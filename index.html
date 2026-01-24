@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Ionic Auth App</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=5.0" />
+  <meta name="description" content="Ionic Auth App" />
+  <link rel="icon" type="image/x-icon" href="favicon.ico" />
+  
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          },
+          backgroundImage: {
+             'placeholder': "url('https://i.ibb.co/nNsGtRqn/placeholder-80x80.png')",
+          }
+        },
+      },
+    }
+  </script>
+
+  <script type="module" src="https://cdn.jsdelivr.net/npm/@ionic/core/dist/ionic/ionic.esm.js"></script>
+  <script nomodule src="https://cdn.jsdelivr.net/npm/@ionic/core/dist/ionic/ionic.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@ionic/core/css/ionic.bundle.css"/>
+  <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+  <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+  <style>
+    body { 
+      font-family: 'Inter', sans-serif;
+      --ion-font-family: 'Inter', sans-serif;
+    }
+    /* Increase base font size on iPhones for better readability and larger touch targets. */
+    html.is-iphone {
+      font-size: 15.5px;
+    }
+
+    /* --- Common Safe Area Overlay --- */
+    /* Used for headers over hero images to respect device notches/status bars */
+    .nav-overlay-safe {
+      padding-top: calc(4rem + env(safe-area-inset-top));
+    }
+    .plt-android .nav-overlay-safe {
+      padding-top: 4rem;
+    }
+
+    /* --- Common Rich Content Styles --- */
+    /* Shared typography for dynamic content injected via [innerHTML] */
+    
+    .article-content *, .legal-content *, .business-content *, .job-content * {
+      /* Reset margins to handle them consistently */
+      margin: 0;
+      padding: 0;
+    }
+
+    /* Paragraphs */
+    .article-content p, .legal-content p, .business-content p, .job-content p {
+      line-height: inherit;
+      color: inherit;
+      margin-bottom: 0;
+    }
+
+    /* Headings */
+    .article-content h2, .article-content h3,
+    .legal-content h2, .legal-content h3,
+    .business-content h2, 
+    .job-content h2, .job-content h3,
+    h2.section-title {
+      color: #1A1C1E;
+      font-weight: inherit;
+    }
+
+    h2.section-title:first-child {
+      margin-top: 0;
+    }
+
+    /* Lists */
+    .legal-content ul, .job-content ul {
+      list-style-type: disc;
+      padding-left: 1.25rem;
+      margin-bottom: 1.25rem;
+      color: inherit;
+    }
+
+    .legal-content li, .job-content li {
+      margin-bottom: 0.5rem;
+      line-height: inherit;
+    }
+
+    /* Custom Toast Style to ensure white text */
+    ion-toast.toast-custom-text {
+      --color: #ffffff !important;
+      --icon-color: #ffffff !important;
+      --button-color: #ffffff !important;
+      font-weight: 600 !important;
+    }
+    ion-toast.toast-custom-text::part(message) {
+      color: #ffffff;
+      font-weight: 600;
+    }
+    ion-toast.toast-custom-text::part(icon) {
+      color: #ffffff;
+    }
+  </style>
+<script type="importmap">
+{
+  "imports": {
+    "rxjs": "https://esm.sh/rxjs@^7.8.2?conditions=es2015",
+    "rxjs/operators": "https://esm.sh/rxjs@^7.8.2/operators?conditions=es2015",
+    "rxjs/ajax": "https://esm.sh/rxjs@^7.8.2/ajax?conditions=es2015",
+    "rxjs/webSocket": "https://esm.sh/rxjs@^7.8.2/webSocket?conditions=es2015",
+    "rxjs/testing": "https://esm.sh/rxjs@^7.8.2/testing?conditions=es2015",
+    "rxjs/fetch": "https://esm.sh/rxjs@^7.8.2/fetch?conditions=es2015",
+    "@angular/compiler": "https://esm.sh/@angular/compiler@^21.1.0?external=rxjs",
+    "@angular/router": "https://esm.sh/@angular/router@^21.1.0?external=rxjs",
+    "@angular/core": "https://esm.sh/@angular/core@^21.1.0?external=rxjs",
+    "@angular/core/rxjs-interop": "https://esm.sh/@angular/core@^21.1.0/rxjs-interop?external=rxjs",
+    "@angular/platform-browser": "https://esm.sh/@angular/platform-browser@^21.1.0?external=rxjs",
+    "@angular/common": "https://esm.sh/@angular/common@^21.1.0?external=rxjs",
+    "@angular/common/http": "https://esm.sh/@angular/common@^21.1.0/http?external=rxjs",
+    "@ionic/angular": "https://esm.sh/@ionic/angular@^8.7.17?external=rxjs",
+    "@ionic/angular/standalone": "https://esm.sh/@ionic/angular@^8.7.17/standalone?external=rxjs",
+    "firebase/app": "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js",
+    "firebase/auth": "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js",
+    "firebase/firestore": "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js",
+    "@angular/forms": "https://esm.sh/@angular/forms@^21.1.1?external=rxjs"
+  }
+}
+</script>
+</head>
+<body class="bg-[#F2F4F7]">
+  <app-root></app-root>
+</body>
+</html>

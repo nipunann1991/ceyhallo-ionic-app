@@ -1,0 +1,90 @@
+import { Component, ChangeDetectionStrategy, signal, inject, computed } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { IonicModule } from '@ionic/angular';
+import { AuthService } from '../../services/auth.service';
+import { DataService } from '../../services/data.service';
+import { RouterLink, Router } from '@angular/router';
+
+@Component({
+  selector: 'app-signup',
+  templateUrl: './signup.component.html',
+  styles: [`
+    @keyframes slideInUp {
+      from {
+        opacity: 0;
+        transform: translateY(12px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    .animate-slide-in {
+      animation: slideInUp 0.7s ease-out forwards;
+    }
+  `],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [CommonModule, IonicModule, RouterLink],
+})
+export class SignUpComponent {
+  private authService = inject(AuthService);
+  private dataService = inject(DataService);
+  private router = inject(Router);
+
+  countries = this.dataService.getCountries();
+
+  name = signal('');
+  email = signal('');
+  password = signal('');
+  confirmPassword = signal('');
+  
+  // New Fields
+  region = signal('');
+  phoneNumber = signal('');
+  
+  errorMessage = signal('');
+  isLoading = signal(false);
+  
+  showPassword = signal(false);
+  passwordFieldType = computed(() => this.showPassword() ? 'text' : 'password');
+
+  togglePasswordVisibility() {
+    this.showPassword.update(value => !value);
+  }
+
+  async signUp() {
+    if (!this.name() || !this.email() || !this.password() || !this.confirmPassword() || !this.region()) {
+      this.errorMessage.set('Please fill in all required fields (Region is required).');
+      return;
+    }
+    
+    if (this.password() !== this.confirmPassword()) {
+      this.errorMessage.set('Passwords do not match.');
+      return;
+    }
+    
+    if (this.password().length < 6) {
+        this.errorMessage.set('Password must be at least 6 characters.');
+        return;
+    }
+
+    this.errorMessage.set('');
+    this.isLoading.set(true);
+    
+    const result = await this.authService.signUp(
+      this.email(), 
+      this.password(), 
+      this.name(),
+      this.region(),
+      this.phoneNumber()
+    );
+    
+    this.isLoading.set(false);
+    
+    if (result.success) {
+      this.router.navigate(['/tabs/home']);
+    } else {
+      this.errorMessage.set(result.error || 'Registration failed. Please try again.');
+    }
+  }
+}

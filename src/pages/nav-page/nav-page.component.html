@@ -1,0 +1,21 @@
+<ion-header class="ion-no-border">
+  <ion-toolbar class="bg-gray-100 text-black border-b border-gray-200">
+    <ion-buttons slot="start">
+      <ion-back-button></ion-back-button>
+    </ion-buttons>
+    <ion-title class="font-bold">
+      Pushed Page
+    </ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding bg-white text-black">
+  <h1 class="text-xl font-bold mb-4">This is a Pushed Page</h1>
+  <p>The back button in the header was added automatically by <code>&lt;ion-nav&gt;</code>.</p>
+  @if (receivedMessage()) {
+    <div class="mt-4 p-4 bg-gray-100 rounded-lg">
+      <p class="font-semibold">Message Received:</p>
+      <p class="italic">"{{ receivedMessage() }}"</p>
+    </div>
+  }
+</ion-content>

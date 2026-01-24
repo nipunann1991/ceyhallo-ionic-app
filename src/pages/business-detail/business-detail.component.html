@@ -1,0 +1,164 @@
+
+@if (business(); as biz) {
+  <ion-content [fullscreen]="true" class="bg-white">
+    
+    <!-- Hero Section -->
+    <div class="relative w-full h-[40vh]">
+      <!-- Image -->
+      <img [src]="biz.imageUrl || 'https://i.ibb.co/nNsGtRqn/placeholder-80x80.png'" (error)="handleImgError($event)" [alt]="biz.name" class="w-full h-full object-cover" [style.object-fit]="biz.imageUrl ? 'cover' : 'none'" [class.bg-gray-200]="!biz.imageUrl">
+      
+      <!-- Gradient for Status Bar visibility -->
+      <div class="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-transparent h-32 pointer-events-none"></div>
+
+      <!-- Header Actions -->
+      <div class="absolute top-0 left-0 right-0 nav-overlay-safe px-5 flex justify-between items-start z-10">
+        <button (click)="close()" class="active:scale-90 transition-transform">
+           <ion-icon name="arrow-back" class="text-3xl text-white drop-shadow-md"></ion-icon>
+        </button>
+        
+        <button class="active:scale-90 transition-transform">
+           <ion-icon name="bookmark-outline" class="text-2xl text-white drop-shadow-md"></ion-icon>
+        </button>
+      </div>
+    </div>
+
+    <!-- Content Container (Overlapping) -->
+    <div class="relative -mt-12 bg-white rounded-t-[2.5rem] px-6 pt-8 pb-32 min-h-[65vh] shadow-[0_-5px_20px_rgba(0,0,0,0.05)]">
+       
+       <!-- Header Info Centered -->
+       <div class="flex flex-col items-center text-center mb-6">
+          <span class="text-[#083594] font-bold text-[0.7rem] tracking-widest uppercase mb-1">{{ biz.category }}</span>
+          
+          <div class="flex items-center gap-2 mb-2">
+            <!-- Title classes preserved as requested -->
+            <h1 class="text-lg font-bold text-[#1A1C1E] leading-tight">{{ biz.name }}</h1>
+            <!-- Decorative icon/emoji -->
+            <span class="text-xl">
+               @if (biz.isPromoted) {
+                <img src="https://i.ibb.co/4hd1y7m/crown.png" alt="Verified" class="w-4 h-4 object-contain">
+               }
+            </span> 
+          </div>
+          
+          <div class="flex items-center gap-2 text-sm mb-5">
+             <ion-icon name="star" class="text-[#FFC107] text-base"></ion-icon>
+             <span class="font-bold text-[#1A1C1E]">{{ biz.rating }}</span>
+             <span class="text-gray-400 font-medium">({{ biz.reviewCount }} reviews)</span>
+             <span class="text-gray-300 text-xs mx-1">|</span>
+             <span class="font-bold text-[#1A1C1E]">{{ biz.priceRange || '$$$' }}</span>
+          </div>
+
+          <!-- Location Badge in Header -->
+          @if (biz.location) {
+            <div class="w-full bg-[#F8F9FA] rounded-xl p-3 flex items-center gap-3 text-left">
+                <div class="w-8 h-8 rounded-full bg-white flex items-center justify-center shadow-sm text-[#083594] shrink-0">
+                   <ion-icon name="location" class="text-lg"></ion-icon>
+                </div>
+                <span class="text-[0.9rem] font-semibold text-[#1A1C1E] leading-tight">{{ biz.location }}</span>
+            </div>
+          }
+       </div>
+
+       <!-- About Section -->
+       <div class="mb-8">
+          <h2 class="text-md font-bold text-[#1A1C1E] mb-3">About</h2>
+          <!-- Paragraph classes preserved as requested -->
+          <p class="text-sm text-gray-600 leading-relaxed font-normal" [innerHTML]="biz.description"></p>
+       </div>
+
+       <!-- Gallery Section (Grid Layout) -->
+       @if (galleryImages().length > 0) {
+        <div class="mb-8">
+            <h2 class="text-md font-bold text-[#1A1C1E] mb-3">Gallery</h2>
+            <div class="grid grid-cols-2 gap-3">
+              @for (img of galleryImages(); track $index) {
+                  <div (click)="openLightbox($index)" class="aspect-[4/3] rounded-2xl overflow-hidden bg-gray-100 relative active:opacity-90 transition-opacity cursor-pointer">
+                    <img [src]="img" (error)="handleImgError($event)" class="w-full h-full object-cover">
+                  </div>
+              }
+            </div>
+        </div>
+       }
+
+       <!-- Opening Hours Section -->
+       @if (biz.openingHours && biz.openingHours.length > 0) {
+         <div class="mb-8">
+            <h2 class="text-md font-bold text-[#1A1C1E] mb-3">Opening Hours</h2>
+            <div class="bg-gray-50 rounded-2xl p-5 space-y-3">
+               @for (openingHour of biz.openingHours; track $index) {
+                  <div class="flex justify-between items-center text-sm">
+                     <span class="font-bold text-[#1A1C1E]">{{ openingHour.day }}</span>
+                     <span class="font-medium text-gray-500">{{ openingHour.hours }}</span>
+                  </div>
+               }
+            </div>
+         </div>
+       }
+
+       <!-- Location Section (Updated with Map) -->
+       @if (biz.location) {
+         <div class="mb-8">
+            <h2 class="text-md font-bold text-[#1A1C1E] mb-3">Location</h2>
+            <div (click)="openMap()" class="w-full h-48 rounded-2xl overflow-hidden relative border border-gray-100 shadow-sm bg-gray-100 cursor-pointer active:opacity-95 transition-opacity group">
+                
+                @if (mapSafeUrl(); as url) {
+                   <iframe [src]="url" width="100%" height="100%" frameborder="0" style="border:0; pointer-events: none;" allowfullscreen></iframe>
+                } @else {
+                   <img src="https://i.ibb.co/hyg73xG/map-placeholder.png" class="w-full h-full object-cover" alt="Map">
+                }
+                
+                <!-- Transparent overlay to intercept clicks -->
+                <div class="absolute inset-0 z-10 bg-transparent"></div>
+
+                <div class="absolute inset-0 flex items-center justify-center pointer-events-none z-20 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div class="bg-white/90 backdrop-blur-sm px-4 py-2 rounded-full shadow-sm text-xs font-bold text-[#083594] group-hover:bg-[#083594] group-hover:text-white transition-colors">
+                      View on Google Maps
+                  </div>
+                </div>
+            </div>
+         </div>
+       }
+
+    </div>
+
+  </ion-content>
+
+  <!-- Sticky Footer -->
+  <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 px-5 pt-4 pb-[calc(1.5rem+env(safe-area-inset-bottom))] z-20 shadow-[0_-10px_30px_rgba(0,0,0,0.03)] flex gap-4">
+     <!-- Call Button -->
+     <a [href]="'tel:' + biz.phone" class="w-[3.5rem] h-[3.5rem] rounded-[1.2rem] border border-gray-200 flex items-center justify-center text-[#1A1C1E] active:bg-gray-50 transition-colors shadow-sm">
+        <ion-icon name="call" class="text-xl"></ion-icon>
+     </a>
+     
+     <!-- Reservation Button -->
+     <button class="flex-1 h-[3.5rem] bg-[#083594] text-white font-bold text-[0.95rem] rounded-[1.2rem] shadow-lg shadow-[#083594]/20 flex items-center justify-center gap-2 active:scale-[0.98] transition-transform">
+        <ion-icon name="calendar" class="text-lg"></ion-icon>
+        Make a Reservation
+     </button>
+  </div>
+}
+
+<!-- Lightbox Modal -->
+<ion-modal [isOpen]="isLightboxOpen()" (didDismiss)="closeLightbox()" style="--background: rgba(0,0,0,0.95);">
+  <ng-template>
+     <div class="w-full h-full flex flex-col items-center justify-center relative" (click)="closeLightbox()">
+        
+        <!-- Close Button -->
+        <button (click)="closeLightbox()" class="absolute top-10 right-5 z-50 w-10 h-10 bg-white/10 rounded-full flex items-center justify-center text-white backdrop-blur-md active:bg-white/20 transition-colors">
+           <ion-icon name="close" class="text-2xl"></ion-icon>
+        </button>
+
+        <!-- Image -->
+        <img [src]="galleryImages()[activeLightboxIndex()]" class="max-w-full max-h-full object-contain transition-all duration-300 shadow-2xl" (click)="$event.stopPropagation()">
+
+        <!-- Controls -->
+        <button (click)="prevImage($event)" class="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/10 rounded-full flex items-center justify-center text-white backdrop-blur-md active:bg-white/20 transition-colors">
+            <ion-icon name="chevron-back" class="text-2xl"></ion-icon>
+        </button>
+        <button (click)="nextImage($event)" class="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/10 rounded-full flex items-center justify-center text-white backdrop-blur-md active:bg-white/20 transition-colors">
+            <ion-icon name="chevron-forward" class="text-2xl"></ion-icon>
+        </button>
+
+     </div>
+  </ng-template>
+</ion-modal>

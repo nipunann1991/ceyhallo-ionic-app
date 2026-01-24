@@ -1,0 +1,90 @@
+
+@if (event(); as event) {
+  <ion-content [fullscreen]="true" class="bg-white">
+    
+    <!-- Hero Section -->
+    <div class="relative w-full h-72">
+      <!-- Event Image -->
+      <img [src]="event.imageUrl || 'https://i.ibb.co/nNsGtRqn/placeholder-80x80.png'" (error)="handleImgError($event)" [alt]="event.title" class="w-full h-full object-cover" [style.object-fit]="event.imageUrl ? 'cover' : 'none'" [class.bg-gray-200]="!event.imageUrl">
+      
+      <!-- Gradient Overlay (Top) -->
+      <div class="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-transparent h-32 pointer-events-none"></div>
+
+      <!-- Navigation Overlay -->
+      <div class="absolute top-0 left-0 right-0 nav-overlay-safe px-5 flex justify-between items-start z-10">
+        <!-- Back Button -->
+        <button (click)="close()" class="text-white hover:opacity-80 transition-opacity active:scale-90">
+           <ion-icon name="arrow-back" class="text-[1.75rem] drop-shadow-md"></ion-icon>
+        </button>
+        
+        <!-- Bookmark Button -->
+        <button class="text-white hover:opacity-80 transition-opacity active:scale-90">
+           <ion-icon name="bookmark-outline" class="text-[1.5rem] drop-shadow-md"></ion-icon>
+        </button>
+      </div>
+    </div>
+
+    <!-- Content Card (Overlapping) -->
+    <div class="relative -mt-12 z-10 bg-white rounded-t-[2.5rem] px-6 pt-10 pb-40 min-h-[60vh] shadow-[0_-10px_40px_rgba(0,0,0,0.05)]">
+       
+       <!-- Date & Time -->
+       <div class="flex justify-center mb-1">
+         <span class="text-[#083594] font-bold text-[0.75rem] tracking-[0.05em] uppercase">
+            {{ event.date | date:'EEE, MMM d, y' }} • {{ event.date | date:'shortTime' }}
+         </span>
+       </div>
+
+       <!-- Title -->
+       <h1 class="text-xl font-extrabold text-[#1A1C1E] tracking-tight mb-4 text-center leading-tight">
+         {{ event.title }}
+       </h1>
+       
+       <!-- Location Badge -->
+       @if (event.location) {
+        <div class="w-full bg-[#F8F9FA] rounded-xl p-3 flex items-center gap-3 text-left mb-6">
+            <div class="w-8 h-8 rounded-full bg-white flex items-center justify-center shadow-sm text-[#083594] shrink-0">
+               <ion-icon name="location" class="text-lg"></ion-icon>
+            </div>
+            <span class="text-[0.9rem] font-semibold text-[#1A1C1E] leading-tight">{{ event.location }}</span>
+        </div>
+       }
+
+       <!-- Article Content -->
+       <div class="article-content text-sm text-gray-600 leading-relaxed font-normal mb-8" [innerHTML]="event.content"></div>
+       
+       <!-- Location Map Section -->
+       @if (event.location) {
+         <div class="mb-8">
+            <h2 class="text-md font-bold text-[#1A1C1E] mb-3">Location</h2>
+            <div (click)="openMap()" class="w-full h-48 rounded-2xl overflow-hidden relative border border-gray-100 shadow-sm bg-gray-100 cursor-pointer active:opacity-95 transition-opacity group">
+                
+                @if (mapSafeUrl(); as url) {
+                   <iframe [src]="url" width="100%" height="100%" frameborder="0" style="border:0; pointer-events: none;" allowfullscreen></iframe>
+                } @else {
+                   <img src="https://i.ibb.co/hyg73xG/map-placeholder.png" class="w-full h-full object-cover" alt="Map">
+                }
+                
+                <!-- Transparent overlay to intercept clicks -->
+                <div class="absolute inset-0 z-10 bg-transparent"></div>
+
+                <div class="absolute inset-0 flex items-center justify-center pointer-events-none z-20 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div class="bg-white/90 backdrop-blur-sm px-4 py-2 rounded-full shadow-sm text-xs font-bold text-[#083594] group-hover:bg-[#083594] group-hover:text-white transition-colors">
+                      View on Google Maps
+                  </div>
+                </div>
+            </div>
+         </div>
+       }
+
+    </div>
+
+  </ion-content>
+
+  <!-- Sticky Footer Action -->
+  <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 px-5 pt-4 pb-[calc(1.5rem+env(safe-area-inset-bottom))] z-20 shadow-[0_-10px_30px_rgba(0,0,0,0.03)]">
+     <button class="w-full h-[3.25rem] bg-[#083594] text-white font-bold text-[0.95rem] rounded-full shadow-lg shadow-[#083594]/20 flex items-center justify-center gap-2.5 active:scale-[0.98] transition-transform">
+        <ion-icon name="ticket" class="text-lg"></ion-icon>
+        <span>Get Tickets</span>
+     </button>
+  </div>
+}

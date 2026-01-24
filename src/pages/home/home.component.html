@@ -1,0 +1,257 @@
+<ion-content [fullscreen]="true" class="[--background:#F2F4F7]" [forceOverscroll]="false">
+  
+  <!-- Custom Header Section -->
+  <div class="relative bg-[#083594] home-header pb-20 px-5 rounded-b-[2.5rem] shadow-sm z-0">
+    <!-- User Info Row -->
+    <div class="flex items-center justify-between mb-2">
+      <div class="flex items-center gap-3">
+        <!-- Avatar with Online Dot -->
+        <div class="relative">
+          <div class="w-12 h-12 rounded-full border-2 border-white/20 bg-white/20 flex items-center justify-center text-white overflow-hidden">
+             <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7">
+                  <circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M5 21C5.61754 18.2372 7.9899 16 10.8 16H13.2C16.0101 16 18.3825 18.2372 19 21" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            <!-- <img [src]="user().avatar" [alt]="user().name" class="w-full h-full object-cover"> -->
+          </div>
+       
+          <div class="absolute top-0.5 right-0.5 w-3.5 h-3.5 bg-[#4ADE80] border-[2px] border-[#083594] rounded-full z-10"></div>
+        </div>
+        
+        <!-- Welcome Text -->
+        <div class="text-white flex flex-col justify-center">
+          <div class="flex items-center gap-2">
+             <h2 class="text-[1.1rem] font-bold tracking-tight">Hello {{ user().name }}</h2>
+             <span class="text-xl animate-wave">👋</span>
+          </div>
+          
+          <!-- Warning Message (Yellow) -->
+          @if (!user().isVerified) {
+            <button class="flex items-center gap-1.5 opacity-100 group">
+               <ion-icon name="alert-circle" class="text-[#FCD34D] text-[1rem]"></ion-icon>
+               <p class="text-[0.75rem] text-[#FCD34D] leading-tight group-active:opacity-80">Email not verified. Resend link.</p>
+            </button>
+          }
+        </div>
+      </div>
+
+      <!-- Right Side Actions -->
+      <div class="flex items-center gap-3">
+         <!-- Country Flag Selector -->
+         <button 
+            (click)="openCountrySelector()"
+            class="w-9 h-9 rounded-full overflow-hidden shadow-sm shrink-0 active:scale-90 transition-transform bg-white/10 backdrop-blur-md"
+            style="border: 2px solid rgb(255 255 255 / 17%);">
+            @if (currentCountry(); as country) {
+              <img [src]="country.flagUrl || 'https://i.ibb.co/nNsGtRqn/placeholder-80x80.png'" (error)="handleImgError($event)" class="w-full h-full object-fill" [style.object-fit]="country.flagUrl ? 'fill' : 'none'" [class.bg-gray-200]="!country.flagUrl" [alt]="country.name">
+            } @else {
+              <!-- Skeleton loader for flag -->
+              <div class="w-full h-full bg-white/20 animate-pulse"></div>
+            }
+         </button>
+         
+         <!-- Notification Bell -->
+         <button routerLink="/notifications" class="relative w-10 h-10 flex items-center justify-center bg-white/10 rounded-full text-white active:scale-90 transition-transform">
+            <ion-icon name="notifications" class="text-xl text-white"></ion-icon>
+            <!-- Unread Badge (Simulated) -->
+            <div class="absolute top-2.5 right-2.5 w-2 h-2 bg-red-500 rounded-full"></div>
+         </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Banner Section (Carousel) -->
+  <div class="relative z-10 -mt-16 px-5">
+    <app-banner [banners]="banners()" (bannerClick)="handleBannerClick($event)"></app-banner>
+  </div>
+
+  <!-- Category Grid Section -->
+  <div class="px-5 pt-8 pb-2">
+    @if (categories().length === 0) {
+      <!-- Skeleton for Categories -->
+      <div class="grid grid-cols-4 gap-x-3 gap-y-4 mb-3">
+        @for (item of [1,2,3,4,5,6,7,8]; track item) {
+          <div class="flex flex-col items-center gap-2">
+             <div class="w-full aspect-square rounded-[1.2rem] bg-gray-200 animate-pulse"></div>
+             <div class="w-12 h-3 rounded bg-gray-200 animate-pulse"></div>
+          </div>
+        }
+      </div>
+    } @else {
+      <!-- Actual Grid -->
+      <div class="grid grid-cols-4 gap-x-3 gap-y-4 mb-3">
+         @for (category of categories(); track category.id) {
+            <button 
+              (click)="handleCategoryClick(category.path)"
+              [disabled]="!category.path"
+              class="flex flex-col items-center gap-2 group focus:outline-none active:scale-95 transition-transform disabled:opacity-50">
+               <!-- Icon Box -->
+               <div class="relative w-[65px] h-[65px] bg-white rounded-2xl shadow-[0_4px_15px_rgba(0,0,0,0.03)] border border-[#F1F3F6] flex items-center justify-center group-hover:shadow-md transition-shadow">
+                  <!-- Category Icon Image -->
+                  <img [src]="category.icon || 'https://i.ibb.co/nNsGtRqn/placeholder-80x80.png'" (error)="handleImgError($event)" [alt]="category.label" class="w-10 h-10 object-contain drop-shadow-sm" [style.object-fit]="category.icon ? 'contain' : 'none'" [class.bg-gray-50]="!category.icon">
+                  
+                  <!-- Notification Dot -->
+                  @if (category.hasNotification) {
+                     <div class="absolute top-2.5 right-2.5 w-2.5 h-2.5 bg-[#EF4444] rounded-full border-2 border-white shadow-sm"></div>
+                  }
+               </div>
+               
+               <!-- Label -->
+               <span class="text-[0.75rem] font-medium text-[#4B5563] text-center tracking-normal leading-none">{{ category.label }}</span>
+            </button>
+         }
+      </div>
+    }
+  </div>
+
+  <!-- News Feed Section -->
+  <div class="mt-6 pl-5 pb-12">
+    <!-- Header -->
+    <div class="flex items-center justify-between pr-5 mb-4">
+      <a routerLink="/news" class="text-[1.1rem] font-bold text-[#1A1C1E] tracking-tight hover:text-[#083594] transition-colors">News feed</a>
+      <button routerLink="/news" class="text-sm font-bold text-gray-400 hover:text-[#083594] transition-colors">See all</button>
+    </div>
+
+    <!-- Horizontal Scroll Container with Drag Logic -->
+    <div 
+      #newsContainer
+      class="flex overflow-x-auto gap-4 pb-4 pr-5 scrollbar-hide snap-x cursor-grab active:cursor-grabbing select-none"
+      (mousedown)="startDrag($event)"
+      (mouseleave)="endDrag()"
+      (mouseup)="endDrag()"
+      (mousemove)="doDrag($event)">
+      
+      @if (news().length === 0) {
+        <!-- Skeleton Cards -->
+        @for (item of [1,2,3]; track item) {
+           <div class="min-w-[85%] md:min-w-[400px] bg-white p-3 rounded-[1.25rem] shadow-sm border border-gray-100 h-28 animate-pulse"></div>
+        }
+      } @else {
+        @for (item of news(); track item.id) {
+          <!-- Card Component -->
+          <app-news-card 
+            [newsItem]="item"
+            (click)="handleNewsClick(item.id)"
+            class="min-w-[85%] md:min-w-[400px] snap-center block">
+          </app-news-card>
+        }
+      }
+    </div>
+  </div>
+
+  <!-- Featured Restaurants Section -->
+  <div class="-mt-4 pl-5 pb-12">
+    <!-- Header -->
+    <div class="flex items-center justify-between pr-5 mb-4">
+      <a routerLink="/restaurants" class="text-[1.1rem] font-bold text-[#1A1C1E] tracking-tight hover:text-[#083594] transition-colors">Featured Restaurants</a>
+      <button routerLink="/restaurants" class="text-sm font-bold text-gray-400 hover:text-[#083594] transition-colors">See all</button>
+    </div>
+
+    <!-- Scroll Container -->
+    <div 
+      #restaurantContainer
+      class="flex overflow-x-auto gap-3 pb-4 pr-5 scrollbar-hide snap-x cursor-grab active:cursor-grabbing select-none"
+      (mousedown)="startRestaurantDrag($event)"
+      (mouseleave)="endRestaurantDrag()"
+      (mouseup)="endRestaurantDrag()"
+      (mousemove)="doRestaurantDrag($event)">
+      
+       @if (featuredRestaurants().length === 0) {
+         <!-- Skeleton -->
+         @for (item of [1,2]; track item) {
+            <div class="min-w-[230px] w-[230px] bg-white rounded-[1.2rem] h-[210px] animate-pulse"></div>
+         }
+       } @else {
+         @for (biz of featuredRestaurants(); track biz.id) {
+            <app-business-card 
+              [business]="biz"
+              class="min-w-[230px] w-[230px] snap-center block"
+              (click)="handleBusinessClick(biz.id, true)">
+            </app-business-card>
+         }
+       }
+    </div>
+  </div>
+
+  <!-- Featured Business Section (Non-Restaurants) -->
+  <div class="-mt-4 pl-5 pb-24">
+    <!-- Header -->
+    <div class="flex items-center justify-between pr-5 mb-4">
+      <a routerLink="/businesses" class="text-[1.1rem] font-bold text-[#1A1C1E] tracking-tight hover:text-[#083594] transition-colors">Featured Business</a>
+      <button routerLink="/businesses" class="text-sm font-bold text-gray-400 hover:text-[#083594] transition-colors">See all</button>
+    </div>
+
+    <!-- Scroll Container -->
+    <div 
+      #businessContainer
+      class="flex overflow-x-auto gap-3 pb-4 pr-5 scrollbar-hide snap-x cursor-grab active:cursor-grabbing select-none"
+      (mousedown)="startBusinessDrag($event)"
+      (mouseleave)="endBusinessDrag()"
+      (mouseup)="endBusinessDrag()"
+      (mousemove)="doBusinessDrag($event)">
+      
+       @if (generalBusinesses().length === 0) {
+         <!-- Skeleton -->
+         @for (item of [1,2,3]; track item) {
+            <div class="min-w-[230px] w-[230px] bg-white rounded-[1.2rem] h-[210px] animate-pulse"></div>
+         }
+       } @else {
+         @for (biz of generalBusinesses(); track biz.id) {
+            <app-business-card 
+              [business]="biz"
+              class="min-w-[230px] w-[230px] snap-center block"
+              (click)="handleBusinessClick(biz.id)">
+            </app-business-card>
+         }
+       }
+    </div>
+  </div>
+
+  <!-- Country Selection Modal (Bottom Sheet Style) -->
+  <ion-modal 
+    [isOpen]="isCountryModalOpen()" 
+    (didDismiss)="closeCountrySelector()" 
+    [initialBreakpoint]="0.5" 
+    [breakpoints]="[0, 0.5, 0.75]"
+    class="--border-radius: 16px;">
+    <ng-template>
+      <ion-header class="ion-no-border">
+        <ion-toolbar class="bg-white">
+          <ion-title class="font-bold text-gray-900">Select Location</ion-title>
+          <ion-buttons slot="end">
+            <ion-button (click)="closeCountrySelector()" color="medium">
+              <ion-icon slot="icon-only" name="close"></ion-icon>
+            </ion-button>
+          </ion-buttons>
+        </ion-toolbar>
+      </ion-header>
+      <ion-content class="bg-white">
+        <ion-list lines="none" class="p-2">
+          @for (country of countries(); track country.id) {
+            <ion-item 
+              button 
+              (click)="selectCountry(country)"
+              class="rounded-xl mb-2"
+              [class.bg-blue-50]="country.id === selectedCountryId()"
+              detail="false">
+              
+              <div slot="start" class="w-10 h-10 rounded-full overflow-hidden border border-gray-100 shadow-sm mr-3">
+                 <img [src]="country.flagUrl || 'https://i.ibb.co/nNsGtRqn/placeholder-80x80.png'" (error)="handleImgError($event)" class="w-full h-full object-fill" [style.object-fit]="country.flagUrl ? 'fill' : 'none'" [class.bg-gray-200]="!country.flagUrl">
+              </div>
+              
+              <ion-label>
+                <h3 class="font-bold text-gray-800">{{ country.name }}</h3>
+                <p class="text-xs text-gray-500">{{ country.cities.length }} Cities Available</p>
+              </ion-label>
+              
+              @if (country.id === selectedCountryId()) {
+                <ion-icon slot="end" name="checkmark-circle" class="text-[#083594] text-xl"></ion-icon>
+              }
+            </ion-item>
+          }
+        </ion-list>
+      </ion-content>
+    </ng-template>
+  </ion-modal>
+
+</ion-content>

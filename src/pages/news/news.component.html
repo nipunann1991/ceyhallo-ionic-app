@@ -1,0 +1,82 @@
+<ion-content [fullscreen]="true" class="[--background:#F2F4F7]">
+  
+  <app-page-header 
+    title="News" 
+    searchPlaceholder="Search news..."
+    [searchValue]="searchTerm()"
+    [isModal]="isModalSignal()"
+    (searchChange)="handleSearch($event)"
+    (back)="goBack()">
+  </app-page-header>
+
+  <div class="px-5 pb-8">
+
+    <!-- Featured Banner -->
+    @if (selectedCategory() === 'All' && searchTerm() === '' && featuredArticle(); as featured) {
+      <app-featured-banner
+        [title]="featured.title"
+        [category]="featured.category || 'COMMUNITY'"
+        [imageUrl]="featured.imageUrl"
+        variant="news"
+        (click)="openArticle(featured)">
+      </app-featured-banner>
+    }
+
+    <!-- Category Filter Chips -->
+    <div 
+      #categoryContainer
+      class="flex overflow-x-auto gap-2.5 pb-2 mb-4 scrollbar-hide -mx-5 px-5 snap-x select-none cursor-grab active:cursor-grabbing"
+      (mousedown)="startDrag($event)"
+      (mouseleave)="endDrag()"
+      (mouseup)="endDrag()"
+      (mousemove)="doDrag($event)">
+      @for (cat of categories(); track cat) {
+        <button 
+          (click)="setCategory(cat)"
+          class="px-3 py-[0.4rem] text-[0.8rem] font-semibold rounded-full whitespace-nowrap transition-colors duration-200 border"
+          [class.bg-[#083594]]="selectedCategory() === cat"
+          [class.text-white]="selectedCategory() === cat"
+          [class.border-transparent]="selectedCategory() === cat"
+          [class.bg-white]="selectedCategory() !== cat"
+          [class.text-[#4B5563]]="selectedCategory() !== cat"
+          [class.border-gray-200]="selectedCategory() !== cat"
+          [class.hover:bg-gray-50]="selectedCategory() !== cat"
+          [class.shadow-sm]="selectedCategory() !== cat">
+          {{ cat }}
+        </button>
+      }
+    </div>
+
+    <!-- News List -->
+    <div class="flex flex-col">
+      @if (displayedNews().length > 0) {
+        @for (item of displayedNews(); track item.id) {
+          <app-news-card 
+            [newsItem]="item"
+            (click)="openArticle(item)"
+            class="mb-3">
+          </app-news-card>
+        }
+      } @else {
+        <!-- No Results State -->
+        <div class="flex items-center justify-center h-[40vh]">
+          <div class="text-center text-gray-400">
+            <ion-icon name="newspaper-outline" class="text-7xl mb-2 text-gray-300"></ion-icon>
+            <h1 class="text-xl font-bold mt-2">No News Found</h1>
+            @if (searchTerm()) {
+              <p class="text-sm">We couldn't find any news for "{{ searchTerm() }}".</p>
+            } @else {
+              <p class="text-sm">We couldn't find any news in '{{ selectedCategory() }}'.</p>
+            }
+          </div>
+        </div>
+      }
+    </div>
+
+    <!-- Infinite Scroll -->
+    <ion-infinite-scroll (ionInfinite)="onIonInfinite($event)" [disabled]="displayedNews().length >= filteredNews().length">
+       <ion-infinite-scroll-content loadingSpinner="bubbles" loadingText="Loading more news..."></ion-infinite-scroll-content>
+    </ion-infinite-scroll>
+
+  </div>
+</ion-content>
