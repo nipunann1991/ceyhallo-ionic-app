@@ -66,14 +66,34 @@
           <p class="text-sm text-gray-600 leading-relaxed font-normal" [innerHTML]="biz.description"></p>
        </div>
 
-       <!-- Gallery Section (Grid Layout) -->
+       <!-- Gallery Section (Slidable) -->
        @if (galleryImages().length > 0) {
-        <div class="mb-8">
-            <h2 class="text-md font-bold text-[#1A1C1E] mb-3">Gallery</h2>
-            <div class="grid grid-cols-2 gap-3">
+        <div class="mb-8 relative group/gallery">
+            <div class="flex justify-between items-center mb-3 px-1">
+                <h2 class="text-md font-bold text-[#1A1C1E]">
+                    Gallery <span class="text-gray-400 font-medium text-sm ml-1">({{ galleryImages().length }})</span>
+                </h2>
+                
+                <!-- Menu Button Overlay (If URL exists) -->
+                @if (biz.menuUrl) {
+                    <button (click)="openMenu()" class="text-xs font-bold text-[#083594] flex items-center gap-1 active:opacity-70">
+                        <span>View Menu</span>
+                        <ion-icon name="restaurant-outline"></ion-icon>
+                    </button>
+                }
+            </div>
+
+            <!-- Horizontal Scroll Container -->
+            <div 
+              #galleryContainer
+              class="flex overflow-x-auto gap-3 pb-2 -mx-6 px-6 scrollbar-hide snap-x cursor-grab active:cursor-grabbing select-none"
+              (mousedown)="startDrag($event)"
+              (mouseleave)="endDrag()"
+              (mouseup)="endDrag()"
+              (mousemove)="doDrag($event)">
               @for (img of galleryImages(); track $index) {
-                  <div (click)="openLightbox($index)" class="aspect-[4/3] rounded-2xl overflow-hidden bg-gray-100 relative active:opacity-90 transition-opacity cursor-pointer">
-                    <img [src]="img" (error)="handleImgError($event)" class="w-full h-full object-cover">
+                  <div (click)="openLightbox($index)" class="min-w-[150px] w-[150px] aspect-[4/3] rounded-2xl overflow-hidden bg-gray-100 relative active:opacity-90 transition-opacity cursor-pointer snap-center shadow-sm border border-gray-100">
+                    <img [src]="img" (error)="handleImgError($event)" class="w-full h-full object-cover pointer-events-none">
                   </div>
               }
             </div>
@@ -150,6 +170,11 @@
 
         <!-- Image -->
         <img [src]="galleryImages()[activeLightboxIndex()]" class="max-w-full max-h-full object-contain transition-all duration-300 shadow-2xl" (click)="$event.stopPropagation()">
+
+        <!-- Image Counter -->
+        <div class="absolute bottom-10 left-1/2 -translate-x-1/2 bg-black/40 backdrop-blur-md px-4 py-1.5 rounded-full text-white font-bold text-sm pointer-events-none">
+            {{ activeLightboxIndex() + 1 }} / {{ galleryImages().length }}
+        </div>
 
         <!-- Controls -->
         <button (click)="prevImage($event)" class="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/10 rounded-full flex items-center justify-center text-white backdrop-blur-md active:bg-white/20 transition-colors">

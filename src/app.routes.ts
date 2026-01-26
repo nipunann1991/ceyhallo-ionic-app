@@ -57,6 +57,10 @@ export const APP_ROUTES: Routes = [
     loadComponent: () => import('./pages/news/news.component').then(m => m.NewsComponent),
   },
   {
+    path: 'news/:id',
+    loadComponent: () => import('./pages/news-detail/news-detail.component').then(m => m.NewsDetailComponent),
+  },
+  {
     path: 'restaurants',
     loadComponent: () => import('./pages/restaurants/restaurants.component').then(m => m.RestaurantsComponent),
   },
@@ -65,20 +69,28 @@ export const APP_ROUTES: Routes = [
     loadComponent: () => import('./pages/businesses/businesses.component').then(m => m.BusinessesComponent),
   },
   {
+    path: 'business/:id',
+    loadComponent: () => import('./pages/business-detail/business-detail.component').then(m => m.BusinessDetailComponent),
+  },
+  {
     path: 'events',
     loadComponent: () => import('./pages/events/events.component').then(m => m.EventsComponent),
+  },
+  {
+    path: 'event/:id',
+    loadComponent: () => import('./pages/event-detail/event-detail.component').then(m => m.EventDetailComponent),
   },
   {
     path: 'jobs',
     loadComponent: () => import('./pages/jobs/jobs.component').then(m => m.JobsComponent),
   },
   {
-    path: 'navigate',
-    loadComponent: () => import('./pages/navigate/navigate.component').then(m => m.NavigateComponent),
+    path: 'job/:id',
+    loadComponent: () => import('./pages/job-detail/job-detail.component').then(m => m.JobDetailComponent),
   },
   {
-    path: 'settings',
-    loadComponent: () => import('./pages/settings/settings.component').then(m => m.SettingsComponent),
+    path: 'navigate',
+    loadComponent: () => import('./pages/navigate/navigate.component').then(m => m.NavigateComponent),
   },
   {
     path: 'legal/:id',

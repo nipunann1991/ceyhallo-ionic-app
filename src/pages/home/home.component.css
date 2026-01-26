@@ -37,6 +37,7 @@ ion-content::part(scroll)::-webkit-scrollbar {
 ion-content::part(scroll) {
   -ms-overflow-style: none;
   scrollbar-width: none;
+  padding-bottom: inherit;
 }
 
 /* Safe Area Handling */
@@ -47,4 +48,8 @@ ion-content::part(scroll) {
 /* Adjust safe-area-inset-top on Android */
 :host-context(.plt-android) .home-header {
   padding-top: calc(2.5rem + env(safe-area-inset-top));
+}
+
+.inner-scroll {
+  padding-bottom: inherit;
 }

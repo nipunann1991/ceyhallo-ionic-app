@@ -57,12 +57,14 @@
     </div>
 
   </ion-content>
-
-  <!-- Sticky Footer Action -->
-  <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 px-5 pt-4 pb-[calc(1.5rem+env(safe-area-inset-bottom))] z-20 shadow-[0_-10px_30px_rgba(0,0,0,0.03)]">
-     <button class="w-full h-[3.25rem] bg-[#083594] text-white font-bold text-[0.95rem] rounded-full shadow-lg shadow-[#083594]/20 flex items-center justify-center gap-2.5 active:scale-[0.98] transition-transform">
-        <ion-icon name="share-social" class="text-lg"></ion-icon>
-        <span>Share Article</span>
-     </button>
-  </div>
 }
+
+<!-- Sticky Footer Action - Moved outside @if to ensure context is correct -->
+<div class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 px-5 pt-4 pb-[calc(1.5rem+env(safe-area-inset-bottom))] z-20 shadow-[0_-10px_30px_rgba(0,0,0,0.03)]">
+   <button 
+      (click)="handleAction()"
+      class="w-full h-[3.25rem] bg-[#083594] text-white font-bold text-[0.95rem] rounded-full shadow-lg shadow-[#083594]/20 flex items-center justify-center gap-2.5 active:scale-[0.98] transition-transform">
+      <ion-icon [name]="actionIcon" class="text-lg"></ion-icon>
+      <span>{{ actionLabel }}</span>
+   </button>
+</div>

@@ -14,4 +14,5 @@ export interface Business {
   priceRange?: string;
   openingHours?: { days: string; time: string; }[];
   gallery?: string[];
+  menuUrl?: string;
 }

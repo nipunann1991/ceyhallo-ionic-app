@@ -1,18 +1,22 @@
-import { Component, ChangeDetectionStrategy, signal, inject, computed, viewChild, ElementRef } from '@angular/core';
+import { Component, ChangeDetectionStrategy, signal, inject, computed, viewChild, ElementRef, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { IonicModule, ModalController } from '@ionic/angular';
+import { IonicModule, ModalController, ToastController } from '@ionic/angular';
 import { Router, RouterLink } from '@angular/router';
 import { DataService } from '../../services/data.service';
 import { AuthService } from '../../services/auth.service';
+import { PushNotificationService } from '../../services/push-notifications.service';
 import { BannerComponent } from '../../components/banner/banner.component';
 import { Country } from '../../models/country.model';
 import { NewsDetailComponent } from '../news-detail/news-detail.component';
 import { BusinessDetailComponent } from '../business-detail/business-detail.component';
+import { EventDetailComponent } from '../event-detail/event-detail.component';
+import { JobDetailComponent } from '../job-detail/job-detail.component';
 import { BusinessCardComponent } from '../../components/business-card/business-card.component';
 import { NewsCardComponent } from '../../components/news-card/news-card.component';
 import { handleImageError } from '../../utils/image.utils';
 import { Banner } from '../../models/banner.model';
 import { NewsArticle } from '../../models/news.model';
+import { LoginComponent } from '../login/login.component';
 
 @Component({
   selector: 'app-home',
@@ -21,11 +25,13 @@ import { NewsArticle } from '../../models/news.model';
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [CommonModule, IonicModule, RouterLink, BannerComponent, BusinessCardComponent, NewsCardComponent],
 })
-export class HomeComponent {
+export class HomeComponent implements OnInit {
   private dataService = inject(DataService);
   private authService = inject(AuthService);
-  private modalCtrl = inject(ModalController);
-  private router = inject(Router);
+  private pushService = inject(PushNotificationService);
+  private modalCtrl: ModalController = inject(ModalController);
+  private toastCtrl: ToastController = inject(ToastController);
+  private router: Router = inject(Router);
 
   user = computed(() => {
     const profile = this.authService.userProfile();
@@ -106,7 +112,27 @@ export class HomeComponent {
     return list.length > 0 ? list[0] : null; 
   });
 
+  ngOnInit() {
+    // Initialize push notifications when home page loads
+    // This will check permissions and register the device if on Android/iOS
+    this.pushService.initPush();
+  }
+
   handleImgError = handleImageError;
+
+  private async requireLogin(): Promise<boolean> {
+    if (this.authService.isLoggedIn()) return true;
+
+    const modal = await this.modalCtrl.create({
+      component: LoginComponent,
+      componentProps: { 
+        isModal: true,
+        message: 'Please login to view all explore features of CeyHallo app'
+      }
+    });
+    await modal.present();
+    return false;
+  }
 
   openCountrySelector() {
     this.isCountryModalOpen.set(true);
@@ -225,6 +251,9 @@ export class HomeComponent {
       this.isDragging = false; // Reset for next time
       return;
     }
+    
+    if (!(await this.requireLogin())) return;
+
     await this.openNewsArticle(articleId);
   }
 
@@ -239,38 +268,89 @@ export class HomeComponent {
   }
 
   async handleBannerClick(banner: Banner) {
-    // Construct a temporary NewsArticle object from the banner content
-    // This allows us to reuse the NewsDetailComponent to show the banner info
+    if (!(await this.requireLogin())) return;
+
+    const navType = banner.navigationType || 'none';
+    
+    // Prepare Data for the Detail View
     const bannerArticle: NewsArticle = {
       id: banner.id,
       title: banner.title,
       source: 'Featured',
-      date: new Date(), // Current date
+      date: new Date(),
       imageUrl: banner.image,
       description: banner.description || '',
       content: `<p class="text-lg font-medium">${banner.description || ''}</p>`,
       category: banner.category
     };
 
+    // Configure Action based on Navigation Type
+    let actionType: 'share' | 'external' | 'internal' | 'close' = 'close';
+    let actionLabel = 'Back to Home';
+    let actionIcon = 'home-outline';
+    let targetUrl = '';
+    let targetType = banner.targetType; // Pass this to component
+
+    switch (navType) {
+        case 'external':
+            if (banner.targetId) {
+                actionType = 'external';
+                actionLabel = 'Visit Website';
+                actionIcon = 'globe-outline';
+                targetUrl = banner.targetId;
+            } else {
+                actionType = 'close';
+            }
+            break;
+        case 'internal':
+            if (banner.targetId) {
+                actionType = 'internal';
+                // Updated label as requested
+                actionLabel = 'View in Page';
+                actionIcon = 'arrow-forward-circle-outline';
+                targetUrl = banner.targetId;
+            } else {
+                actionType = 'close';
+            }
+            break;
+        case 'share':
+            actionType = 'share';
+            actionLabel = 'Share Article';
+            actionIcon = 'share-social';
+            break;
+        case 'none':
+        default:
+            actionType = 'close';
+            actionLabel = 'Back to Home';
+            actionIcon = 'home-outline';
+            break;
+    }
+
     const modal = await this.modalCtrl.create({
       component: NewsDetailComponent,
       componentProps: {
-        articleData: bannerArticle
+        articleData: bannerArticle,
+        actionType: actionType,
+        actionLabel: actionLabel,
+        actionIcon: actionIcon,
+        targetUrl: targetUrl,
+        targetType: targetType // Passing the type for stacking logic
       }
     });
     await modal.present();
   }
   
   async handleBusinessClick(businessId: string, isRestaurantContext = false) {
-    // Check correct dragging flag based on context
     const dragging = isRestaurantContext ? this.isRestaurantDragging : this.isBusinessDragging;
     
     if (dragging) {
-      // Reset flag after drag attempt
       if (isRestaurantContext) this.isRestaurantDragging = false;
       else this.isBusinessDragging = false;
       return;
     }
+    
+    if (!(await this.requireLogin())) return;
+
     await this.openBusinessDetail(businessId);
   }
 
@@ -280,6 +360,22 @@ export class HomeComponent {
       componentProps: {
         businessId: businessId,
       },
+    });
+    await modal.present();
+  }
+
+  async openEventDetail(eventId: string) {
+    const modal = await this.modalCtrl.create({
+      component: EventDetailComponent,
+      componentProps: { eventId }
+    });
+    await modal.present();
+  }
+
+  async openJobDetail(jobId: string) {
+    const modal = await this.modalCtrl.create({
+      component: JobDetailComponent,
+      componentProps: { jobId }
     });
     await modal.present();
   }

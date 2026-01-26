@@ -12,7 +12,7 @@ import { SupportInfo } from '../../models/support.model';
 })
 export class SupportComponent {
   private dataService = inject(DataService);
-  private navCtrl = inject(NavController);
+  private navCtrl: NavController = inject(NavController);
 
   supportInfo = this.dataService.getSupportInfo();
   

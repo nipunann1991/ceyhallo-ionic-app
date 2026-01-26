@@ -10,6 +10,8 @@ import { PageHeaderComponent } from '../../components/page-header/page-header.co
 import { NewsCardComponent } from '../../components/news-card/news-card.component';
 import { BusinessCardComponent } from '../../components/business-card/business-card.component';
 import { handleImageError } from '../../utils/image.utils';
+import { AuthService } from '../../services/auth.service';
+import { LoginComponent } from '../login/login.component';
 
 // A type to unify search results for the template
 type SearchResult = (NewsArticle & { type: 'news' }) | (Business & { type: 'business' | 'restaurant' });
@@ -23,7 +25,8 @@ type SearchResult = (NewsArticle & { type: 'news' }) | (Business & { type: 'busi
 export class SearchComponent implements OnInit {
   private dataService = inject(DataService);
   private modalCtrl: ModalController = inject(ModalController);
-  private navCtrl = inject(NavController);
+  private navCtrl: NavController = inject(NavController);
+  private authService = inject(AuthService);
 
   // This public property is set by Ionic's ModalController via componentProps
   public isModal = false;
@@ -122,6 +125,18 @@ export class SearchComponent implements OnInit {
   }
 
   async openResult(result: SearchResult) {
+    if (!this.authService.isLoggedIn()) {
+      const modal = await this.modalCtrl.create({
+        component: LoginComponent,
+        componentProps: { 
+          isModal: true,
+          message: 'Please login to view all explore features of CeyHallo app'
+        }
+      });
+      await modal.present();
+      return;
+    }
+
     if (result.type === 'news') {
       const modal = await this.modalCtrl.create({
         component: NewsDetailComponent,

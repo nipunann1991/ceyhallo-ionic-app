@@ -8,6 +8,8 @@ import { JobCardComponent } from '../../components/job-card/job-card.component';
 import { FeaturedBannerComponent } from '../../components/featured-banner/featured-banner.component';
 import { PageHeaderComponent } from '../../components/page-header/page-header.component';
 import { handleImageError } from '../../utils/image.utils';
+import { AuthService } from '../../services/auth.service';
+import { LoginComponent } from '../login/login.component';
 
 @Component({
   selector: 'app-jobs',
@@ -18,8 +20,9 @@ import { handleImageError } from '../../utils/image.utils';
 })
 export class JobsComponent implements OnInit {
   private dataService = inject(DataService);
-  private modalCtrl = inject(ModalController);
-  private navCtrl = inject(NavController);
+  private authService = inject(AuthService);
+  private modalCtrl: ModalController = inject(ModalController);
+  private navCtrl: NavController = inject(NavController);
 
   public isModal = false;
   readonly isModalSignal = signal(false);
@@ -124,6 +127,15 @@ export class JobsComponent implements OnInit {
   }
 
   async openJob(job: Job) {
+    if (!this.authService.isLoggedIn()) {
+      const modal = await this.modalCtrl.create({
+        component: LoginComponent,
+        componentProps: { isModal: true }
+      });
+      await modal.present();
+      return;
+    }
+
     const modal = await this.modalCtrl.create({
       component: JobDetailComponent,
       componentProps: {

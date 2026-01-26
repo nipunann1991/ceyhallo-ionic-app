@@ -1,6 +1,6 @@
-import { Component, ChangeDetectionStrategy, signal, inject, computed } from '@angular/core';
+import { Component, ChangeDetectionStrategy, signal, inject, computed, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { IonicModule } from '@ionic/angular';
+import { IonicModule, ModalController, NavController } from '@ionic/angular';
 import { AuthService } from '../../services/auth.service';
 import { DataService } from '../../services/data.service';
 import { RouterLink, Router } from '@angular/router';
@@ -29,7 +29,11 @@ import { RouterLink, Router } from '@angular/router';
 export class SignUpComponent {
   private authService = inject(AuthService);
   private dataService = inject(DataService);
-  private router = inject(Router);
+  private router: Router = inject(Router);
+  private modalCtrl: ModalController = inject(ModalController);
+  private navCtrl: NavController = inject(NavController);
+
+  @Input() isModal: boolean = false;
 
   countries = this.dataService.getCountries();
 
@@ -50,6 +54,14 @@ export class SignUpComponent {
 
   togglePasswordVisibility() {
     this.showPassword.update(value => !value);
+  }
+
+  close() {
+    if (this.isModal) {
+      this.modalCtrl.dismiss();
+    } else {
+      this.navCtrl.navigateBack('/tabs/home');
+    }
   }
 
   async signUp() {
@@ -82,7 +94,11 @@ export class SignUpComponent {
     this.isLoading.set(false);
     
     if (result.success) {
-      this.router.navigate(['/tabs/home']);
+      if (this.isModal) {
+        this.modalCtrl.dismiss({ signedUp: true });
+      } else {
+        this.router.navigate(['/tabs/home']);
+      }
     } else {
       this.errorMessage.set(result.error || 'Registration failed. Please try again.');
     }

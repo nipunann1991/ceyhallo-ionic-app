@@ -1,6 +1,6 @@
-import { Component, ChangeDetectionStrategy, signal, inject, computed } from '@angular/core';
+import { Component, ChangeDetectionStrategy, signal, inject, computed, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { IonicModule } from '@ionic/angular';
+import { IonicModule, ModalController } from '@ionic/angular';
 import { AuthService } from '../../services/auth.service';
 import { RouterLink, Router } from '@angular/router';
 
@@ -27,7 +27,12 @@ import { RouterLink, Router } from '@angular/router';
 })
 export class LoginComponent {
   private authService = inject(AuthService);
-  private router = inject(Router);
+  private router: Router = inject(Router);
+  private modalCtrl: ModalController = inject(ModalController);
+
+  // Use standard Input for compatibility with Ionic ModalController componentProps
+  @Input() isModal: boolean = false;
+  @Input() message: string = '';
 
   email = signal('alex@ceyhallo.com');
   password = signal('12345678');
@@ -55,6 +60,17 @@ export class LoginComponent {
     this.rememberMe.update(v => !v);
   }
 
+  closeModal() {
+    this.modalCtrl.dismiss();
+  }
+
+  goToSignup() {
+    if (this.isModal) {
+      this.modalCtrl.dismiss();
+    }
+    this.router.navigate(['/signup']);
+  }
+
   async login() {
     this.errorMessage.set('');
     this.isLoading.set(true);
@@ -62,7 +78,13 @@ export class LoginComponent {
     this.isLoading.set(false);
     
     if (result.success) {
-      this.router.navigate(['/tabs/home']);
+      if (this.isModal) {
+        // If in modal, simply close it. The calling component will react to auth state change if needed.
+        this.modalCtrl.dismiss({ loggedIn: true });
+      } else {
+        // If full page, navigate to home
+        this.router.navigate(['/tabs/home']);
+      }
     } else {
       this.errorMessage.set(result.error || 'Login failed. Please try again.');
     }

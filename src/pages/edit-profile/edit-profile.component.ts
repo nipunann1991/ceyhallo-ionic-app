@@ -16,8 +16,8 @@ import { handleImageError } from '../../utils/image.utils';
 export class EditProfileComponent {
   private authService = inject(AuthService);
   private dataService = inject(DataService);
-  private navCtrl = inject(NavController);
-  private toastCtrl = inject(ToastController);
+  private navCtrl: NavController = inject(NavController);
+  private toastCtrl: ToastController = inject(ToastController);
 
   userProfile = this.authService.userProfile;
   countries = this.dataService.getCountries();

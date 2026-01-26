@@ -1,4 +1,13 @@
 <ion-content [fullscreen]="true">
+  <!-- Close Button for Modal Mode -->
+  @if (isModal) {
+    <div class="absolute top-4 right-4 z-50">
+      <button (click)="closeModal()" class="w-10 h-10 bg-white rounded-full shadow-sm flex items-center justify-center text-gray-500 hover:bg-gray-50 active:scale-95 transition-all">
+        <ion-icon name="close" class="text-xl"></ion-icon>
+      </button>
+    </div>
+  }
+
   <div 
     class="flex flex-col items-center justify-center min-h-full w-full bg-[#F2F4F7] px-6 font-sans text-[#1A1C1E]"
     style="padding-top: calc(6rem + var(--ion-safe-area-top, 0px)); padding-bottom: 2rem;">
@@ -12,6 +21,13 @@
     <!-- Main Form Container -->
     <div class="w-full max-w-[21.25rem] animate-slide-in">
         
+        <!-- Custom Message -->
+        @if (message) {
+          <div class="mb-6 p-4 bg-blue-50 text-[#083594] text-sm font-medium rounded-2xl border border-blue-100 text-center leading-relaxed">
+            {{ message }}
+          </div>
+        }
+
         <!-- Error Message -->
         @if (errorMessage()) {
           <div class="mb-4 p-3 bg-red-50 text-red-600 text-xs font-bold rounded-lg border border-red-100">
@@ -120,7 +136,7 @@
         <div class="text-center">
              <p class="text-sm text-gray-500 font-bold">
                 Don't have an account? 
-                <button routerLink="/signup" class="text-[#083594] font-black hover:underline ml-1">Sign up</button>
+                <button (click)="goToSignup()" class="text-[#083594] font-black hover:underline ml-1">Sign up</button>
              </p>
         </div>
 

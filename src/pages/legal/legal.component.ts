@@ -12,9 +12,9 @@ import { handleImageError } from '../../utils/image.utils';
   imports: [CommonModule, IonicModule],
 })
 export class LegalPageComponent implements OnInit {
-  private route = inject(ActivatedRoute);
+  private route: ActivatedRoute = inject(ActivatedRoute);
   private dataService = inject(DataService);
-  private navCtrl = inject(NavController);
+  private navCtrl: NavController = inject(NavController);
 
   docId = signal<string>('');
   

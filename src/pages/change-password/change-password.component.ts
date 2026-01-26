@@ -12,8 +12,8 @@ import { FormsModule } from '@angular/forms';
 })
 export class ChangePasswordComponent {
   private authService = inject(AuthService);
-  private navCtrl = inject(NavController);
-  private toastCtrl = inject(ToastController);
+  private navCtrl: NavController = inject(NavController);
+  private toastCtrl: ToastController = inject(ToastController);
 
   oldPassword = signal('');
   newPassword = signal('');

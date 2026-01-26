@@ -1,4 +1,12 @@
 <ion-content [fullscreen]="true">
+  
+  <!-- Close Button (Always visible to allow exit from Auth flow) -->
+  <div class="absolute top-4 right-4 z-50">
+    <button (click)="close()" class="w-10 h-10 bg-white rounded-full shadow-sm flex items-center justify-center text-gray-500 hover:bg-gray-50 active:scale-95 transition-all">
+      <ion-icon name="close" class="text-xl"></ion-icon>
+    </button>
+  </div>
+
   <div 
     class="flex flex-col items-center justify-center min-h-full w-full bg-[#F2F4F7] px-6 font-sans text-[#1A1C1E]"
     style="padding-top: calc(4rem + var(--ion-safe-area-top, 0px)); padding-bottom: 2rem;">

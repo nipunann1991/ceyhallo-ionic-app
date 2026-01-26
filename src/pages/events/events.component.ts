@@ -8,6 +8,8 @@ import { EventCardComponent } from '../../components/event-card/event-card.compo
 import { FeaturedBannerComponent } from '../../components/featured-banner/featured-banner.component';
 import { PageHeaderComponent } from '../../components/page-header/page-header.component';
 import { handleImageError } from '../../utils/image.utils';
+import { AuthService } from '../../services/auth.service';
+import { LoginComponent } from '../login/login.component';
 
 @Component({
   selector: 'app-events',
@@ -21,8 +23,9 @@ import { handleImageError } from '../../utils/image.utils';
 })
 export class EventsComponent implements OnInit {
   private dataService = inject(DataService);
-  private modalCtrl = inject(ModalController);
-  private navCtrl = inject(NavController);
+  private authService = inject(AuthService);
+  private modalCtrl: ModalController = inject(ModalController);
+  private navCtrl: NavController = inject(NavController);
 
   // This public property is set by Ionic's ModalController via componentProps if opened as modal
   public isModal = false;
@@ -140,6 +143,15 @@ export class EventsComponent implements OnInit {
   }
 
   async openEvent(event: Event) {
+    if (!this.authService.isLoggedIn()) {
+      const modal = await this.modalCtrl.create({
+        component: LoginComponent,
+        componentProps: { isModal: true }
+      });
+      await modal.present();
+      return;
+    }
+
     const modal = await this.modalCtrl.create({
       component: EventDetailComponent,
       componentProps: {

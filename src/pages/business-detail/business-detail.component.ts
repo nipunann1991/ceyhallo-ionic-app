@@ -1,23 +1,38 @@
-import { Component, ChangeDetectionStrategy, inject, computed, signal, OnInit } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject, computed, signal, OnInit, Input, viewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { IonicModule, ModalController } from '@ionic/angular';
+import { IonicModule, ModalController, NavController } from '@ionic/angular';
 import { DataService } from '../../services/data.service';
 import { handleImageError } from '../../utils/image.utils';
 import { DomSanitizer } from '@angular/platform-browser';
+import { ActivatedRoute } from '@angular/router';
 
 @Component({
   selector: 'app-business-detail',
   templateUrl: './business-detail.component.html',
+  styles: [`
+    .scrollbar-hide::-webkit-scrollbar { display: none; }
+    .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+  `],
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [CommonModule, IonicModule],
 })
 export class BusinessDetailComponent implements OnInit {
-  private modalCtrl = inject(ModalController);
+  private modalCtrl: ModalController = inject(ModalController);
   private dataService = inject(DataService);
-  private sanitizer = inject(DomSanitizer);
+  private sanitizer: DomSanitizer = inject(DomSanitizer);
+  private route: ActivatedRoute = inject(ActivatedRoute);
+  private navCtrl: NavController = inject(NavController);
 
-  public businessId!: string;
+  @Input() businessId!: string;
   private readonly businessIdSignal = signal<string | undefined>(undefined);
+  private isRouteDriven = false;
+
+  // Gallery Drag Scroll Logic
+  galleryContainer = viewChild<ElementRef>('galleryContainer');
+  private isDown = false;
+  private startX = 0;
+  private scrollLeft = 0;
+  private isDragging = false;
 
   // Lightbox State
   isLightboxOpen = signal(false);
@@ -146,13 +161,23 @@ export class BusinessDetailComponent implements OnInit {
   });
 
   ngOnInit() {
-    this.businessIdSignal.set(this.businessId);
+    const routeId = this.route.snapshot.paramMap.get('id');
+    if (routeId) {
+       this.isRouteDriven = true;
+       this.businessIdSignal.set(routeId);
+    } else {
+       this.businessIdSignal.set(this.businessId);
+    }
   }
 
   handleImgError = handleImageError;
 
   close() {
-    this.modalCtrl.dismiss();
+    if (this.isRouteDriven) {
+        this.navCtrl.back();
+    } else {
+        this.modalCtrl.dismiss();
+    }
   }
 
   openMap() {
@@ -162,9 +187,50 @@ export class BusinessDetailComponent implements OnInit {
         window.open(`https://www.google.com/maps/search/?api=1&query=${query}`, '_system');
     }
   }
+  
+  openMenu() {
+    const biz = this.business();
+    if (biz && biz.menuUrl) {
+        window.open(biz.menuUrl, '_system');
+    }
+  }
+
+  // Gallery Drag Methods
+  startDrag(e: MouseEvent) {
+    this.isDown = true;
+    this.isDragging = false;
+    const slider = this.galleryContainer()?.nativeElement;
+    if (slider) {
+      this.startX = e.pageX - slider.offsetLeft;
+      this.scrollLeft = slider.scrollLeft;
+    }
+  }
+
+  endDrag() {
+    this.isDown = false;
+  }
+
+  doDrag(e: MouseEvent) {
+    if (!this.isDown) return;
+    e.preventDefault();
+    const slider = this.galleryContainer()?.nativeElement;
+    if (slider) {
+      const x = e.pageX - slider.offsetLeft;
+      const walk = (x - this.startX) * 2;
+      slider.scrollLeft = this.scrollLeft - walk;
+      
+      if (Math.abs(walk) > 5) {
+        this.isDragging = true;
+      }
+    }
+  }
 
   // Lightbox Methods
   openLightbox(index: number) {
+    if (this.isDragging) {
+        this.isDragging = false;
+        return;
+    }
     this.activeLightboxIndex.set(index);
     this.isLightboxOpen.set(true);
   }

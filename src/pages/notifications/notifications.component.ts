@@ -12,8 +12,8 @@ import { Router } from '@angular/router';
 })
 export class NotificationsComponent {
   private dataService = inject(DataService);
-  private navCtrl = inject(NavController);
-  private router = inject(Router);
+  private navCtrl: NavController = inject(NavController);
+  private router: Router = inject(Router);
 
   notifications = this.dataService.getNotifications();
   

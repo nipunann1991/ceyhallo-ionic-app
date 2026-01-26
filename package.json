@@ -17,6 +17,8 @@
     "@angular/common": "^21.1.0",
     "@ionic/angular": "^8.7.17",
     "@angular/forms": "^21.1.1",
+    "@capacitor/core": "^8.0.1",
+    "@capacitor-firebase/messaging": "latest",
     "@angular/build": "^21.1.0",
     "@angular/cli": "^21.1.0",
     "@angular/compiler-cli": "^21.1.0",

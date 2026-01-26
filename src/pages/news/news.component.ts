@@ -8,6 +8,8 @@ import { NewsCardComponent } from '../../components/news-card/news-card.componen
 import { FeaturedBannerComponent } from '../../components/featured-banner/featured-banner.component';
 import { PageHeaderComponent } from '../../components/page-header/page-header.component';
 import { handleImageError } from '../../utils/image.utils';
+import { AuthService } from '../../services/auth.service';
+import { LoginComponent } from '../login/login.component';
 
 @Component({
   selector: 'app-news',
@@ -18,8 +20,9 @@ import { handleImageError } from '../../utils/image.utils';
 })
 export class NewsComponent implements OnInit {
   private dataService = inject(DataService);
-  private modalCtrl = inject(ModalController);
-  private navCtrl = inject(NavController);
+  private authService = inject(AuthService);
+  private modalCtrl: ModalController = inject(ModalController);
+  private navCtrl: NavController = inject(NavController);
 
   // This public property is set by Ionic's ModalController via componentProps
   public isModal = false;
@@ -111,6 +114,15 @@ export class NewsComponent implements OnInit {
   }
 
   async openArticle(article: NewsArticle) {
+    if (!this.authService.isLoggedIn()) {
+      const modal = await this.modalCtrl.create({
+        component: LoginComponent,
+        componentProps: { isModal: true }
+      });
+      await modal.present();
+      return;
+    }
+
     const modal = await this.modalCtrl.create({
       component: NewsDetailComponent,
       componentProps: {

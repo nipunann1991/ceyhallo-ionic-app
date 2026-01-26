@@ -111,8 +111,14 @@ export class DataService {
         title: data['title'] || '',
         description: data['description'] || '',
         image: data['image'] || data['imageUrl'] || '',
-        active: data['active'] ?? true
-      })
+        active: data['active'] ?? true,
+        targetId: data['targetId'],
+        targetType: data['targetType'],
+        navigationType: data['navigationType'] || (data['targetId'] ? 'internal' : 'none'),
+        order: data['order'] || 999
+      }),
+      // Sort by order (ascending)
+      (banners) => banners.sort((a, b) => (a.order ?? 999) - (b.order ?? 999))
     );
   }
 
@@ -167,7 +173,8 @@ export class DataService {
         email: data['email'] || 'info@example.com',
         website: data['website'] || 'https://example.com',
         openingHours: data['openingHours'] || [],
-        gallery: data['gallery'] || []
+        gallery: data['gallery'] || [],
+        menuUrl: data['menuUrl']
       })
     );
   }
@@ -191,7 +198,8 @@ export class DataService {
         website: data['website'] || 'https://restaurant.com',
         priceRange: data['priceRange'] || '$$$',
         openingHours: data['openingHours'] || [],
-        gallery: data['gallery'] || []
+        gallery: data['gallery'] || [],
+        menuUrl: data['menuUrl']
       })
     );
   }

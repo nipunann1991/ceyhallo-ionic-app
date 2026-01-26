@@ -27,8 +27,8 @@ import { RouterLink } from '@angular/router';
 })
 export class ForgotPasswordComponent {
     private authService = inject(AuthService);
-    private navCtrl = inject(NavController);
-    private toastCtrl = inject(ToastController);
+    private navCtrl: NavController = inject(NavController);
+    private toastCtrl: ToastController = inject(ToastController);
     
     email = signal('');
     isLoading = signal(false);

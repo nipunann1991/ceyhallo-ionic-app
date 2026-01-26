@@ -1,10 +1,11 @@
-import { Component, ChangeDetectionStrategy, inject, computed, signal, OnInit } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject, computed, signal, OnInit, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { IonicModule, ModalController } from '@ionic/angular';
+import { IonicModule, ModalController, NavController } from '@ionic/angular';
 import { Event } from '../../models/event.model';
 import { DataService } from '../../services/data.service';
 import { handleImageError } from '../../utils/image.utils';
 import { DomSanitizer } from '@angular/platform-browser';
+import { ActivatedRoute } from '@angular/router';
 
 @Component({
   selector: 'app-event-detail',
@@ -13,12 +14,15 @@ import { DomSanitizer } from '@angular/platform-browser';
   imports: [CommonModule, IonicModule],
 })
 export class EventDetailComponent implements OnInit {
-  private modalCtrl = inject(ModalController);
+  private modalCtrl: ModalController = inject(ModalController);
   private dataService = inject(DataService);
-  private sanitizer = inject(DomSanitizer);
+  private sanitizer: DomSanitizer = inject(DomSanitizer);
+  private route: ActivatedRoute = inject(ActivatedRoute);
+  private navCtrl: NavController = inject(NavController);
   
-  public eventId!: string;
+  @Input() eventId!: string;
   private readonly eventIdSignal = signal<string | undefined>(undefined);
+  private isRouteDriven = false;
   
   event = computed(() => {
     const id = this.eventIdSignal();
@@ -37,13 +41,23 @@ export class EventDetailComponent implements OnInit {
   });
 
   ngOnInit() {
-    this.eventIdSignal.set(this.eventId);
+    const routeId = this.route.snapshot.paramMap.get('id');
+    if (routeId) {
+        this.isRouteDriven = true;
+        this.eventIdSignal.set(routeId);
+    } else {
+        this.eventIdSignal.set(this.eventId);
+    }
   }
 
   handleImgError = handleImageError;
 
   close() {
-    this.modalCtrl.dismiss();
+    if (this.isRouteDriven) {
+        this.navCtrl.back();
+    } else {
+        this.modalCtrl.dismiss();
+    }
   }
 
   openMap() {

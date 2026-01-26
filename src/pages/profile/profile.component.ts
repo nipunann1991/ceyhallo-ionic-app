@@ -15,6 +15,12 @@ import { handleImageError } from '../../utils/image.utils';
     :host-context(.plt-android) .profile-header {
       padding-top: calc(2rem + env(safe-area-inset-top));
     }
+    .inner-scroll {
+      padding-bottom: inherit;
+    }
+    ion-content::part(scroll) {
+      padding-bottom: inherit;
+    }
   `],
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [CommonModule, IonicModule, RouterLink],
