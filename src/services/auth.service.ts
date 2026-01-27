@@ -1,7 +1,7 @@
 import { Injectable, signal, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { auth } from './firebase.service';
-import { onAuthStateChanged, signInWithEmailAndPassword, signOut, User, updateProfile, updatePassword, reauthenticateWithCredential, EmailAuthProvider, createUserWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth';
+import { onAuthStateChanged, signInWithEmailAndPassword, signOut, User, updateProfile, updatePassword, reauthenticateWithCredential, EmailAuthProvider, createUserWithEmailAndPassword, sendPasswordResetEmail, deleteUser, sendEmailVerification } from 'firebase/auth';
 import { FirestoreService } from './firestore.service';
 import { UserProfile } from '../models/user.model';
 import { Unsubscribe } from 'firebase/firestore';
@@ -102,6 +102,22 @@ export class AuthService {
     }
   }
 
+  async resendVerificationEmail(): Promise<{success: boolean; error?: string}> {
+    const user = auth.currentUser;
+    if (!user) {
+      return { success: false, error: 'No user is logged in.' };
+    }
+    if (user.emailVerified) {
+      return { success: false, error: 'Your email is already verified.' };
+    }
+    try {
+      await sendEmailVerification(user);
+      return { success: true };
+    } catch (error: any) {
+      return { success: false, error: this.mapFirebaseAuthError(error.code) };
+    }
+  }
+
   async resetPassword(email: string): Promise<{success: boolean; error?: string}> {
     try {
       await sendPasswordResetEmail(auth, email);
@@ -185,6 +201,41 @@ export class AuthService {
     }
   }
 
+  async deleteAccount(password: string): Promise<{success: boolean; error?: string}> {
+    const user = auth.currentUser;
+    if (!user || !user.email) {
+      return { success: false, error: 'No user is currently logged in.' };
+    }
+  
+    try {
+      // 1. Re-authenticate the user to confirm their identity
+      const credential = EmailAuthProvider.credential(user.email, password);
+      await reauthenticateWithCredential(user, credential);
+  
+      // 2. If re-authentication is successful, proceed with deletion
+      // First, delete Firestore data
+      await this.firestoreService.deleteDocument('users', user.uid);
+      
+      // Then, delete the Firebase Auth user
+      await deleteUser(user);
+  
+      // onAuthStateChanged will handle the rest (logout, nav)
+      this.router.navigate(['/login']); 
+      return { success: true };
+  
+    } catch (error: any) {
+      console.error("Error deleting account:", error.message || error);
+      if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+        return { success: false, error: 'The password you entered is incorrect.' };
+      }
+      if (error.code === 'auth/requires-recent-login') {
+        // This can still happen if the login is very old, even with re-auth attempt. The message is still good.
+        return { success: false, error: 'This is a sensitive operation. Please sign in again before deleting your account.' };
+      }
+      return { success: false, error: 'Failed to delete account. Please try again later.' };
+    }
+  }
+
   private mapFirebaseAuthError(errorCode: string): string {
     switch (errorCode) {
       case 'auth/invalid-email':
@@ -200,6 +251,8 @@ export class AuthService {
         return 'Invalid email or password.';
       case 'auth/weak-password':
         return 'The password is too weak. It should be at least 6 characters.';
+      case 'auth/too-many-requests':
+        return 'Too many requests. Please try again later.';
       default:
         return 'An unexpected error occurred. Please try again.';
     }

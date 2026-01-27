@@ -120,6 +120,42 @@ export class HomeComponent implements OnInit {
 
   handleImgError = handleImageError;
 
+  async goToProfile() {
+    if (this.authService.isLoggedIn()) {
+      this.router.navigate(['/tabs/profile']);
+    } else {
+      const modal = await this.modalCtrl.create({
+        component: LoginComponent,
+        componentProps: {
+          isModal: true,
+          message: 'Please log in to view your profile.'
+        }
+      });
+      await modal.present();
+    }
+  }
+
+  async resendVerification() {
+    const result = await this.authService.resendVerificationEmail();
+    let toastMessage = 'Verification email sent. Please check your inbox.';
+    let toastColor: 'success' | 'danger' = 'success';
+    
+    if (!result.success) {
+      toastMessage = result.error || 'Failed to send verification email.';
+      toastColor = 'danger';
+    }
+    
+    const toast = await this.toastCtrl.create({
+      message: toastMessage,
+      duration: 3000,
+      color: toastColor,
+      position: 'top',
+      icon: toastColor === 'success' ? 'checkmark-circle' : 'alert-circle',
+      cssClass: 'toast-custom-text'
+    });
+    await toast.present();
+  }
+
   private async requireLogin(): Promise<boolean> {
     if (this.authService.isLoggedIn()) return true;
 
@@ -287,7 +323,7 @@ export class HomeComponent implements OnInit {
     // Configure Action based on Navigation Type
     let actionType: 'share' | 'external' | 'internal' | 'close' = 'close';
     let actionLabel = 'Back to Home';
-    let actionIcon = 'home-outline';
+    let actionIcon = 'arrow-back';
     let targetUrl = '';
     let targetType = banner.targetType; // Pass this to component
 
@@ -305,9 +341,8 @@ export class HomeComponent implements OnInit {
         case 'internal':
             if (banner.targetId) {
                 actionType = 'internal';
-                // Updated label as requested
                 actionLabel = 'View in Page';
-                actionIcon = 'arrow-forward-circle-outline';
+                actionIcon = 'open-outline';
                 targetUrl = banner.targetId;
             } else {
                 actionType = 'close';
@@ -322,7 +357,7 @@ export class HomeComponent implements OnInit {
         default:
             actionType = 'close';
             actionLabel = 'Back to Home';
-            actionIcon = 'home-outline';
+            actionIcon = 'arrow-back';
             break;
     }
 

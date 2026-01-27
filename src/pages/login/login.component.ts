@@ -71,6 +71,14 @@ export class LoginComponent {
     this.router.navigate(['/signup']);
   }
 
+  continueAsGuest() {
+    if (this.isModal) {
+      this.modalCtrl.dismiss({ guest: true });
+    } else {
+      this.router.navigate(['/tabs/home']);
+    }
+  }
+
   async login() {
     this.errorMessage.set('');
     this.isLoading.set(true);

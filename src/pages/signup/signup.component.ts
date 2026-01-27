@@ -64,6 +64,14 @@ export class SignUpComponent {
     }
   }
 
+  continueAsGuest() {
+    if (this.isModal) {
+      this.modalCtrl.dismiss({ guest: true });
+    } else {
+      this.router.navigate(['/tabs/home']);
+    }
+  }
+
   async signUp() {
     if (!this.name() || !this.email() || !this.password() || !this.confirmPassword() || !this.region()) {
       this.errorMessage.set('Please fill in all required fields (Region is required).');

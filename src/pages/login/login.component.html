@@ -88,7 +88,7 @@
         </div>
 
         <!-- Login Button -->
-        <div class="mb-6">
+        <div class="mb-3">
             <button 
                 (click)="login()" 
                 [disabled]="isLoading()"
@@ -98,6 +98,14 @@
                 } @else { 
                   Login 
                 }
+            </button>
+        </div>
+
+        <!-- Continue as Guest -->
+        <div class="text-center mb-6">
+            <button (click)="continueAsGuest()" class="inline-flex items-center gap-2 text-sm font-bold text-[#083594] hover:opacity-80 transition-opacity">
+                <span>Continue as guest</span>
+                <ion-icon name="arrow-forward" class="text-lg"></ion-icon>
             </button>
         </div>
 
@@ -133,7 +141,7 @@
         </div>
 
         <!-- Sign Up -->
-        <div class="text-center">
+        <div class="text-center mb-4">
              <p class="text-sm text-gray-500 font-bold">
                 Don't have an account? 
                 <button (click)="goToSignup()" class="text-[#083594] font-black hover:underline ml-1">Sign up</button>

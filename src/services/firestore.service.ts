@@ -1,6 +1,6 @@
 import { Injectable, WritableSignal } from '@angular/core';
 import { firestore } from './firebase.service';
-import { collection, onSnapshot, doc, getDoc, setDoc, Firestore, QuerySnapshot, DocumentData } from 'firebase/firestore';
+import { collection, onSnapshot, doc, getDoc, setDoc, Firestore, QuerySnapshot, DocumentData, deleteDoc } from 'firebase/firestore';
 import { MOCK_DATA } from '../data/mock-data';
 
 @Injectable({
@@ -28,8 +28,8 @@ export class FirestoreService {
           return; 
       }
       
-      // Prevent circular structure errors in logs by logging only the message or a simple string
-      console.error(`Firestore Read Error at path '${path}' or invalid mock data:`, error?.message || 'Unknown Error');
+      // FIX: Combine into a single string to prevent circular structure errors when logging complex Firebase errors.
+      console.error(`Firestore read error on path '${path}': ${error?.message || 'Unknown Error'}`);
       
       if (errorCallback) errorCallback(error);
     });
@@ -53,8 +53,8 @@ export class FirestoreService {
       
       targetSignal.set(itemsArray);
     }, (error) => {
-      // Log sanitized error
-      console.error(`Firestore data fetching failed for ${path}: `, error?.message || 'Unknown Error');
+      // The error is already logged by listenToPath, which is now robust against circular errors.
+      // We just need to handle the state update here.
       targetSignal.set([]);
     });
   }
@@ -100,7 +100,8 @@ export class FirestoreService {
         }
       }
     }, (error) => {
-       console.error(`Error listening to doc ${path}/${id}`, error);
+       // FIX: Combine into a single string to prevent circular structure errors.
+       console.error(`Error listening to doc '${path}/${id}': ${error.message || 'Unknown error'}`);
        // Fallback on error
        const mockCollection = (MOCK_DATA as any)[path];
         if (mockCollection && mockCollection[id]) {
@@ -130,5 +131,17 @@ export class FirestoreService {
     // Directly return the promise so the caller can handle try/catch and specific error codes
     const docRef = doc(this.firestore, path, id);
     await setDoc(docRef, data, { merge: true });
+  }
+
+  // Delete a document
+  async deleteDocument(path: string, id: string): Promise<void> {
+    // Also remove from mock data for local consistency
+    const mockCollection = (MOCK_DATA as any)[path];
+    if (mockCollection && mockCollection[id]) {
+      delete mockCollection[id];
+    }
+    
+    const docRef = doc(this.firestore, path, id);
+    await deleteDoc(docRef);
   }
 }

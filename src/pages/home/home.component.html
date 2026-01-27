@@ -4,7 +4,7 @@
   <div class="relative bg-[#083594] home-header pb-20 px-5 rounded-b-[2.5rem] shadow-sm z-0">
     <!-- User Info Row -->
     <div class="flex items-center justify-between mb-2">
-      <div class="flex items-center gap-3">
+      <div (click)="goToProfile()" class="flex items-center gap-3 cursor-pointer active:opacity-80 transition-opacity">
         <!-- Avatar with Online Dot -->
         <div class="relative">
           <div class="w-12 h-12 rounded-full border-2 border-white/20 bg-white/20 flex items-center justify-center text-white overflow-hidden">
@@ -27,7 +27,7 @@
           
           <!-- Warning Message (Yellow) -->
           @if (!user().isVerified) {
-            <button class="flex items-center gap-1.5 opacity-100 group">
+            <button (click)="resendVerification(); $event.stopPropagation()" class="flex items-center gap-1.5 opacity-100 group">
                <ion-icon name="alert-circle" class="text-[#FCD34D] text-[1rem]"></ion-icon>
                <p class="text-[0.75rem] text-[#FCD34D] leading-tight group-active:opacity-80">Email not verified. Resend link.</p>
             </button>

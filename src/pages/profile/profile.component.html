@@ -31,13 +31,17 @@
         <div class="absolute bottom-1.5 right-1.5 w-5 h-5 bg-[#22C55E] border-[3px] border-white rounded-full"></div>
      </div>
      
-     <!-- Text -->
-     <h2 class="text-[1.35rem] font-extrabold text-[#1A1C1E] tracking-tight mb-0.5">{{ user().name }}</h2>
-     <p class="text-[0.9rem] font-medium text-gray-500">{{ user().email }}</p>
+     <!-- Text & Location -->
+     <div class="flex items-center gap-2 mb-1">
+        <h2 class="text-[1.35rem] font-extrabold text-[#1A1C1E] tracking-tight">{{ user().name }}</h2>
+        @if (user().flagUrl) {
+            <img [src]="user().flagUrl" (error)="handleImgError($event)" class="w-7 h-4 rounded-sm object-cover border border-gray-200" [alt]="user().name">
+        }
+     </div>
      @if (user().city) {
-        <div class="flex items-center gap-1 mt-1 bg-white/50 backdrop-blur-sm px-2 py-0.5 rounded-md border border-gray-200/50">
-            <ion-icon name="location-outline" class="text-xs text-gray-400"></ion-icon>
-            <span class="text-[0.75rem] font-medium text-gray-400">{{ user().city }}</span>
+        <div class="flex items-center gap-1.5 text-gray-500">
+            <ion-icon name="location-sharp" class="text-sm"></ion-icon>
+            <span class="text-[0.9rem] font-medium">{{ user().city }}</span>
         </div>
      }
   </div>
@@ -50,7 +54,7 @@
             <div>
                <h3 class="font-bold text-[#92400E] text-sm mb-1">Verify Your Email Address</h3>
                <p class="text-xs text-[#92400E]/80 font-medium mb-2">Your account is not verified. Please check your inbox for a verification link.</p>
-               <button class="text-xs font-bold text-[#78350F] hover:underline flex items-center gap-1 group">
+               <button (click)="resendVerification()" class="text-xs font-bold text-[#78350F] hover:underline flex items-center gap-1 group">
                  Resend verification link
                </button>
             </div>
@@ -93,6 +97,20 @@
              </div>
           </button>
 
+       </div>
+    </div>
+
+    <!-- Business Section -->
+    <div>
+       <h3 class="text-md font-bold text-[#1A1C1E] mb-3 ml-1">Business</h3>
+       <div class="bg-white rounded-2xl p-2 shadow-[0_8px_30px_rgb(0,0,0,0.03)] border border-[#E8EEF7] space-y-1">
+          <button routerLink="/list-business" class="w-full flex items-center justify-between p-3 hover:bg-gray-50 rounded-xl transition-colors group">
+             <div class="flex items-center gap-3.5">
+                <ion-icon name="add-circle-outline" class="text-gray-400 text-[1.4rem] group-active:text-[#083594] transition-colors"></ion-icon>
+                <span class="font-semibold text-sm text-gray-700">List my business (Free)</span>
+             </div>
+             <ion-icon name="chevron-forward" class="text-gray-300 text-lg"></ion-icon>
+          </button>
        </div>
     </div>
 
@@ -145,7 +163,14 @@
 
        </div>
     </div>
+  </div>
 
+  <!-- Delete Account Button -->
+  <div class="px-5 mt-8">
+    <button (click)="deleteAccount()" class="w-full h-12 bg-transparent border border-red-500 text-red-500 font-bold rounded-full active:bg-red-50 transition-colors flex items-center justify-center gap-2">
+        <ion-icon name="trash-outline" class="text-xl"></ion-icon>
+        <span>Delete Account</span>
+    </button>
   </div>
   
   <!-- Spacer to clear Tab Bar comfortably -->

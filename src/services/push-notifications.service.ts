@@ -34,8 +34,8 @@ export class PushNotificationService {
       this.addListeners();
       // Then attempt registration (permissions/token)
       await this.registerNotifications();
-    } catch (e) {
-      console.error('Error initializing push notifications', e);
+    } catch (e: any) {
+      console.error('Error initializing push notifications:', e.message || e);
     }
   }
 
@@ -60,16 +60,16 @@ export class PushNotificationService {
         this.fcmToken.set(result.token);
         await this.saveTokenToFirestore(result.token);
       }
-    } catch (error) {
-      console.error('Error getting FCM token:', error);
+    } catch (error: any) {
+      console.error('Error getting FCM token:', error.message || error);
     }
 
     // 3. Subscribe to general topic
     try {
         await FirebaseMessaging.subscribeToTopic({ topic: 'general' });
         console.log('Subscribed to general topic');
-    } catch (e) {
-        console.error('Topic subscription failed', e);
+    } catch (e: any) {
+        console.error('Topic subscription failed:', e.message || e);
     }
   }
 
@@ -131,8 +131,8 @@ export class PushNotificationService {
           fcmToken: token,
           lastLogin: new Date().toISOString()
         });
-      } catch (error) {
-        console.error('Error saving FCM token to Firestore', error);
+      } catch (error: any) {
+        console.error('Error saving FCM token to Firestore:', error.message || error);
       }
     }
   }

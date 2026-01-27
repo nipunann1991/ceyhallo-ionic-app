@@ -1,0 +1,149 @@
+<ion-content [fullscreen]="true" class="[--background:#F2F4F7]" [forceOverscroll]="false">
+  
+  <!-- Custom Header -->
+  <div class="relative bg-[#083594] pb-20 rounded-b-[2.5rem] px-5 text-white shadow-sm pt-[calc(4rem+env(safe-area-inset-top))]">
+    <div class="flex items-center justify-between relative z-10">
+      <!-- Back Button -->
+      <button (click)="goBack()" class="p-2 -ml-2 active:opacity-70 transition-opacity text-white">
+         <ion-icon name="arrow-back" class="text-2xl"></ion-icon>
+      </button>
+      
+      <!-- Title -->
+      <h1 class="text-lg font-bold absolute left-1/2 -translate-x-1/2 tracking-tight">List Your Business</h1>
+      
+      <div class="w-8"></div>
+    </div>
+    
+    <!-- Hero Text -->
+    <div class="text-center px-4">
+        <p class="text-blue-100 text-sm font-medium">Reach new customers in the community by listing your business for free.</p>
+    </div>
+  </div>
+
+  <div class="px-6 -mt-12 relative z-10 pb-[calc(2rem+env(safe-area-inset-bottom))]">
+
+    <!-- Form Container -->
+    <div class="bg-white rounded-3xl p-5 shadow-[0_8px_30px_rgba(0,0,0,0.04)] border border-[#E8EEF7] space-y-5">
+       
+       <!-- Info Banner -->
+       <div class="bg-blue-50 border border-blue-100 rounded-xl p-4 flex gap-3">
+            <ion-icon name="information-circle" class="text-blue-500 text-xl mt-0.5 shrink-0"></ion-icon>
+            <div>
+                <h3 class="font-bold text-blue-800 text-sm mb-1">Next Steps</h3>
+                <p class="text-xs text-blue-700/80 leading-relaxed font-medium">Please fill in the details below. Our team will contact you shortly to verify your business and complete the listing process.</p>
+            </div>
+       </div>
+
+       <!-- Business Name -->
+       <div>
+          <label class="block text-xs font-bold text-[#1A1C1E] mb-2 pl-1">Business Name *</label>
+          <input 
+            type="text" 
+            [ngModel]="businessName()" 
+            (ngModelChange)="businessName.set($event)"
+            class="w-full h-12 bg-[#F8F9FA] rounded-xl px-4 text-[#1A1C1E] font-medium border border-transparent focus:bg-white focus:border-[#083594] focus:ring-4 focus:ring-[#083594]/10 transition-all outline-none placeholder-gray-400"
+            placeholder="e.g., Sparkle Solutions Cleaning">
+       </div>
+
+       <!-- Category -->
+       <div>
+          <label class="block text-xs font-bold text-[#1A1C1E] mb-2 pl-1">Category *</label>
+          <input 
+            type="text" 
+            [ngModel]="category()" 
+            (ngModelChange)="category.set($event)"
+            class="w-full h-12 bg-[#F8F9FA] rounded-xl px-4 text-[#1A1C1E] font-medium border border-transparent focus:bg-white focus:border-[#083594] focus:ring-4 focus:ring-[#083594]/10 transition-all outline-none placeholder-gray-400"
+            placeholder="e.g., Cleaning Services, Shipping">
+       </div>
+       
+       <!-- Region/Country (Select) -->
+       <div>
+          <label class="block text-xs font-bold text-[#1A1C1E] mb-2 pl-1">Region *</label>
+          <div class="relative">
+             <select 
+               [ngModel]="region()" 
+               (ngModelChange)="onRegionChange($event)"
+               class="w-full h-12 bg-[#F8F9FA] rounded-xl px-4 pr-10 text-[#1A1C1E] font-medium border border-transparent focus:bg-white focus:border-[#083594] focus:ring-4 focus:ring-[#083594]/10 transition-all outline-none appearance-none">
+               <option value="" disabled>Select Region</option>
+               @for (country of countries(); track country.id) {
+                 <option [value]="country.id">{{ country.name }}</option>
+               }
+             </select>
+             <div class="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-500">
+                <ion-icon name="chevron-down"></ion-icon>
+             </div>
+          </div>
+       </div>
+
+       <!-- City (Select - Dependent on Region) -->
+       <div>
+          <label class="block text-xs font-bold text-[#1A1C1E] mb-2 pl-1">City *</label>
+          <div class="relative">
+             <select 
+               [ngModel]="city()" 
+               (ngModelChange)="city.set($event)"
+               [disabled]="!region() || availableCities().length === 0"
+               class="w-full h-12 bg-[#F8F9FA] rounded-xl px-4 pr-10 text-[#1A1C1E] font-medium border border-transparent focus:bg-white focus:border-[#083594] focus:ring-4 focus:ring-[#083594]/10 transition-all outline-none appearance-none disabled:bg-gray-50 disabled:text-gray-400">
+               <option value="" disabled>Select City</option>
+               @for (c of availableCities(); track c.code) {
+                 <option [value]="c.name">{{ c.name }}</option>
+               }
+             </select>
+             <div class="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-500">
+                <ion-icon name="chevron-down"></ion-icon>
+             </div>
+          </div>
+       </div>
+
+       <!-- Phone Number -->
+       <div>
+          <label class="block text-xs font-bold text-[#1A1C1E] mb-2 pl-1">Phone Number *</label>
+          <input 
+            type="tel" 
+            [ngModel]="phoneNumber()" 
+            (ngModelChange)="phoneNumber.set($event)"
+            class="w-full h-12 bg-[#F8F9FA] rounded-xl px-4 text-[#1A1C1E] font-medium border border-transparent focus:bg-white focus:border-[#083594] focus:ring-4 focus:ring-[#083594]/10 transition-all outline-none placeholder-gray-400"
+            placeholder="+971 50 123 4567">
+       </div>
+
+       <!-- Email -->
+       <div>
+          <label class="block text-xs font-bold text-[#1A1C1E] mb-2 pl-1">Email (Optional)</label>
+          <input 
+            type="email" 
+            [ngModel]="email()" 
+            (ngModelChange)="email.set($event)"
+            class="w-full h-12 bg-[#F8F9FA] rounded-xl px-4 text-[#1A1C1E] font-medium border border-transparent focus:bg-white focus:border-[#083594] focus:ring-4 focus:ring-[#083594]/10 transition-all outline-none placeholder-gray-400"
+            placeholder="hello@business.com">
+       </div>
+
+       <!-- Description -->
+       <div>
+          <label class="block text-xs font-bold text-[#1A1C1E] mb-2 pl-1">Description *</label>
+          <textarea 
+            [ngModel]="description()" 
+            (ngModelChange)="description.set($event)"
+            class="w-full h-28 bg-[#F8F9FA] rounded-xl px-4 py-3 text-[#1A1C1E] font-medium border border-transparent focus:bg-white focus:border-[#083594] focus:ring-4 focus:ring-[#083594]/10 transition-all outline-none placeholder-gray-400 resize-none"
+            placeholder="Tell us about your business..."></textarea>
+       </div>
+
+    </div>
+
+    <!-- Submit Button -->
+    <div class="mt-8">
+       <button 
+         (click)="submit()" 
+         [disabled]="isLoading()"
+         class="w-full h-[3.25rem] bg-[#083594] hover:bg-[#07308a] active:scale-[0.98] text-white font-bold text-[0.95rem] rounded-full shadow-[0_8px_20px_rgba(8,53,148,0.25)] flex items-center justify-center gap-2 transition-all disabled:opacity-70 disabled:cursor-not-allowed">
+         @if (isLoading()) {
+            <ion-spinner name="crescent" color="light" class="w-6 h-6"></ion-spinner>
+         } @else {
+            <ion-icon name="paper-plane-outline" class="text-xl"></ion-icon>
+            Submit for Review
+         }
+       </button>
+    </div>
+
+  </div>
+
+</ion-content>
