@@ -37,14 +37,13 @@ export class SignUpComponent {
 
   countries = this.dataService.getCountries();
 
-  name = signal('');
-  email = signal('');
-  password = signal('');
-  confirmPassword = signal('');
-  
-  // New Fields
-  region = signal('');
-  phoneNumber = signal('');
+  // Pre-filled data
+  name = signal('Nipuna Nanayakkara');
+  email = signal('nipunann0710@gmail.com');
+  region = signal('AE'); // UAE
+  phoneNumber = signal('00000000');
+  password = signal('12345678');
+  confirmPassword = signal('12345678');
   
   errorMessage = signal('');
   isLoading = signal(false);

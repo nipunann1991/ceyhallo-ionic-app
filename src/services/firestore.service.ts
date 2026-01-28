@@ -1,6 +1,6 @@
 import { Injectable, WritableSignal } from '@angular/core';
 import { firestore } from './firebase.service';
-import { collection, onSnapshot, doc, getDoc, setDoc, Firestore, QuerySnapshot, DocumentData, deleteDoc } from 'firebase/firestore';
+import { collection, onSnapshot, doc, getDoc, setDoc, Firestore, QuerySnapshot, DocumentData, deleteDoc, addDoc } from 'firebase/firestore';
 import { MOCK_DATA } from '../data/mock-data';
 
 @Injectable({
@@ -110,6 +110,13 @@ export class FirestoreService {
             callback(null);
         }
     });
+  }
+
+  // Add a document to a collection
+  async addDocument(path: string, data: any): Promise<string> {
+    const colRef = collection(this.firestore, path);
+    const docRef = await addDoc(colRef, data);
+    return docRef.id;
   }
 
   // Update a document

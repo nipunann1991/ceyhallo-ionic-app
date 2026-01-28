@@ -6,7 +6,6 @@ import { DataService } from '../../services/data.service';
 import { AuthService } from '../../services/auth.service';
 import { PushNotificationService } from '../../services/push-notifications.service';
 import { BannerComponent } from '../../components/banner/banner.component';
-import { Country } from '../../models/country.model';
 import { NewsDetailComponent } from '../news-detail/news-detail.component';
 import { BusinessDetailComponent } from '../business-detail/business-detail.component';
 import { EventDetailComponent } from '../event-detail/event-detail.component';
@@ -17,6 +16,7 @@ import { handleImageError } from '../../utils/image.utils';
 import { Banner } from '../../models/banner.model';
 import { NewsArticle } from '../../models/news.model';
 import { LoginComponent } from '../login/login.component';
+import { Country } from '../../models/country.model';
 
 @Component({
   selector: 'app-home',
@@ -84,7 +84,7 @@ export class HomeComponent implements OnInit {
   private isDown = false;
   private startX = 0;
   private scrollLeft = 0;
-  private isDragging = false;
+  public isDragging = false;
 
   // Restaurant Drag Scroll Logic
   restaurantContainer = viewChild<ElementRef>('restaurantContainer');
@@ -114,7 +114,6 @@ export class HomeComponent implements OnInit {
 
   ngOnInit() {
     // Initialize push notifications when home page loads
-    // This will check permissions and register the device if on Android/iOS
     this.pushService.initPush();
   }
 
@@ -202,7 +201,6 @@ export class HomeComponent implements OnInit {
 
   endDrag() {
     this.isDown = false;
-    // Keep isDragging true briefly to prevent click event
   }
 
   doDrag(e: MouseEvent) {
@@ -214,7 +212,6 @@ export class HomeComponent implements OnInit {
       const walk = (x - this.startX) * 2; // Scroll speed multiplier
       slider.scrollLeft = this.scrollLeft - walk;
       
-      // If moved significantly (more than 5px), mark as dragging
       if (Math.abs(walk) > 5) {
         this.isDragging = true;
       }
@@ -282,9 +279,8 @@ export class HomeComponent implements OnInit {
   }
 
   async handleNewsClick(articleId: string) {
-    // If we were dragging, ignore the click
     if (this.isDragging) {
-      this.isDragging = false; // Reset for next time
+      this.isDragging = false;
       return;
     }
     
@@ -308,7 +304,6 @@ export class HomeComponent implements OnInit {
 
     const navType = banner.navigationType || 'none';
     
-    // Prepare Data for the Detail View
     const bannerArticle: NewsArticle = {
       id: banner.id,
       title: banner.title,
@@ -320,12 +315,11 @@ export class HomeComponent implements OnInit {
       category: banner.category
     };
 
-    // Configure Action based on Navigation Type
     let actionType: 'share' | 'external' | 'internal' | 'close' = 'close';
     let actionLabel = 'Back to Home';
     let actionIcon = 'arrow-back';
     let targetUrl = '';
-    let targetType = banner.targetType; // Pass this to component
+    let targetType = banner.targetType;
 
     switch (navType) {
         case 'external':
@@ -334,8 +328,6 @@ export class HomeComponent implements OnInit {
                 actionLabel = 'Visit Website';
                 actionIcon = 'globe-outline';
                 targetUrl = banner.targetId;
-            } else {
-                actionType = 'close';
             }
             break;
         case 'internal':
@@ -344,20 +336,12 @@ export class HomeComponent implements OnInit {
                 actionLabel = 'View in Page';
                 actionIcon = 'open-outline';
                 targetUrl = banner.targetId;
-            } else {
-                actionType = 'close';
             }
             break;
         case 'share':
             actionType = 'share';
             actionLabel = 'Share Article';
             actionIcon = 'share-social';
-            break;
-        case 'none':
-        default:
-            actionType = 'close';
-            actionLabel = 'Back to Home';
-            actionIcon = 'arrow-back';
             break;
     }
 
@@ -369,7 +353,7 @@ export class HomeComponent implements OnInit {
         actionLabel: actionLabel,
         actionIcon: actionIcon,
         targetUrl: targetUrl,
-        targetType: targetType // Passing the type for stacking logic
+        targetType: targetType
       }
     });
     await modal.present();

@@ -29,8 +29,8 @@ import { DataService } from '../../services/data.service';
 export class ProfileComponent {
   authService = inject(AuthService);
   private dataService = inject(DataService);
-  private alertCtrl = inject(AlertController);
-  private toastCtrl = inject(ToastController);
+  private alertCtrl: AlertController = inject(AlertController);
+  private toastCtrl: ToastController = inject(ToastController);
 
   user = computed(() => {
     // Prefer extended profile from Firestore, fallback to Auth

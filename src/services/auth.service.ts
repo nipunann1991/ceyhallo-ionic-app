@@ -1,10 +1,11 @@
 import { Injectable, signal, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { auth } from './firebase.service';
-import { onAuthStateChanged, signInWithEmailAndPassword, signOut, User, updateProfile, updatePassword, reauthenticateWithCredential, EmailAuthProvider, createUserWithEmailAndPassword, sendPasswordResetEmail, deleteUser, sendEmailVerification } from 'firebase/auth';
+import { onAuthStateChanged, signInWithEmailAndPassword, signOut, updateProfile, updatePassword, reauthenticateWithCredential, EmailAuthProvider, createUserWithEmailAndPassword, sendPasswordResetEmail, deleteUser, sendEmailVerification, Unsubscribe } from 'firebase/auth';
+import type { User } from 'firebase/auth';
 import { FirestoreService } from './firestore.service';
 import { UserProfile } from '../models/user.model';
-import { Unsubscribe } from 'firebase/firestore';
+import { EmailService } from './email.service';
 
 @Injectable({
   providedIn: 'root',
@@ -13,6 +14,7 @@ export class AuthService {
   // FIX: Explicitly type injected Router to resolve type inference issue.
   private router: Router = inject(Router);
   private firestoreService = inject(FirestoreService);
+  private emailService = inject(EmailService);
 
   isLoggedIn = signal<boolean | undefined>(undefined);
   currentUser = signal<User | null>(null);
@@ -91,6 +93,9 @@ export class AuthService {
          
          await this.firestoreService.updateDocument('users', userCredential.user.uid, newUserProfile);
          
+         // Send Welcome Email
+         this.emailService.sendWelcomeEmail(email, name);
+
          // Force reload to update local auth state
          await userCredential.user.reload();
          this.currentUser.set({ ...auth.currentUser } as User);
@@ -206,15 +211,31 @@ export class AuthService {
     if (!user || !user.email) {
       return { success: false, error: 'No user is currently logged in.' };
     }
+
+    // Capture details for email before deletion
+    const email = user.email;
+    const name = this.userProfile()?.name || user.displayName || 'User';
   
     try {
       // 1. Re-authenticate the user to confirm their identity
       const credential = EmailAuthProvider.credential(user.email, password);
       await reauthenticateWithCredential(user, credential);
   
-      // 2. If re-authentication is successful, proceed with deletion
-      // First, delete Firestore data
-      await this.firestoreService.deleteDocument('users', user.uid);
+      // 2. Queue Goodbye Email (Best Effort)
+      this.emailService.sendGoodbyeEmail(email, name);
+
+      // 3. If re-authentication is successful, proceed with deletion
+      // First, attempt to delete Firestore data (Best Effort)
+      try {
+        await this.firestoreService.deleteDocument('users', user.uid);
+      } catch (fsError: any) {
+        // If it's a permission error, we expect this in some environments. Log info instead of warn.
+        if (fsError.code === 'permission-denied' || fsError.message?.includes('Missing or insufficient permissions')) {
+            console.log("Firestore profile delete skipped (permissions), proceeding with Auth delete.");
+        } else {
+            console.warn("Firestore profile delete failed, proceeding with Auth delete:", fsError.message);
+        }
+      }
       
       // Then, delete the Firebase Auth user
       await deleteUser(user);
@@ -229,7 +250,6 @@ export class AuthService {
         return { success: false, error: 'The password you entered is incorrect.' };
       }
       if (error.code === 'auth/requires-recent-login') {
-        // This can still happen if the login is very old, even with re-auth attempt. The message is still good.
         return { success: false, error: 'This is a sensitive operation. Please sign in again before deleting your account.' };
       }
       return { success: false, error: 'Failed to delete account. Please try again later.' };
