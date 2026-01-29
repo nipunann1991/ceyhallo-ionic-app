@@ -79,7 +79,7 @@ export class PushNotificationService {
 
     // 2. Show local notification when app is open (Foreground)
     FirebaseMessaging.addListener('notificationReceived', async (event) => {
-      console.log('Push received: ', event);
+      console.log('Push notification received'); // FIX: Avoid logging 'event' to prevent circular errors
       const notification = event.notification;
       
       const toast = await this.toastCtrl.create({
@@ -109,7 +109,7 @@ export class PushNotificationService {
 
     // 3. Handle action (tapping the notification from system tray)
     FirebaseMessaging.addListener('notificationActionPerformed', (event) => {
-      console.log('Push action performed: ' + JSON.stringify(event));
+      console.log('Push action performed'); // FIX: Avoid logging 'event' to prevent circular errors
       
       const notification = event.notification;
       const data = notification.data as any;

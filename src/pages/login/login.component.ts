@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, signal, inject, computed, Input } from '@angular/core';
+import { Component, ChangeDetectionStrategy, signal, computed, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { IonicModule, ModalController } from '@ionic/angular';
 import { AuthService } from '../../services/auth.service';
@@ -26,11 +26,13 @@ import { RouterLink, Router } from '@angular/router';
   imports: [CommonModule, IonicModule, RouterLink],
 })
 export class LoginComponent {
-  private authService = inject(AuthService);
-  private router: Router = inject(Router);
-  private modalCtrl: ModalController = inject(ModalController);
+  // Use constructor injection to ensure dependencies are resolved correctly when created via ModalController
+  constructor(
+    private authService: AuthService,
+    private router: Router,
+    private modalCtrl: ModalController
+  ) {}
 
-  // Use standard Input for compatibility with Ionic ModalController componentProps
   @Input() isModal: boolean = false;
   @Input() message: string = '';
 
@@ -87,10 +89,8 @@ export class LoginComponent {
     
     if (result.success) {
       if (this.isModal) {
-        // If in modal, simply close it. The calling component will react to auth state change if needed.
         this.modalCtrl.dismiss({ loggedIn: true });
       } else {
-        // If full page, navigate to home
         this.router.navigate(['/tabs/home']);
       }
     } else {

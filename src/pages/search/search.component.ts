@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, signal, inject, computed, OnInit } from '@angular/core';
+import { Component, ChangeDetectionStrategy, signal, computed, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { IonicModule, ModalController, NavController } from '@ionic/angular';
 import { DataService } from '../../services/data.service';
@@ -13,7 +13,6 @@ import { handleImageError } from '../../utils/image.utils';
 import { AuthService } from '../../services/auth.service';
 import { LoginComponent } from '../login/login.component';
 
-// A type to unify search results for the template
 type SearchResult = (NewsArticle & { type: 'news' }) | (Business & { type: 'business' | 'restaurant' });
 
 @Component({
@@ -23,21 +22,20 @@ type SearchResult = (NewsArticle & { type: 'news' }) | (Business & { type: 'busi
   imports: [CommonModule, IonicModule, PageHeaderComponent, NewsCardComponent, BusinessCardComponent],
 })
 export class SearchComponent implements OnInit {
-  private dataService = inject(DataService);
-  private modalCtrl: ModalController = inject(ModalController);
-  private navCtrl: NavController = inject(NavController);
-  private authService = inject(AuthService);
+  // Use constructor injection for dependencies
+  constructor(
+    private dataService: DataService,
+    private modalCtrl: ModalController,
+    private navCtrl: NavController,
+    private authService: AuthService
+  ) {}
 
-  // This public property is set by Ionic's ModalController via componentProps
   public isModal = false;
-
-  // We use an internal signal that we set once `isModal` is available.
   readonly isModalSignal = signal(false);
 
   searchTerm = signal('');
   expandedCategories = signal<Set<string>>(new Set());
 
-  // Combine news and events into a single computed signal for searching
   private allContent = computed(() => {
     const news: SearchResult[] = this.dataService.getNews()().map(item => ({ ...item, type: 'news' }));
     const businesses: SearchResult[] = this.dataService.getBusinesses()().map(item => ({ ...item, type: 'business' }));
@@ -45,7 +43,6 @@ export class SearchComponent implements OnInit {
     return [...news, ...businesses, ...restaurants];
   });
 
-  // Filter the combined content based on the search term and group it
   searchResults = computed(() => {
     const term = (this.searchTerm() || '').trim().toLowerCase();
     if (!term) {
@@ -57,7 +54,7 @@ export class SearchComponent implements OnInit {
         const titleMatch = (item.title || '').toLowerCase().includes(term);
         const descriptionMatch = (item.description || '').toLowerCase().includes(term);
         return titleMatch || descriptionMatch;
-      } else { // business or restaurant
+      } else {
         const nameMatch = (item.name || '').toLowerCase().includes(term);
         const categoryMatch = (item.category || '').toLowerCase().includes(term);
         const locationMatch = (item.location || '').toLowerCase().includes(term);
@@ -65,7 +62,6 @@ export class SearchComponent implements OnInit {
       }
     });
 
-    // Group the filtered results
     const groups: { [key: string]: SearchResult[] } = {
       'News': [],
       'Restaurants': [],
@@ -84,7 +80,6 @@ export class SearchComponent implements OnInit {
 
     const expanded = this.expandedCategories();
 
-    // Convert to an array, filter empty groups, and apply pagination logic
     return Object.entries(groups)
       .map(([category, results]) => {
         const totalCount = results.length;
@@ -96,8 +91,6 @@ export class SearchComponent implements OnInit {
   });
 
   ngOnInit() {
-    // When the component initializes, `isModal` will have been set.
-    // We now set our internal signal to make our component reactive.
     this.isModalSignal.set(this.isModal);
   }
 
@@ -105,7 +98,7 @@ export class SearchComponent implements OnInit {
 
   handleSearch(value: string) {
     this.searchTerm.set(value);
-    this.expandedCategories.set(new Set()); // Reset on new search
+    this.expandedCategories.set(new Set());
   }
 
   expandCategory(category: string) {

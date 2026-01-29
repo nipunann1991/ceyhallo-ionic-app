@@ -1,7 +1,6 @@
-import { Component, ChangeDetectionStrategy, inject, computed, signal, OnInit, Input } from '@angular/core';
+import { Component, ChangeDetectionStrategy, computed, signal, OnInit, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { IonicModule, ModalController, NavController } from '@ionic/angular';
-import { Event } from '../../models/event.model';
 import { DataService } from '../../services/data.service';
 import { handleImageError } from '../../utils/image.utils';
 import { DomSanitizer } from '@angular/platform-browser';
@@ -14,11 +13,14 @@ import { ActivatedRoute } from '@angular/router';
   imports: [CommonModule, IonicModule],
 })
 export class EventDetailComponent implements OnInit {
-  private modalCtrl: ModalController = inject(ModalController);
-  private dataService = inject(DataService);
-  private sanitizer: DomSanitizer = inject(DomSanitizer);
-  private route: ActivatedRoute = inject(ActivatedRoute);
-  private navCtrl: NavController = inject(NavController);
+  // Use constructor injection
+  constructor(
+    private modalCtrl: ModalController,
+    private dataService: DataService,
+    private sanitizer: DomSanitizer,
+    private route: ActivatedRoute,
+    private navCtrl: NavController
+  ) {}
   
   @Input() eventId!: string;
   private readonly eventIdSignal = signal<string | undefined>(undefined);

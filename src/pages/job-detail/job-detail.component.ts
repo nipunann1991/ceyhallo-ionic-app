@@ -1,7 +1,6 @@
-import { Component, ChangeDetectionStrategy, inject, computed, signal, OnInit, Input } from '@angular/core';
+import { Component, ChangeDetectionStrategy, computed, signal, OnInit, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { IonicModule, ModalController, NavController } from '@ionic/angular';
-import { Job } from '../../models/job.model';
 import { DataService } from '../../services/data.service';
 import { handleImageError } from '../../utils/image.utils';
 import { ActivatedRoute } from '@angular/router';
@@ -13,10 +12,13 @@ import { ActivatedRoute } from '@angular/router';
   imports: [CommonModule, IonicModule],
 })
 export class JobDetailComponent implements OnInit {
-  private modalCtrl: ModalController = inject(ModalController);
-  private dataService = inject(DataService);
-  private route: ActivatedRoute = inject(ActivatedRoute);
-  private navCtrl: NavController = inject(NavController);
+  // Use constructor injection
+  constructor(
+    private modalCtrl: ModalController,
+    private dataService: DataService,
+    private route: ActivatedRoute,
+    private navCtrl: NavController
+  ) {}
   
   @Input() jobId!: string;
   private readonly jobIdSignal = signal<string | undefined>(undefined);

@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, inject, OnInit, signal, computed, viewChild, ElementRef } from '@angular/core';
+import { Component, ChangeDetectionStrategy, OnInit, signal, computed, viewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { IonicModule, ModalController, NavController, InfiniteScrollCustomEvent } from '@ionic/angular';
 import { DataService } from '../../services/data.service';
@@ -19,60 +19,51 @@ import { LoginComponent } from '../login/login.component';
   imports: [CommonModule, IonicModule, NewsCardComponent, FeaturedBannerComponent, PageHeaderComponent],
 })
 export class NewsComponent implements OnInit {
-  private dataService = inject(DataService);
-  private authService = inject(AuthService);
-  private modalCtrl: ModalController = inject(ModalController);
-  private navCtrl: NavController = inject(NavController);
+  // Use constructor injection
+  constructor(
+    private dataService: DataService,
+    private authService: AuthService,
+    private modalCtrl: ModalController,
+    private navCtrl: NavController
+  ) {}
 
-  // This public property is set by Ionic's ModalController via componentProps
   public isModal = false;
   readonly isModalSignal = signal(false);
 
-  // Data Source
   allNews = this.dataService.getNews();
 
-  // Component State
   selectedCategory = signal('All');
   searchTerm = signal('');
-  limit = signal(10); // Pagination limit, default 10
+  limit = signal(10);
 
-  // Static Categories for the Filter Chips
   categories = signal(['All', 'General', 'Business', 'Tech', 'Community', 'Lifestyle', 'Food', 'Travel', 'Health', 'Sports']);
 
-  // Drag Scroll Logic
   categoryContainer = viewChild<ElementRef>('categoryContainer');
   private isDown = false;
   private startX = 0;
   private scrollLeft = 0;
   private isDragging = false;
 
-  // Computed: Featured Article (Top Banner)
-  // We take the first item as the featured one for the 'All' view
   featuredArticle = computed(() => {
     const news = this.allNews();
     if (news.length === 0) return null;
-    return news[0]; // Logic: Most recent is featured
+    return news[0];
   });
 
-  // Computed: Filtered News List
   filteredNews = computed(() => {
     let news = this.allNews();
     const cat = this.selectedCategory();
     const term = this.searchTerm().toLowerCase();
     const featured = this.featuredArticle();
 
-    // 1. Filter by Category
     if (cat !== 'All') {
       news = news.filter(a => (a.category || 'General').toLowerCase() === cat.toLowerCase());
     }
 
-    // 2. Filter by Search
     if (term) {
       news = news.filter(a => a.title.toLowerCase().includes(term));
     }
 
-    // 3. Exclude Featured Article if it's currently being shown in the banner
-    // (Only happens when Category is All and Search is empty)
     if (cat === 'All' && !term && featured) {
       news = news.filter(a => a.id !== featured.id);
     }
@@ -80,7 +71,6 @@ export class NewsComponent implements OnInit {
     return news;
   });
 
-  // Computed: Displayed News (Paginated)
   displayedNews = computed(() => {
     return this.filteredNews().slice(0, this.limit());
   });
@@ -95,12 +85,12 @@ export class NewsComponent implements OnInit {
       return;
     }
     this.selectedCategory.set(cat);
-    this.limit.set(10); // Reset pagination
+    this.limit.set(10);
   }
 
   handleSearch(value: string) {
     this.searchTerm.set(value);
-    this.limit.set(10); // Reset pagination
+    this.limit.set(10);
   }
 
   handleImgError = handleImageError;
@@ -134,15 +124,12 @@ export class NewsComponent implements OnInit {
 
   onIonInfinite(ev: any) {
     const infiniteScroll = ev as InfiniteScrollCustomEvent;
-    
-    // Simulate a small delay for better UX or simply load next batch
     setTimeout(() => {
       this.limit.update(currentLimit => currentLimit + 10);
       infiniteScroll.target.complete();
     }, 500);
   }
 
-  // Drag Methods
   startDrag(e: MouseEvent) {
     this.isDown = true;
     this.isDragging = false;
@@ -163,7 +150,7 @@ export class NewsComponent implements OnInit {
     const slider = this.categoryContainer()?.nativeElement;
     if (slider) {
       const x = e.pageX - slider.offsetLeft;
-      const walk = (x - this.startX) * 2; // Scroll speed
+      const walk = (x - this.startX) * 2;
       slider.scrollLeft = this.scrollLeft - walk;
       
       if (Math.abs(walk) > 5) {

@@ -6,19 +6,22 @@ import type { User } from 'firebase/auth';
 import { FirestoreService } from './firestore.service';
 import { UserProfile } from '../models/user.model';
 import { EmailService } from './email.service';
+import { BehaviorSubject } from 'rxjs';
 
 @Injectable({
   providedIn: 'root',
 })
 export class AuthService {
-  // FIX: Explicitly type injected Router to resolve type inference issue.
-  private router: Router = inject(Router);
+  private router = inject(Router);
   private firestoreService = inject(FirestoreService);
   private emailService = inject(EmailService);
 
   isLoggedIn = signal<boolean | undefined>(undefined);
   currentUser = signal<User | null>(null);
   
+  // Observable auth state for Guards to avoid 'toObservable' context errors
+  readonly authState$ = new BehaviorSubject<User | null | undefined>(undefined);
+
   // Extended User Profile from Firestore
   userProfile = signal<UserProfile | null>(null);
   
@@ -28,6 +31,7 @@ export class AuthService {
     onAuthStateChanged(auth, (user) => {
       this.isLoggedIn.set(!!user);
       this.currentUser.set(user);
+      this.authState$.next(user);
       
       if (user) {
          // Start listening to the extended profile in Firestore using the real UID from the token

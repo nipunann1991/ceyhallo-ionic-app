@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, inject, OnInit, signal } from '@angular/core';
+import { Component, ChangeDetectionStrategy, OnInit, signal, Optional } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { IonicModule, NavParams } from '@ionic/angular';
 
@@ -9,11 +9,14 @@ import { IonicModule, NavParams } from '@ionic/angular';
   imports: [IonicModule, CommonModule],
 })
 export class NavPageComponent implements OnInit {
-  // FIX: Explicitly type injected NavParams to resolve type inference issue.
-  private navParams: NavParams = inject(NavParams);
   receivedMessage = signal('');
 
+  // Use constructor injection with @Optional() to prevent NG0203 errors
+  constructor(@Optional() private navParams: NavParams) {}
+
   ngOnInit() {
-    this.receivedMessage.set(this.navParams.get('message'));
+    if (this.navParams) {
+      this.receivedMessage.set(this.navParams.get('message'));
+    }
   }
 }
