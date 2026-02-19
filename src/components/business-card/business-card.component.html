@@ -23,7 +23,7 @@
         
         <!-- Promoted Badge -->
         @if (business().isPromoted) {
-           <div class="absolute top-0 left-0 w-[1.75rem] h-[1.75rem] bg-white rounded-br-lg flex items-center justify-center" title="Verified"><img src="https://i.ibb.co/4hd1y7m/crown.png" alt="Verified" class="w-4 h-4 object-contain"></div>
+           <div class="absolute top-0 left-0 w-[1.75rem] h-[1.75rem] bg-white rounded-br-lg flex items-center justify-center" title="Promoted"><img src="https://i.ibb.co/4hd1y7m/crown.png" alt="Promoted" class="w-4 h-4 object-contain"></div>
         }
   
         <!-- Bookmark Button -->
@@ -38,7 +38,12 @@
         <p class="text-[0.65rem] font-bold text-[#083594] uppercase tracking-wider mb-1 truncate">{{ business().category }}</p>
         
         <!-- Title -->
-        <h4 class="text-[0.95rem] font-bold text-[#1A1C1E] mb-1 leading-tight truncate">{{ business().name }}</h4>
+        <div class="flex items-center gap-1 mb-1">
+            <h4 class="text-[0.95rem] font-bold text-[#1A1C1E] leading-tight truncate">{{ business().name }}</h4>
+            @if (business().isVerified) {
+                <img src="https://i.ibb.co/WWcqDQbK/cropped-50x50.png" alt="Verified" class="w-[0.8rem] h-[0.8rem] shrink-0 object-contain">
+            }
+        </div>
   
         <div class="flex items-center gap-1.5 text-gray-500 mb-2">
             <ion-icon name="location" class="text-xs shrink-0"></ion-icon>
@@ -62,26 +67,36 @@
   <div class="relative w-full bg-white p-3 rounded-[1.5rem] shadow-[0_4px_20px_rgba(0,0,0,0.03)] border border-gray-100 flex gap-4 active:scale-[0.98] transition-transform group cursor-pointer">
               
     <!-- Left: Image Section -->
-    <div class="w-[6.5rem] h-[6.5rem] shrink-0 rounded-[1rem] overflow-hidden bg-gray-100 relative shadow-inner">
+    <div class="w-[6rem] h-[6rem] shrink-0 rounded-[1rem] overflow-hidden bg-gray-100 relative shadow-inner flex items-center justify-center">
       <!-- Promoted Badge -->
         @if (business().isPromoted) {
-           <div class="absolute top-0 left-0 w-[1.75rem] h-[1.75rem] bg-white rounded-br-lg flex items-center justify-center" title="Verified"><img src="https://i.ibb.co/4hd1y7m/crown.png" alt="Verified" class="w-4 h-4 object-contain"></div>
+           <div class="absolute top-0 left-0 w-[1.75rem] h-[1.75rem] bg-white rounded-br-lg flex items-center justify-center z-10" title="Promoted"><img src="https://i.ibb.co/4hd1y7m/crown.png" alt="Promoted" class="w-4 h-4 object-contain"></div>
         }
-       <img [src]="business().imageUrl || 'https://i.ibb.co/nNsGtRqn/placeholder-80x80.png'" 
+       
+       @let displayImage = business().logo || business().imageUrl;
+       @let isLogo = !!business().logo;
+
+       <img [src]="displayImage || 'https://i.ibb.co/nNsGtRqn/placeholder-80x80.png'" 
             (error)="handleImgError($event)" 
             class="pointer-events-none transition-all duration-300"
-            [class.w-full]="business().imageUrl" 
-            [class.h-full]="business().imageUrl" 
-            [class.object-cover]="business().imageUrl"
-            [class.absolute]="!business().imageUrl"
-            [class.top-1/2]="!business().imageUrl"
-            [class.left-1/2]="!business().imageUrl"
-            [class.-translate-x-1/2]="!business().imageUrl"
-            [class.-translate-y-1/2]="!business().imageUrl"
-            [class.w-10]="!business().imageUrl"
-            [class.h-10]="!business().imageUrl"
-            [class.object-contain]="!business().imageUrl"
-            [class.opacity-40]="!business().imageUrl"
+            [class.w-full]="displayImage" 
+            [class.h-full]="displayImage" 
+            
+            [class.object-contain]="isLogo"
+            [class.bg-white]="isLogo"
+            [class.rounded-[1rem]]="isLogo"
+            
+            [class.object-cover]="!isLogo && displayImage"
+            
+            [class.absolute]="!displayImage"
+            [class.top-1/2]="!displayImage"
+            [class.left-1/2]="!displayImage"
+            [class.-translate-x-1/2]="!displayImage"
+            [class.-translate-y-1/2]="!displayImage"
+            [class.w-10]="!displayImage"
+            [class.h-10]="!displayImage"
+            [class.object-contain]="!displayImage"
+            [class.opacity-40]="!displayImage"
             [alt]="business().name">
     </div>
 
@@ -91,7 +106,12 @@
        <p class="text-[0.65rem] font-bold text-[#083594] uppercase tracking-wider mb-0.5 truncate">{{ business().category }}</p>
        
        <!-- Title -->
-       <h4 class="text-[0.95rem] font-bold text-[#1A1C1E] leading-tight mb-1 truncate">{{ business().name }}</h4>
+       <div class="flex items-center gap-1 mb-1">
+           <h4 class="text-[0.95rem] font-bold text-[#1A1C1E] leading-tight truncate">{{ business().name }}</h4>
+           @if (business().isVerified) {
+               <img src="https://i.ibb.co/WWcqDQbK/cropped-50x50.png" alt="Verified" class="w-[0.8rem] h-[0.8rem] shrink-0 object-contain">
+           }
+       </div>
 
        <!-- Location -->
        <div class="flex items-center gap-1 mb-1.5 text-gray-500">

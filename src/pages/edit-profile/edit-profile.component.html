@@ -1,3 +1,4 @@
+
 <ion-content [fullscreen]="true" class="[--background:#F2F4F7]" [forceOverscroll]="false">
   
   <!-- Custom Header (Support Style) -->
@@ -72,7 +73,8 @@
                type="date" 
                [ngModel]="dateOfBirth()" 
                (ngModelChange)="dateOfBirth.set($event)"
-               class="w-full h-12 bg-[#F8F9FA] rounded-xl px-4 text-[#1A1C1E] font-medium border border-transparent focus:bg-white focus:border-[#083594] focus:ring-4 focus:ring-[#083594]/10 transition-all outline-none">
+               min="1900-01-01"
+               class="w-full min-w-full h-12 bg-[#F8F9FA] rounded-xl px-4 text-[#1A1C1E] font-medium border border-transparent focus:bg-white focus:border-[#083594] focus:ring-4 focus:ring-[#083594]/10 transition-all outline-none block appearance-none">
           </div>
        </div>
 

@@ -1,6 +1,6 @@
-import { Injectable, inject, signal, NgZone } from '@angular/core';
+
+import { Injectable, signal, NgZone } from '@angular/core';
 import { Capacitor } from '@capacitor/core';
-// Replaced with the Gradle 8 compatible plugin maintained by Capawesome
 import { FirebaseMessaging } from '@capacitor-firebase/messaging';
 import { Router } from '@angular/router';
 import { AuthService } from './auth.service';
@@ -11,36 +11,31 @@ import { ToastController } from '@ionic/angular';
   providedIn: 'root'
 })
 export class PushNotificationService {
-  private authService = inject(AuthService);
-  private firestoreService = inject(FirestoreService);
-  private toastCtrl: ToastController = inject(ToastController);
-  private router: Router = inject(Router);
-  private ngZone: NgZone = inject(NgZone);
-
-  // Expose the token for the UI (Settings page)
   fcmToken = signal<string>('');
 
-  constructor() {}
+  constructor(
+    private authService: AuthService,
+    private firestoreService: FirestoreService,
+    private toastCtrl: ToastController,
+    private router: Router,
+    private ngZone: NgZone
+  ) {}
 
   async initPush() {
-    // Push notifications only work on native devices (Android/iOS)
     if (!Capacitor.isNativePlatform()) {
-      console.log('Push notifications are only available on native devices.');
       return;
     }
 
     try {
-      // Initialize listeners immediately so we catch any pending actions
       this.addListeners();
-      // Then attempt registration (permissions/token)
       await this.registerNotifications();
     } catch (e: any) {
-      console.error('Error initializing push notifications:', e.message || e);
+      // FIX: Safe error logging
+      console.error('Error initializing push notifications:', e.message || 'Unknown error');
     }
   }
 
   private async registerNotifications() {
-    // 1. Check Permissions
     let permStatus = await FirebaseMessaging.checkPermissions();
 
     if (permStatus.receive === 'prompt') {
@@ -52,34 +47,30 @@ export class PushNotificationService {
       return;
     }
 
-    // 2. Get the Token directly
     try {
       const result = await FirebaseMessaging.getToken();
       if (result.token) {
-        console.log('FCM Token:', result.token);
         this.fcmToken.set(result.token);
         await this.saveTokenToFirestore(result.token);
       }
     } catch (error: any) {
-      console.error('Error getting FCM token:', error.message || error);
+      // FIX: Safe error logging
+      console.error('Error getting FCM token:', error.message || 'Unknown error');
     }
 
-    // 3. Subscribe to general topic
     try {
         await FirebaseMessaging.subscribeToTopic({ topic: 'general' });
-        console.log('Subscribed to general topic');
     } catch (e: any) {
-        console.error('Topic subscription failed:', e.message || e);
+        // FIX: Safe error logging
+        console.error('Topic subscription failed:', e.message || 'Unknown error');
     }
   }
 
   private addListeners() {
-    // 1. Remove old listeners to avoid duplicates
     FirebaseMessaging.removeAllListeners();
 
-    // 2. Show local notification when app is open (Foreground)
     FirebaseMessaging.addListener('notificationReceived', async (event) => {
-      console.log('Push notification received'); // FIX: Avoid logging 'event' to prevent circular errors
+      // FIX: Do not log the event object directly to avoid circular structure errors
       const notification = event.notification;
       
       const toast = await this.toastCtrl.create({
@@ -95,7 +86,6 @@ export class PushNotificationService {
             handler: () => {
               const data = notification.data as any;
               if (data?.routeId) {
-                // Run navigation inside Angular's zone
                 this.ngZone.run(() => {
                   this.router.navigateByUrl(data.routeId);
                 });
@@ -107,15 +97,11 @@ export class PushNotificationService {
       await toast.present();
     });
 
-    // 3. Handle action (tapping the notification from system tray)
     FirebaseMessaging.addListener('notificationActionPerformed', (event) => {
-      console.log('Push action performed'); // FIX: Avoid logging 'event' to prevent circular errors
-      
       const notification = event.notification;
       const data = notification.data as any;
       
       if (data?.routeId) {
-        // Run navigation inside Angular's zone
         this.ngZone.run(() => {
           this.router.navigateByUrl(data.routeId);
         });
@@ -132,7 +118,8 @@ export class PushNotificationService {
           lastLogin: new Date().toISOString()
         });
       } catch (error: any) {
-        console.error('Error saving FCM token to Firestore:', error.message || error);
+        // FIX: Safe error logging
+        console.error('Error saving FCM token to Firestore:', error.message || 'Unknown error');
       }
     }
   }

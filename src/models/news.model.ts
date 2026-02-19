@@ -1,3 +1,4 @@
+
 export interface NewsArticle {
   id: string;
   title: string;
@@ -7,4 +8,5 @@ export interface NewsArticle {
   description: string;
   content: string;
   category?: string;
+  isFeatured?: boolean;
 }

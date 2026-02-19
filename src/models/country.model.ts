@@ -1,3 +1,4 @@
+
 export interface City {
   code: string;
   name: string;
@@ -8,4 +9,5 @@ export interface Country {
   name: string;
   flagUrl: string;
   cities: City[];
+  isActive?: boolean;
 }

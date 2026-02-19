@@ -1,4 +1,5 @@
-import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
+
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { IonicModule, ToastController } from '@ionic/angular';
 import { PushNotificationService } from '../../services/push-notifications.service';
@@ -10,8 +11,10 @@ import { PushNotificationService } from '../../services/push-notifications.servi
   imports: [CommonModule, IonicModule],
 })
 export class SettingsComponent {
-  pushService = inject(PushNotificationService);
-  private toastCtrl: ToastController = inject(ToastController);
+  constructor(
+    public pushService: PushNotificationService,
+    private toastCtrl: ToastController
+  ) {}
 
   async copyToken() {
     const token = this.pushService.fcmToken();

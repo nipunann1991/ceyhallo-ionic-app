@@ -1,3 +1,4 @@
+
 <ion-content [fullscreen]="true" class="[--background:#F2F4F7]">
 
   <app-page-header
@@ -24,38 +25,71 @@
       @if (searchResults().length > 0) {
         <div class="flex flex-col gap-8">
           @for (group of searchResults(); track group.category) {
-            <div>
-              <div class="flex items-baseline justify-between mb-3 px-1">
-                <h2 class="text-lg font-bold text-gray-800">{{ group.category }} 
-                  <span class="text-sm font-semibold text-gray-400">({{ group.totalCount }})</span>
-                </h2>
-              </div>
-              <div class="flex flex-col gap-3.5">
-                @for (result of group.results; track result.id + result.type) {
-                  @switch (result.type) {
-                    @case ('news') {
-                      <app-news-card [newsItem]="result" (click)="openResult(result)"></app-news-card>
-                    }
-                    @case ('business') {
-                      <app-business-card [business]="result" layout="list" (click)="openResult(result)"></app-business-card>
-                    }
-                    @case ('restaurant') {
-                      <app-business-card [business]="result" layout="list" (click)="openResult(result)"></app-business-card>
+            
+            @if (group.category === 'Offers') {
+              <!-- Horizontal Slider for Offers -->
+              <div>
+                <div class="flex items-baseline justify-between mb-3 px-1">
+                  <h2 class="text-lg font-bold text-gray-800">{{ group.category }} 
+                    <span class="text-sm font-semibold text-gray-400">({{ group.totalCount }})</span>
+                  </h2>
+                </div>
+                
+                <div 
+                  #offersContainer
+                  class="flex overflow-x-auto gap-3 pb-2 -mx-5 px-5 scrollbar-hide snap-x cursor-grab active:cursor-grabbing select-none"
+                  (mousedown)="startDrag($event)"
+                  (mouseleave)="endDrag()"
+                  (mouseup)="endDrag()"
+                  (mousemove)="doDrag($event)">
+                  
+                  @for (result of group.results; track result.id) {
+                    @if (result.type === 'offer') {
+                      <app-offer-card 
+                        [offer]="result" 
+                        class="snap-center block min-w-[300px] w-[300px]"
+                        (click)="openResult(result)">
+                      </app-offer-card>
                     }
                   }
-                }
+                </div>
               </div>
 
-              @if (group.totalCount > 5 && !group.isExpanded) {
-                <div class="mt-4">
-                  <button 
-                    (click)="expandCategory(group.category)" 
-                    class="w-full text-center py-3 bg-white rounded-xl shadow-sm border border-gray-100 text-sm font-bold text-[#083594] active:bg-gray-50 transition-colors">
-                    See All {{ group.totalCount }} {{ group.category }}
-                  </button>
+            } @else {
+              <!-- Vertical List for other categories -->
+              <div>
+                <div class="flex items-baseline justify-between mb-3 px-1">
+                  <h2 class="text-lg font-bold text-gray-800">{{ group.category }} 
+                    <span class="text-sm font-semibold text-gray-400">({{ group.totalCount }})</span>
+                  </h2>
                 </div>
-              }
-            </div>
+                <div class="flex flex-col gap-3.5">
+                  @for (result of group.results; track result.id + result.type) {
+                    @switch (result.type) {
+                      @case ('news') {
+                        <app-news-card [newsItem]="result" (click)="openResult(result)"></app-news-card>
+                      }
+                      @case ('business') {
+                        <app-business-card [business]="result" layout="list" (click)="openResult(result)"></app-business-card>
+                      }
+                      @case ('restaurant') {
+                        <app-business-card [business]="result" layout="list" (click)="openResult(result)"></app-business-card>
+                      }
+                    }
+                  }
+                </div>
+
+                @if (group.totalCount > 5 && !group.isExpanded) {
+                  <div class="mt-4">
+                    <button 
+                      (click)="expandCategory(group.category)" 
+                      class="w-full text-center py-3 bg-white rounded-xl shadow-sm border border-gray-100 text-sm font-bold text-[#083594] active:bg-gray-50 transition-colors">
+                      See All {{ group.totalCount }} {{ group.category }}
+                    </button>
+                  </div>
+                }
+              </div>
+            }
           }
         </div>
       } @else {

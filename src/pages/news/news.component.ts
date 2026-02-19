@@ -1,11 +1,13 @@
-import { Component, ChangeDetectionStrategy, OnInit, signal, computed, viewChild, ElementRef } from '@angular/core';
+
+import { Component, ChangeDetectionStrategy, OnInit, signal, computed, viewChild, ElementRef, Signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { IonicModule, ModalController, NavController, InfiniteScrollCustomEvent } from '@ionic/angular';
 import { DataService } from '../../services/data.service';
 import { NewsArticle } from '../../models/news.model';
 import { NewsDetailComponent } from '../news-detail/news-detail.component';
 import { NewsCardComponent } from '../../components/news-card/news-card.component';
-import { FeaturedBannerComponent } from '../../components/featured-banner/featured-banner.component';
+import { BannerComponent } from '../../components/banner/banner.component';
+import { Banner } from '../../models/banner.model';
 import { PageHeaderComponent } from '../../components/page-header/page-header.component';
 import { handleImageError } from '../../utils/image.utils';
 import { AuthService } from '../../services/auth.service';
@@ -16,25 +18,18 @@ import { LoginComponent } from '../login/login.component';
   templateUrl: './news.component.html',
   styleUrls: ['./news.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, IonicModule, NewsCardComponent, FeaturedBannerComponent, PageHeaderComponent],
+  imports: [CommonModule, IonicModule, NewsCardComponent, BannerComponent, PageHeaderComponent],
 })
 export class NewsComponent implements OnInit {
-  // Use constructor injection
-  constructor(
-    private dataService: DataService,
-    private authService: AuthService,
-    private modalCtrl: ModalController,
-    private navCtrl: NavController
-  ) {}
-
   public isModal = false;
   readonly isModalSignal = signal(false);
 
-  allNews = this.dataService.getNews();
+  allNews: Signal<NewsArticle[]>;
 
   selectedCategory = signal('All');
   searchTerm = signal('');
   limit = signal(10);
+  isLoading = signal(true); // Initial loading state
 
   categories = signal(['All', 'General', 'Business', 'Tech', 'Community', 'Lifestyle', 'Food', 'Travel', 'Health', 'Sports']);
 
@@ -44,39 +39,65 @@ export class NewsComponent implements OnInit {
   private scrollLeft = 0;
   private isDragging = false;
 
-  featuredArticle = computed(() => {
-    const news = this.allNews();
-    if (news.length === 0) return null;
-    return news[0];
-  });
+  featuredBanners: Signal<Banner[]>;
+  filteredNews: Signal<NewsArticle[]>;
+  displayedNews: Signal<NewsArticle[]>;
 
-  filteredNews = computed(() => {
-    let news = this.allNews();
-    const cat = this.selectedCategory();
-    const term = this.searchTerm().toLowerCase();
-    const featured = this.featuredArticle();
+  constructor(
+    private dataService: DataService,
+    private authService: AuthService,
+    private modalCtrl: ModalController,
+    private navCtrl: NavController
+  ) {
+    this.allNews = this.dataService.getNews();
 
-    if (cat !== 'All') {
-      news = news.filter(a => (a.category || 'General').toLowerCase() === cat.toLowerCase());
-    }
+    this.featuredBanners = computed(() => {
+        const list = this.allNews();
+        let featured = list.filter(n => n.isFeatured);
+        if (featured.length === 0 && list.length > 0) {
+           featured = list.slice(0, 3);
+        }
+    
+        return featured.map(n => ({
+          id: n.id,
+          category: n.category || 'News',
+          title: n.title,
+          description: n.description,
+          image: n.imageUrl,
+          targetId: n.id,
+          targetType: 'news',
+          navigationType: 'internal'
+        }));
+    });
 
-    if (term) {
-      news = news.filter(a => a.title.toLowerCase().includes(term));
-    }
+    this.filteredNews = computed(() => {
+        let news = this.allNews();
+        const cat = this.selectedCategory();
+        const term = this.searchTerm().toLowerCase();
+    
+        if (cat !== 'All') {
+          news = news.filter(a => (a.category || 'General').toLowerCase() === cat.toLowerCase());
+        }
+    
+        if (term) {
+          news = news.filter(a => a.title.toLowerCase().includes(term));
+        }
+    
+        return news;
+    });
 
-    if (cat === 'All' && !term && featured) {
-      news = news.filter(a => a.id !== featured.id);
-    }
-
-    return news;
-  });
-
-  displayedNews = computed(() => {
-    return this.filteredNews().slice(0, this.limit());
-  });
+    this.displayedNews = computed(() => {
+        return this.filteredNews().slice(0, this.limit());
+    });
+  }
 
   ngOnInit() {
     this.isModalSignal.set(this.isModal);
+    
+    // Simulate initial loading delay to show off skeletons
+    setTimeout(() => {
+      this.isLoading.set(false);
+    }, 1000);
   }
 
   setCategory(cat: string) {
@@ -84,8 +105,13 @@ export class NewsComponent implements OnInit {
       this.isDragging = false;
       return;
     }
+    this.isLoading.set(true);
     this.selectedCategory.set(cat);
     this.limit.set(10);
+    // Simulate loading for category switch
+    setTimeout(() => {
+        this.isLoading.set(false);
+    }, 500);
   }
 
   handleSearch(value: string) {
@@ -104,6 +130,16 @@ export class NewsComponent implements OnInit {
   }
 
   async openArticle(article: NewsArticle) {
+    await this.openArticleDetail(article.id);
+  }
+
+  async handleBannerClick(banner: Banner) {
+    if (banner.targetId) {
+        await this.openArticleDetail(banner.targetId);
+    }
+  }
+
+  async openArticleDetail(id: string) {
     if (!this.authService.isLoggedIn()) {
       const modal = await this.modalCtrl.create({
         component: LoginComponent,
@@ -116,7 +152,7 @@ export class NewsComponent implements OnInit {
     const modal = await this.modalCtrl.create({
       component: NewsDetailComponent,
       componentProps: {
-        articleId: article.id,
+        articleId: id,
       },
     });
     await modal.present();

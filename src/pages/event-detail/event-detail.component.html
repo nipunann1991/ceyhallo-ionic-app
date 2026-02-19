@@ -1,17 +1,24 @@
-<!-- Use standard HTML structure with Ionic components -->
+
 @if (event(); as event) {
   <ion-content [fullscreen]="true" class="bg-white">
     
     <!-- Hero Section -->
-    <div class="relative w-full h-72">
+    <div class="relative w-full h-72 cursor-pointer active:opacity-95 transition-opacity" (click)="openHeroLightbox()">
       <!-- Event Image -->
       <img [src]="event.imageUrl || 'https://i.ibb.co/nNsGtRqn/placeholder-80x80.png'" (error)="handleImgError($event)" [alt]="event.title" class="w-full h-full object-cover" [style.object-fit]="event.imageUrl ? 'cover' : 'none'" [class.bg-gray-200]="!event.imageUrl">
       
       <!-- Gradient Overlay (Top) -->
       <div class="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-transparent h-32 pointer-events-none"></div>
 
+      <!-- Expand Icon Overlay -->
+      @if (event.imageUrl) {
+        <div class="absolute bottom-16 right-4 w-9 h-9 bg-black/30 backdrop-blur-md rounded-full flex items-center justify-center text-white pointer-events-none">
+            <ion-icon name="expand-outline"></ion-icon>
+        </div>
+      }
+
       <!-- Navigation Overlay -->
-      <div class="absolute top-0 left-0 right-0 nav-overlay-safe px-5 flex justify-between items-start z-10">
+      <div class="absolute top-0 left-0 right-0 nav-overlay-safe px-5 flex justify-between items-start z-10" (click)="$event.stopPropagation()">
         <!-- Back Button -->
         <button (click)="close()" class="text-white hover:opacity-80 transition-opacity active:scale-90">
            <ion-icon name="arrow-back" class="text-[1.75rem] drop-shadow-md"></ion-icon>
@@ -35,9 +42,25 @@
        </div>
 
        <!-- Title -->
-       <h1 class="text-xl font-extrabold text-[#1A1C1E] tracking-tight mb-4 text-center leading-tight">
+       <h1 class="text-xl font-extrabold text-[#1A1C1E] tracking-tight mb-2 text-center leading-tight">
          {{ event.title }}
        </h1>
+
+       <!-- Organizer (Clickable) -->
+       @if (event.organizer) {
+         <div class="flex justify-center mb-6">
+            <button 
+              (click)="openOrganizer()" 
+              [disabled]="!event.organizerId"
+              class="text-sm text-gray-500 font-medium flex items-center gap-1 disabled:opacity-100 active:opacity-70 transition-opacity">
+              <span>Organized by</span>
+              <span class="font-bold underline decoration-gray-300 underline-offset-2">{{ event.organizer }}</span>
+              @if(event.organizerId) {
+                <ion-icon name="chevron-forward" class="text-xs opacity-50"></ion-icon>
+              }
+            </button>
+         </div>
+       }
        
        <!-- Location Badge -->
        @if (event.location) {
@@ -52,6 +75,32 @@
        <!-- Article Content -->
        <div class="article-content text-sm text-gray-600 leading-relaxed font-normal mb-8" [innerHTML]="event.content"></div>
        
+       <!-- Gallery Section (Slidable) -->
+       @if (galleryImages().length > 0) {
+        <div class="mb-8 relative group/gallery">
+            <div class="flex justify-between items-center mb-3 px-1">
+                <h2 class="text-md font-bold text-[#1A1C1E]">
+                    Gallery <span class="text-gray-400 font-medium text-sm ml-1">({{ galleryImages().length }})</span>
+                </h2>
+            </div>
+
+            <!-- Horizontal Scroll Container -->
+            <div 
+              #galleryContainer
+              class="flex overflow-x-auto gap-3 pb-2 -mx-6 px-6 scrollbar-hide snap-x cursor-grab active:cursor-grabbing select-none"
+              (mousedown)="startDrag($event)"
+              (mouseleave)="endDrag()"
+              (mouseup)="endDrag()"
+              (mousemove)="doDrag($event)">
+              @for (img of galleryImages(); track $index) {
+                  <div (click)="openLightbox($index)" class="min-w-[150px] w-[150px] aspect-[4/3] rounded-2xl overflow-hidden bg-gray-100 relative active:opacity-90 transition-opacity cursor-pointer snap-center shadow-sm border border-gray-100">
+                    <img [src]="img" (error)="handleImgError($event)" class="w-full h-full object-cover pointer-events-none">
+                  </div>
+              }
+            </div>
+        </div>
+       }
+
        <!-- Location Map Section -->
        @if (event.location) {
          <div class="mb-8">
@@ -82,9 +131,57 @@
 
   <!-- Sticky Footer Action -->
   <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 px-5 pt-4 pb-[calc(1.5rem+env(safe-area-inset-bottom))] z-20 shadow-[0_-10px_30px_rgba(0,0,0,0.03)]">
-     <button class="w-full h-[3.25rem] bg-[#083594] text-white font-bold text-[0.95rem] rounded-full shadow-lg shadow-[#083594]/20 flex items-center justify-center gap-2.5 active:scale-[0.98] transition-transform">
-        <ion-icon name="ticket" class="text-lg"></ion-icon>
-        <span>Get Tickets</span>
+     <button 
+        (click)="handleAction()"
+        class="w-full h-[3.25rem] bg-[#083594] text-white font-bold text-[0.95rem] rounded-full shadow-lg shadow-[#083594]/20 flex items-center justify-center gap-2.5 active:scale-[0.98] transition-transform">
+        <ion-icon [name]="actionButtonConfig()?.icon || 'ticket'" class="text-lg"></ion-icon>
+        <span>{{ actionButtonConfig()?.label }}</span>
      </button>
   </div>
+
+  <!-- Hero Image Lightbox Modal -->
+  <ion-modal [isOpen]="isHeroLightboxOpen()" (didDismiss)="closeHeroLightbox()" style="--background: rgba(0,0,0,0.95);">
+    <ng-template>
+        <div class="w-full h-full flex flex-col items-center justify-center relative" (click)="closeHeroLightbox()">
+            
+            <!-- Close Button -->
+            <button (click)="closeHeroLightbox()" class="absolute top-10 right-5 z-50 w-10 h-10 bg-white/10 rounded-full flex items-center justify-center text-white backdrop-blur-md active:bg-white/20 transition-colors">
+                <ion-icon name="close" class="text-2xl"></ion-icon>
+            </button>
+
+            <!-- Image -->
+            <img [src]="event.imageUrl" class="max-w-full max-h-full object-contain transition-all duration-300 shadow-2xl" (click)="$event.stopPropagation()">
+        </div>
+    </ng-template>
+  </ion-modal>
 }
+
+<!-- Gallery Lightbox Modal -->
+<ion-modal [isOpen]="isLightboxOpen()" (didDismiss)="closeLightbox()" style="--background: rgba(0,0,0,0.95);">
+  <ng-template>
+     <div class="w-full h-full flex flex-col items-center justify-center relative" (click)="closeLightbox()">
+        
+        <!-- Close Button -->
+        <button (click)="closeLightbox()" class="absolute top-10 right-5 z-50 w-10 h-10 bg-white/10 rounded-full flex items-center justify-center text-white backdrop-blur-md active:bg-white/20 transition-colors">
+           <ion-icon name="close" class="text-2xl"></ion-icon>
+        </button>
+
+        <!-- Image -->
+        <img [src]="galleryImages()[activeLightboxIndex()]" class="max-w-full max-h-full object-contain transition-all duration-300 shadow-2xl" (click)="$event.stopPropagation()">
+
+        <!-- Image Counter -->
+        <div class="absolute bottom-10 left-1/2 -translate-x-1/2 bg-black/40 backdrop-blur-md px-4 py-1.5 rounded-full text-white font-bold text-sm pointer-events-none">
+            {{ activeLightboxIndex() + 1 }} / {{ galleryImages().length }}
+        </div>
+
+        <!-- Controls -->
+        <button (click)="prevImage($event)" class="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/10 rounded-full flex items-center justify-center text-white backdrop-blur-md active:bg-white/20 transition-colors">
+            <ion-icon name="chevron-back" class="text-2xl"></ion-icon>
+        </button>
+        <button (click)="nextImage($event)" class="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/10 rounded-full flex items-center justify-center text-white backdrop-blur-md active:bg-white/20 transition-colors">
+            <ion-icon name="chevron-forward" class="text-2xl"></ion-icon>
+        </button>
+
+     </div>
+  </ng-template>
+</ion-modal>

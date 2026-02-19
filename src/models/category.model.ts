@@ -1,3 +1,4 @@
+
 export interface Category {
   id: string;
   label: string;
@@ -5,4 +6,5 @@ export interface Category {
   hasNotification: boolean;
   order: number;
   path?: string;
+  isActive?: boolean;
 }

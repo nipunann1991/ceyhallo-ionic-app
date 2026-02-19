@@ -1,7 +1,23 @@
-import { Injectable, signal, inject } from '@angular/core';
+
+import { Injectable, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { auth } from './firebase.service';
-import { onAuthStateChanged, signInWithEmailAndPassword, signOut, updateProfile, updatePassword, reauthenticateWithCredential, EmailAuthProvider, createUserWithEmailAndPassword, sendPasswordResetEmail, deleteUser, sendEmailVerification, Unsubscribe } from 'firebase/auth';
+import { 
+  onAuthStateChanged, 
+  signInWithEmailAndPassword, 
+  signOut, 
+  updateProfile, 
+  updatePassword, 
+  reauthenticateWithCredential, 
+  EmailAuthProvider, 
+  createUserWithEmailAndPassword, 
+  sendPasswordResetEmail, 
+  deleteUser, 
+  sendEmailVerification, 
+  confirmPasswordReset, 
+  verifyPasswordResetCode, 
+  Unsubscribe 
+} from 'firebase/auth';
 import type { User } from 'firebase/auth';
 import { FirestoreService } from './firestore.service';
 import { UserProfile } from '../models/user.model';
@@ -12,10 +28,6 @@ import { BehaviorSubject } from 'rxjs';
   providedIn: 'root',
 })
 export class AuthService {
-  private router = inject(Router);
-  private firestoreService = inject(FirestoreService);
-  private emailService = inject(EmailService);
-
   isLoggedIn = signal<boolean | undefined>(undefined);
   currentUser = signal<User | null>(null);
   
@@ -27,7 +39,11 @@ export class AuthService {
   
   private userProfileUnsubscribe: Unsubscribe | null = null;
 
-  constructor() {
+  constructor(
+    private router: Router,
+    private firestoreService: FirestoreService,
+    private emailService: EmailService
+  ) {
     onAuthStateChanged(auth, (user) => {
       this.isLoggedIn.set(!!user);
       this.currentUser.set(user);
@@ -127,9 +143,45 @@ export class AuthService {
     }
   }
 
+  /**
+   * Sends a password reset email.
+   * Note: We pass a URL to handleCodeInApp. This deep link must be configured in Capacitor.
+   */
   async resetPassword(email: string): Promise<{success: boolean; error?: string}> {
     try {
-      await sendPasswordResetEmail(auth, email);
+      // Configure this to point to your app's deep link handling scheme
+      // using your custom domain ceyhallo.com
+      await sendPasswordResetEmail(auth, email, {
+        handleCodeInApp: true,
+        // The URL the user is redirected to after clicking the email link.
+        // If the app is installed, this URL is intercepted.
+        url: 'https://ceyhallo.com/auth-action' 
+      });
+      return { success: true };
+    } catch (error: any) {
+      return { success: false, error: this.mapFirebaseAuthError(error.code) };
+    }
+  }
+
+  /**
+   * Verifies the OOB code extracted from the email link.
+   * Returns the email address associated with the request if valid.
+   */
+  async verifyPasswordResetCode(code: string): Promise<{success: boolean; email?: string; error?: string}> {
+    try {
+      const email = await verifyPasswordResetCode(auth, code);
+      return { success: true, email };
+    } catch (error: any) {
+      return { success: false, error: error.message };
+    }
+  }
+
+  /**
+   * Completes the password reset process using the OOB code and new password.
+   */
+  async confirmPasswordReset(code: string, newPassword: string): Promise<{success: boolean; error?: string}> {
+    try {
+      await confirmPasswordReset(auth, code, newPassword);
       return { success: true };
     } catch (error: any) {
       return { success: false, error: this.mapFirebaseAuthError(error.code) };
@@ -237,7 +289,7 @@ export class AuthService {
         if (fsError.code === 'permission-denied' || fsError.message?.includes('Missing or insufficient permissions')) {
             console.log("Firestore profile delete skipped (permissions), proceeding with Auth delete.");
         } else {
-            console.warn("Firestore profile delete failed, proceeding with Auth delete:", fsError.message);
+            console.warn("Firestore profile delete failed, proceeding with Auth delete:", fsError.message || 'Unknown error');
         }
       }
       
@@ -249,7 +301,8 @@ export class AuthService {
       return { success: true };
   
     } catch (error: any) {
-      console.error("Error deleting account:", error.message || error);
+      // FIX: Log only the message to prevent circular structure error
+      console.error("Error deleting account:", error.message || 'Unknown error during deletion');
       if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
         return { success: false, error: 'The password you entered is incorrect.' };
       }
@@ -277,6 +330,10 @@ export class AuthService {
         return 'The password is too weak. It should be at least 6 characters.';
       case 'auth/too-many-requests':
         return 'Too many requests. Please try again later.';
+      case 'auth/expired-action-code':
+        return 'The password reset link has expired. Please request a new one.';
+      case 'auth/invalid-action-code':
+        return 'The password reset link is invalid or has already been used.';
       default:
         return 'An unexpected error occurred. Please try again.';
     }

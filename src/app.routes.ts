@@ -1,3 +1,4 @@
+
 import { Routes } from '@angular/router';
 import { authGuard } from './guards/auth.guard';
 
@@ -15,6 +16,10 @@ export const APP_ROUTES: Routes = [
     loadComponent: () => import('./pages/forgot-password/forgot-password.component').then(m => m.ForgotPasswordComponent),
   },
   {
+    path: 'reset-password',
+    loadComponent: () => import('./pages/reset-password/reset-password.component').then(m => m.ResetPasswordComponent),
+  },
+  {
     path: 'tabs',
     loadComponent: () => import('./pages/tabs/tabs.component').then(m => m.TabsComponent),
     children: [
@@ -25,6 +30,10 @@ export const APP_ROUTES: Routes = [
       {
         path: 'search',
         loadComponent: () => import('./pages/search/search.component').then(m => m.SearchComponent),
+      },
+      {
+        path: 'menu',
+        loadComponent: () => import('./pages/quick-links/quick-links.component').then(m => m.QuickLinksComponent),
       },
       {
         path: 'profile',
@@ -78,6 +87,14 @@ export const APP_ROUTES: Routes = [
     loadComponent: () => import('./pages/business-detail/business-detail.component').then(m => m.BusinessDetailComponent),
   },
   {
+    path: 'organizations',
+    loadComponent: () => import('./pages/organizations/organizations.component').then(m => m.OrganizationsComponent),
+  },
+  {
+    path: 'organization/:id',
+    loadComponent: () => import('./pages/business-detail/business-detail.component').then(m => m.BusinessDetailComponent),
+  },
+  {
     path: 'events',
     loadComponent: () => import('./pages/events/events.component').then(m => m.EventsComponent),
   },
@@ -92,6 +109,10 @@ export const APP_ROUTES: Routes = [
   {
     path: 'job/:id',
     loadComponent: () => import('./pages/job-detail/job-detail.component').then(m => m.JobDetailComponent),
+  },
+  {
+    path: 'offers',
+    loadComponent: () => import('./pages/offers/offers.component').then(m => m.OffersComponent),
   },
   {
     path: 'navigate',

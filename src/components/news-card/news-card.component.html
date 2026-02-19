@@ -1,7 +1,21 @@
+
 <div class="relative w-full bg-white p-3 rounded-[1.2rem] shadow-[0_2px_10px_rgba(0,0,0,0.02)] border border-gray-50 flex gap-3 active:scale-[0.99] transition-transform group">
     <!-- Image Section -->
-    <div class="w-[6rem] h-[6rem] shrink-0 rounded-[1rem] overflow-hidden bg-gray-100 relative">
-       <img [src]="newsItem().imageUrl || 'https://i.ibb.co/nNsGtRqn/placeholder-80x80.png'" (error)="handleImgError($event)" class="w-full h-full object-cover pointer-events-none" [style.object-fit]="newsItem().imageUrl ? 'cover' : 'none'" [class.bg-gray-200]="!newsItem().imageUrl" [class.opacity-40]="!newsItem().imageUrl" [alt]="newsItem().title">
+    <div class="w-[6.5rem] h-[6.5rem] shrink-0 rounded-[1rem] overflow-hidden bg-gray-100 relative">
+       <!-- Skeleton Overlay -->
+       @if (!isImageLoaded()) {
+         <div class="absolute inset-0 bg-gray-200 animate-pulse z-10"></div>
+       }
+       
+       <img [src]="newsItem().imageUrl || 'https://i.ibb.co/nNsGtRqn/placeholder-80x80.png'" 
+            (load)="onImageLoad()"
+            (error)="handleImgError($event); onImageLoad()" 
+            class="w-full h-full object-cover pointer-events-none transition-opacity duration-300" 
+            [style.object-fit]="newsItem().imageUrl ? 'cover' : 'none'" 
+            [class.opacity-0]="!isImageLoaded()"
+            [class.opacity-100]="isImageLoaded()"
+            [class.bg-gray-200]="!newsItem().imageUrl" 
+            [alt]="newsItem().title">
     </div>
 
     <!-- Content Section -->

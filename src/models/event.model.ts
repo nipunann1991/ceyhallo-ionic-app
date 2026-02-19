@@ -1,3 +1,4 @@
+
 export interface Event {
   id: string;
   title: string;
@@ -8,5 +9,11 @@ export interface Event {
   location: string;
   category: string;
   organizer: string;
+  organizerId?: string;
   isFeatured?: boolean;
+  gallery?: string[];
+  actionType?: string;
+  actionTarget?: string;
+  actionLabel?: string;
+  countryCode?: string;
 }

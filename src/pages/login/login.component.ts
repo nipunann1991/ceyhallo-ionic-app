@@ -1,8 +1,11 @@
-import { Component, ChangeDetectionStrategy, signal, computed, Input } from '@angular/core';
+
+import { Component, ChangeDetectionStrategy, signal, computed, Input, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { IonicModule, ModalController } from '@ionic/angular';
 import { AuthService } from '../../services/auth.service';
+import { DataService } from '../../services/data.service';
 import { RouterLink, Router } from '@angular/router';
+import { LegalPageComponent } from '../legal/legal.component';
 
 @Component({
   selector: 'app-login',
@@ -29,12 +32,15 @@ export class LoginComponent {
   // Use constructor injection to ensure dependencies are resolved correctly when created via ModalController
   constructor(
     private authService: AuthService,
+    private dataService: DataService,
     private router: Router,
     private modalCtrl: ModalController
   ) {}
 
   @Input() isModal: boolean = false;
   @Input() message: string = '';
+
+  settings = this.dataService.getAppSettings();
 
   email = signal('alex@ceyhallo.com');
   password = signal('12345678');
@@ -96,5 +102,16 @@ export class LoginComponent {
     } else {
       this.errorMessage.set(result.error || 'Login failed. Please try again.');
     }
+  }
+
+  async openLegalModal(type: string) {
+    const modal = await this.modalCtrl.create({
+      component: LegalPageComponent,
+      componentProps: {
+        docIdInput: type,
+        isModal: true
+      }
+    });
+    await modal.present();
   }
 }

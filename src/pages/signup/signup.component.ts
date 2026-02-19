@@ -1,9 +1,11 @@
+
 import { Component, ChangeDetectionStrategy, signal, inject, computed, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { IonicModule, ModalController, NavController } from '@ionic/angular';
 import { AuthService } from '../../services/auth.service';
 import { DataService } from '../../services/data.service';
 import { RouterLink, Router } from '@angular/router';
+import { LegalPageComponent } from '../legal/legal.component';
 
 @Component({
   selector: 'app-signup',
@@ -35,6 +37,7 @@ export class SignUpComponent {
 
   @Input() isModal: boolean = false;
 
+  settings = this.dataService.getAppSettings();
   countries = this.dataService.getCountries();
 
   // Pre-filled data
@@ -109,5 +112,16 @@ export class SignUpComponent {
     } else {
       this.errorMessage.set(result.error || 'Registration failed. Please try again.');
     }
+  }
+
+  async openLegalModal(type: string) {
+    const modal = await this.modalCtrl.create({
+      component: LegalPageComponent,
+      componentProps: {
+        docIdInput: type,
+        isModal: true
+      }
+    });
+    await modal.present();
   }
 }

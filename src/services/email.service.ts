@@ -1,11 +1,12 @@
-import { Injectable, inject } from '@angular/core';
+
+import { Injectable } from '@angular/core';
 import { FirestoreService } from './firestore.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class EmailService {
-  private firestoreService = inject(FirestoreService);
+  constructor(private firestoreService: FirestoreService) {}
 
   async sendWelcomeEmail(email: string, name: string) {
     const htmlContent = `
@@ -31,6 +32,7 @@ export class EmailService {
         createdAt: new Date().toISOString()
       });
     } catch (error) {
+      // Silent fail or log warning for permissions
       console.warn('Email service: Could not queue welcome email (Permission/Demo).');
     }
   }
@@ -86,17 +88,14 @@ export class EmailService {
         status: 'pending',
         createdAt: new Date().toISOString()
       });
-      console.log(`Recovery code ${code} sent to ${email}`);
     } catch (error: any) {
-      // Robust check for permission errors to enable Simulation Mode
-      const msg = (error.message || error.toString()).toLowerCase();
-      if (error.code === 'permission-denied' || msg.includes('permissions') || msg.includes('missing')) {
-          console.log(`%c[SIMULATION MODE] Recovery Code for ${email}: ${code}`, 'background: #083594; color: white; padding: 4px; border-radius: 4px;');
-          console.warn('Email not queued due to backend permissions. Check console for the code.');
-          return; // Allow flow to proceed without throwing
+      // Handle "Missing or insufficient permissions" for demo environment
+      if (error.code === 'permission-denied' || error.message?.includes('permissions')) {
+          console.warn('Email not sent due to backend permissions.');
+          return; // Allow flow to proceed
       }
-      // Fix: Log the message string instead of the full object to prevent circular JSON errors
-      console.error('Failed to queue recovery email:', error.message || error);
+      // FIX: Log only the error message to avoid circular structure errors
+      console.error('Failed to queue recovery email:', error.message || 'Unknown error');
       throw error;
     }
   }

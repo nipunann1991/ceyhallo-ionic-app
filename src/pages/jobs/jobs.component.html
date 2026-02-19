@@ -1,3 +1,4 @@
+
 <ion-content [fullscreen]="true" class="[--background:#F2F4F7]">
   
   <app-page-header 
@@ -11,15 +12,14 @@
 
   <div class="px-5 pb-8">
 
-    <!-- Featured Banner -->
-    @if (selectedCategory() === 'All' && searchTerm() === '' && featuredJob(); as featured) {
-      <app-featured-banner
-        [title]="featured.title"
-        [category]="'Featured Job'"
-        [imageUrl]="'https://images.unsplash.com/photo-1521791136064-7986c2920216?q=80&w=2669&auto=format&fit=crop'"
-        variant="news"
-        (click)="openJob(featured)">
-      </app-featured-banner>
+    <!-- Featured Banners (Swipeable) -->
+    @if (selectedCategory() === 'All' && searchTerm() === '') {
+      <div class="mb-6">
+        <app-banner 
+          [banners]="featuredBanners()" 
+          (bannerClick)="handleBannerClick($event)">
+        </app-banner>
+      </div>
     }
 
     <!-- Category Filter Chips (Cities) -->
@@ -58,7 +58,7 @@
         }
       } @else {
         <!-- No Results State -->
-        <div class="flex items-center justify-center h-[40vh]">
+        <div class="flex items-center justify-center h-[36vh]">
           <div class="text-center text-gray-400">
             <ion-icon name="briefcase-outline" class="text-7xl mb-2 text-gray-300"></ion-icon>
             <h1 class="text-xl font-bold mt-2">No Jobs Found</h1>

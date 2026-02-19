@@ -1,28 +1,37 @@
+
 <div class="relative w-full bg-white p-3 rounded-[1.2rem] shadow-[0_2px_10px_rgba(0,0,0,0.02)] border border-gray-50 flex gap-4 items-center active:scale-[0.99] transition-transform group cursor-pointer">
     <!-- Image Section -->
-    <div class="relative w-14 h-14 shrink-0 rounded-xl overflow-hidden bg-gray-100 border border-gray-100 p-1 flex items-center justify-center">
+    <div class="relative w-[4rem] h-[4rem] shrink-0 rounded-xl overflow-hidden bg-gray-100 border border-gray-100 p-1 flex items-center justify-center">
        <img [src]="job().companyLogo || 'https://i.ibb.co/nNsGtRqn/placeholder-80x80.png'" (error)="handleImgError($event)" class="w-full h-full object-contain pointer-events-none" [alt]="job().company">
     </div>
 
     <!-- Content Section -->
     <div class="flex-1 flex flex-col min-w-0 py-0.5">
+       <!-- Date (Relative or Absolute) -->
+       <p class="text-[0.65rem] font-bold text-gray-400 uppercase tracking-wide mb-0.5">
+          @if (formattedTime(); as relative) {
+             {{ relative }}
+          } @else {
+             {{ job().postedDate | date:'MMM d, y' }}
+          }
+       </p>
+
        <!-- Title -->
        <h4 class="text-sm font-bold text-[#1A1C1E] leading-[1.35] line-clamp-1 mb-0.5">{{ job().title }}</h4>
        
-       <!-- Company -->
-       <p class="text-xs font-semibold text-gray-500 mb-1.5">{{ job().company }}</p>
+       <!-- Company (Primary Blue) -->
+       <p class="text-xs font-bold text-[#083594] mb-1.5">{{ job().company }}</p>
 
-       <!-- Location -->
-       <div class="flex items-center gap-1.5 text-gray-500 mt-auto">
-          <ion-icon name="location-outline" class="text-xs shrink-0"></ion-icon>
-          <span class="text-[0.75rem] font-medium truncate">{{ job().location }}</span>
+       <!-- Location and Job Type Row -->
+       <div class="flex items-center gap-2 mt-auto">
+          <div class="flex items-center gap-1.5 text-gray-500 min-w-0">
+             <ion-icon name="location-outline" class="text-xs shrink-0"></ion-icon>
+             <span class="text-[0.75rem] font-medium truncate">{{ job().location }}</span>
+          </div>
+          
+          <span class="text-gray-300 text-[0.72rem]">|</span>
+          
+          <span class="text-[0.7rem] text-gray-400 font-semibold truncate">{{ job().jobType }}</span>
        </div>
-    </div>
-
-    <!-- Right section for job type -->
-    <div class="ml-auto shrink-0 self-start">
-        <div class="bg-gray-50 text-gray-600 text-[0.65rem] font-bold px-2.5 py-1.5 rounded-lg border border-gray-100">
-            {{ job().jobType }}
-        </div>
     </div>
 </div>

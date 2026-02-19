@@ -1,4 +1,5 @@
-import { Component, ChangeDetectionStrategy, inject, signal } from '@angular/core';
+
+import { Component, ChangeDetectionStrategy, signal, Signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { IonicModule, NavController } from '@ionic/angular';
 import { DataService } from '../../services/data.service';
@@ -11,13 +12,17 @@ import { SupportInfo } from '../../models/support.model';
   imports: [CommonModule, IonicModule],
 })
 export class SupportComponent {
-  private dataService = inject(DataService);
-  private navCtrl: NavController = inject(NavController);
-
-  supportInfo = this.dataService.getSupportInfo();
+  supportInfo: Signal<SupportInfo | null>;
   
   // Accordion state
   openFaqId = signal<string | null>(null);
+
+  constructor(
+    private dataService: DataService,
+    private navCtrl: NavController
+  ) {
+    this.supportInfo = this.dataService.getSupportInfo();
+  }
 
   toggleFaq(id: string) {
     if (this.openFaqId() === id) {
@@ -28,7 +33,7 @@ export class SupportComponent {
   }
 
   goBack() {
-    this.navCtrl.back();
+    this.navCtrl.navigateBack('/tabs/profile');
   }
 
   callSupport() {

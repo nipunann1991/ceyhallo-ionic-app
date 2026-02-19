@@ -1,4 +1,5 @@
-import { Component, ChangeDetectionStrategy, inject, signal, effect, computed } from '@angular/core';
+
+import { Component, ChangeDetectionStrategy, signal, effect, computed, Signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { IonicModule, NavController, ToastController } from '@ionic/angular';
 import { AuthService } from '../../services/auth.service';
@@ -6,6 +7,7 @@ import { DataService } from '../../services/data.service';
 import { FormsModule } from '@angular/forms';
 import { UserProfile } from '../../models/user.model';
 import { handleImageError } from '../../utils/image.utils';
+import { Country } from '../../models/country.model';
 
 @Component({
   selector: 'app-edit-profile',
@@ -14,13 +16,9 @@ import { handleImageError } from '../../utils/image.utils';
   imports: [CommonModule, IonicModule, FormsModule],
 })
 export class EditProfileComponent {
-  private authService = inject(AuthService);
-  private dataService = inject(DataService);
-  private navCtrl: NavController = inject(NavController);
-  private toastCtrl: ToastController = inject(ToastController);
-
-  userProfile = this.authService.userProfile;
-  countries = this.dataService.getCountries();
+  userProfile: Signal<UserProfile | null>;
+  countries: Signal<Country[]>;
+  availableCities: Signal<any[]>;
   
   // Form Signals
   displayName = signal('');
@@ -33,14 +31,21 @@ export class EditProfileComponent {
   
   isLoading = signal(false);
 
-  // Computed available cities based on selected region
-  availableCities = computed(() => {
-    const selectedRegion = this.region();
-    const country = this.countries().find(c => c.id === selectedRegion);
-    return country ? country.cities : [];
-  });
+  constructor(
+    private authService: AuthService,
+    private dataService: DataService,
+    private navCtrl: NavController,
+    private toastCtrl: ToastController
+  ) {
+    this.userProfile = this.authService.userProfile;
+    this.countries = this.dataService.getCountries();
 
-  constructor() {
+    this.availableCities = computed(() => {
+        const selectedRegion = this.region();
+        const country = this.countries().find(c => c.id === selectedRegion);
+        return country ? country.cities : [];
+    });
+
     effect(() => {
       const profile = this.userProfile();
       if (profile) {
@@ -58,7 +63,7 @@ export class EditProfileComponent {
   handleImgError = handleImageError;
 
   goBack() {
-    this.navCtrl.back();
+    this.navCtrl.navigateBack('/tabs/profile');
   }
 
   onRegionChange(newRegion: string) {
@@ -88,7 +93,7 @@ export class EditProfileComponent {
 
     if (result.success) {
       await this.showToast('Profile updated successfully', 'success');
-      this.navCtrl.back();
+      this.navCtrl.navigateBack('/tabs/profile');
     } else {
       await this.showToast(result.error || 'Failed to update profile', 'danger');
     }

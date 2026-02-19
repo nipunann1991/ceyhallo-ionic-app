@@ -1,15 +1,18 @@
-import { Component, ChangeDetectionStrategy, inject, OnInit, signal, computed, viewChild, ElementRef } from '@angular/core';
+
+import { Component, ChangeDetectionStrategy, OnInit, signal, computed, viewChild, ElementRef, Signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { IonicModule, ModalController, NavController, InfiniteScrollCustomEvent } from '@ionic/angular';
 import { DataService } from '../../services/data.service';
 import { Event } from '../../models/event.model';
 import { EventDetailComponent } from '../event-detail/event-detail.component';
 import { EventCardComponent } from '../../components/event-card/event-card.component';
-import { FeaturedBannerComponent } from '../../components/featured-banner/featured-banner.component';
+import { BannerComponent } from '../../components/banner/banner.component';
+import { Banner } from '../../models/banner.model';
 import { PageHeaderComponent } from '../../components/page-header/page-header.component';
 import { handleImageError } from '../../utils/image.utils';
 import { AuthService } from '../../services/auth.service';
 import { LoginComponent } from '../login/login.component';
+import { Country } from '../../models/country.model';
 
 @Component({
   selector: 'app-events',
@@ -19,100 +22,132 @@ import { LoginComponent } from '../login/login.component';
     .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
   `],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, IonicModule, EventCardComponent, FeaturedBannerComponent, PageHeaderComponent],
+  imports: [CommonModule, IonicModule, EventCardComponent, BannerComponent, PageHeaderComponent],
 })
 export class EventsComponent implements OnInit {
-  private dataService = inject(DataService);
-  private authService = inject(AuthService);
-  private modalCtrl: ModalController = inject(ModalController);
-  private navCtrl: NavController = inject(NavController);
-
-  // This public property is set by Ionic's ModalController via componentProps if opened as modal
   public isModal = false;
   readonly isModalSignal = signal(false);
 
-  // Data Source
-  allEvents = this.dataService.getEvents();
-  countries = this.dataService.getCountries();
-  selectedCountryId = this.dataService.selectedCountryId;
+  allEvents: Signal<Event[]>;
+  countries: Signal<Country[]>;
+  selectedCountryId: Signal<string>;
 
-  // Component State
   selectedCategory = signal('All');
   searchTerm = signal('');
-  limit = signal(10); // Pagination limit
+  limit = signal(10);
 
-  // Computed: Get cities for filter chips
-  categories = computed(() => {
-    const cid = this.selectedCountryId();
-    const country = this.countries().find(c => c.id === cid);
-    const cities = country ? country.cities.map(c => c.name) : [];
-    
-    return ['All', ...cities];
-  });
-  
-  // Drag Scroll Logic
+  categories: Signal<string[]>;
+  countryEvents: Signal<Event[]>;
+  featuredBanners: Signal<Banner[]>;
+  filteredEvents: Signal<Event[]>;
+  displayedEvents: Signal<Event[]>;
+
   categoryContainer = viewChild<ElementRef>('categoryContainer');
   private isDown = false;
   private startX = 0;
   private scrollLeft = 0;
   private isDragging = false;
-  
-  // Computed: Events filtered by Country
-  countryEvents = computed(() => {
-    const list = this.allEvents();
-    const cid = this.selectedCountryId();
-    const country = this.countries().find(c => c.id === cid);
-    
-    if (!country) return [];
 
-    const cityNames = country.cities.map(c => c.name.toLowerCase());
-    
-    return list.filter(e => {
-       const loc = (e.location || '').toLowerCase();
-       return cityNames.some(city => loc.includes(city));
-    });
-  });
+  constructor(
+    private dataService: DataService,
+    private authService: AuthService,
+    private modalCtrl: ModalController,
+    private navCtrl: NavController
+  ) {
+    this.allEvents = this.dataService.getEvents();
+    this.countries = this.dataService.getCountries();
+    this.selectedCountryId = this.dataService.selectedCountryId;
 
-  // Computed: Single Featured Event for the Banner
-  featuredEvent = computed<Event | null>(() => {
-    const list = this.countryEvents();
-    if (list.length === 0) return null;
-    
-    const featured = list.find(e => e.isFeatured);
-    if (featured) return featured;
-
-    // Fallback to the soonest upcoming event
-    return list[0]; // Already sorted by date in DataService
-  });
-
-  // Computed: Final Filtered List
-  filteredEvents = computed(() => {
-    let list = [...this.countryEvents()];
-    const cat = this.selectedCategory();
-    const term = this.searchTerm().toLowerCase();
-    
-    if (cat !== 'All') {
-      list = list.filter(e => (e.location || '').toLowerCase().includes(cat.toLowerCase()));
-    }
-
-    if (term) {
-      list = list.filter(e => e.title.toLowerCase().includes(term) || e.description.toLowerCase().includes(term));
-    }
-    
-    // Sort: Featured First, then by Date
-    list.sort((a, b) => {
-        if (a.isFeatured && !b.isFeatured) return -1;
-        if (!a.isFeatured && b.isFeatured) return 1;
-        return a.date.getTime() - b.date.getTime(); // Keep upcoming sort
+    this.categories = computed(() => {
+        const cid = this.selectedCountryId();
+        const country = this.countries().find(c => c.id === cid);
+        const cities = country ? country.cities.map(c => c.name) : [];
+        return ['All', ...cities];
     });
 
-    return list;
-  });
+    this.countryEvents = computed(() => {
+        const list = this.allEvents();
+        const cid = this.selectedCountryId();
+        const country = this.countries().find(c => c.id === cid);
+        
+        // Relaxed constraint: If no country/cities found, return all events (Fallback)
+        if (!country || !country.cities || country.cities.length === 0) return list;
 
-  // Computed: Displayed Events (Paginated)
-  displayedEvents = computed(() => {
-    return this.filteredEvents().slice(0, this.limit());
-  });
+        const cityNames = country.cities.map(c => c.name.toLowerCase());
+        
+        return list.filter(e => {
+           // Debug IFTAR specifically
+           const isIftar = e.title && (e.title.includes('IFTAR') || e.title.includes('Iftar'));
+
+           // 1. Precise Match via Country Code
+           if (e.countryCode) {
+               // Normalize logic: e.g. "AE" vs "ae"
+               const match = e.countryCode.toUpperCase() === cid.toUpperCase();
+               if (isIftar && !match) console.log(`Iftar filtered out by countryCode: ${e.countryCode} !== ${cid}`);
+               if (match) return true;
+           }
+
+           const loc = (e.location || '').toLowerCase();
+           
+           // 2. Fallback text matching
+           // Allow if location includes a city name OR if location includes the country name
+           const match = cityNames.some(city => loc.includes(city)) || loc.includes(country.name.toLowerCase());
+           
+           if (isIftar && !match && !e.countryCode) {
+               console.log(`Iftar filtered out by location text: '${loc}' not found in cities or '${country.name}'. Cities: ${cityNames.join(', ')}`);
+           }
+           
+           return match;
+        });
+    });
+
+    this.featuredBanners = computed(() => {
+        const list = this.countryEvents();
+        let featured = list.filter(e => e.isFeatured);
+        
+        // Fallback if no featured items found
+        if (featured.length === 0 && list.length > 0) {
+           featured = list.slice(0, 3);
+        }
+    
+        return featured.map(e => ({
+           id: e.id,
+           category: e.category,
+           title: e.title,
+           description: e.location || 'Upcoming Event',
+           image: e.imageUrl,
+           targetId: e.id,
+           targetType: 'event',
+           navigationType: 'internal'
+        }));
+    });
+
+    this.filteredEvents = computed(() => {
+        let list = [...this.countryEvents()];
+        const cat = this.selectedCategory();
+        const term = this.searchTerm().toLowerCase();
+        
+        if (cat !== 'All') {
+          list = list.filter(e => (e.location || '').toLowerCase().includes(cat.toLowerCase()));
+        }
+    
+        if (term) {
+          list = list.filter(e => e.title.toLowerCase().includes(term) || e.description.toLowerCase().includes(term));
+        }
+        
+        list.sort((a, b) => {
+            if (a.isFeatured && !b.isFeatured) return -1;
+            if (!a.isFeatured && b.isFeatured) return 1;
+            return a.date.getTime() - b.date.getTime();
+        });
+    
+        return list;
+    });
+
+    this.displayedEvents = computed(() => {
+        return this.filteredEvents().slice(0, this.limit());
+    });
+  }
 
   ngOnInit() {
     this.isModalSignal.set(this.isModal);
@@ -124,7 +159,7 @@ export class EventsComponent implements OnInit {
       return;
     }
     this.selectedCategory.set(cat);
-    this.limit.set(10); // Reset pagination
+    this.limit.set(10);
   }
 
   handleSearch(value: string) {
@@ -143,6 +178,16 @@ export class EventsComponent implements OnInit {
   }
 
   async openEvent(event: Event) {
+    await this.openEventDetail(event.id);
+  }
+
+  async handleBannerClick(banner: Banner) {
+    if (banner.targetId) {
+        await this.openEventDetail(banner.targetId);
+    }
+  }
+
+  async openEventDetail(id: string) {
     if (!this.authService.isLoggedIn()) {
       const modal = await this.modalCtrl.create({
         component: LoginComponent,
@@ -155,7 +200,7 @@ export class EventsComponent implements OnInit {
     const modal = await this.modalCtrl.create({
       component: EventDetailComponent,
       componentProps: {
-        eventId: event.id,
+        eventId: id,
       },
     });
     await modal.present();
@@ -169,7 +214,6 @@ export class EventsComponent implements OnInit {
     }, 500);
   }
   
-  // Drag Methods
   startDrag(e: MouseEvent) {
     this.isDown = true;
     this.isDragging = false;

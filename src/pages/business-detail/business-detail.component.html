@@ -3,7 +3,7 @@
   <ion-content [fullscreen]="true" class="bg-white">
     
     <!-- Hero Section -->
-    <div class="relative w-full h-[40vh]">
+    <div class="relative w-full h-[36vh]">
       <!-- Image -->
       <img [src]="biz.imageUrl || 'https://i.ibb.co/nNsGtRqn/placeholder-80x80.png'" (error)="handleImgError($event)" [alt]="biz.name" class="w-full h-full object-cover" [style.object-fit]="biz.imageUrl ? 'cover' : 'none'" [class.bg-gray-200]="!biz.imageUrl">
       
@@ -25,27 +25,41 @@
     <!-- Content Container (Overlapping) -->
     <div class="relative -mt-12 bg-white rounded-t-[2.5rem] px-6 pt-8 pb-32 min-h-[65vh] shadow-[0_-5px_20px_rgba(0,0,0,0.05)]">
        
+       <!-- Logo Avatar -->
+       @if (biz.logo) {
+         <div class="flex justify-center -mt-20 mb-4 relative z-20">
+            <div class="w-24 h-24 bg-white rounded-[1.5rem] shadow-[0_4px_20px_rgba(0,0,0,0.08)] border border-gray-100 flex items-center justify-center overflow-hidden">
+               <img [src]="biz.logo" (error)="handleImgError($event)" class="w-full h-full object-contain" [alt]="biz.name">
+            </div>
+         </div>
+       }
+
        <!-- Header Info Centered -->
        <div class="flex flex-col items-center text-center mb-6">
           <span class="text-[#083594] font-bold text-[0.7rem] tracking-widest uppercase mb-1">{{ biz.category }}</span>
           
           <div class="flex items-center gap-2 mb-2">
-            <!-- Title classes preserved as requested -->
             <h1 class="text-lg font-bold text-[#1A1C1E] leading-tight">{{ biz.name }}</h1>
-            <!-- Decorative icon/emoji -->
-            <span class="text-xl">
-               @if (biz.isPromoted) {
-                <img src="https://i.ibb.co/4hd1y7m/crown.png" alt="Verified" class="w-4 h-4 object-contain">
+            <div class="flex items-center gap-1">
+               @if (biz.isVerified) {
+                <img src="https://i.ibb.co/WWcqDQbK/cropped-50x50.png" alt="Verified" class="w-4 h-4 object-contain">
                }
-            </span> 
+               @if (biz.isPromoted) {
+                <img src="https://i.ibb.co/4hd1y7m/crown.png" alt="Promoted" class="w-4 h-4 object-contain">
+               }
+            </div>
           </div>
           
           <div class="flex items-center gap-2 text-sm mb-5">
              <ion-icon name="star" class="text-[#FFC107] text-base"></ion-icon>
              <span class="font-bold text-[#1A1C1E]">{{ biz.rating }}</span>
-             <span class="text-gray-400 font-medium">({{ biz.reviewCount }} reviews)</span>
-             <span class="text-gray-300 text-xs mx-1">|</span>
-             <span class="font-bold text-[#1A1C1E]">{{ biz.priceRange || '$$$' }}</span>
+             <span class="text-gray-400 font-medium text-xs">({{ biz.reviewCount }} reviews)</span>
+             
+             <!-- Price Range only for Restaurants -->
+             @if (isRestaurant()) {
+               <span class="text-gray-300 text-xs mx-1">|</span>
+               <span class="font-bold text-[#1A1C1E]">{{ biz.priceRange || '$$$' }}</span>
+             }
           </div>
 
           <!-- Location Badge in Header -->
@@ -62,31 +76,99 @@
        <!-- About Section -->
        <div class="mb-8">
           <h2 class="text-md font-bold text-[#1A1C1E] mb-3">About</h2>
-          <!-- Paragraph classes preserved as requested -->
           <p class="text-sm text-gray-600 leading-relaxed font-normal" [innerHTML]="biz.description"></p>
        </div>
 
-       <!-- Gallery Section (Slidable) -->
+       <!-- Latest Offers Section -->
+       @if (businessOffers().length > 0) {
+         <div>
+            <h2 class="text-md font-bold text-[#1A1C1E] mb-3">Latest Offers</h2>
+            <div 
+              #offerContainer
+              class="flex gap-3 pb-8 -mx-6 px-6 scrollbar-hide snap-x cursor-grab active:cursor-grabbing select-none"
+              [class.overflow-x-auto]="businessOffers().length > 1"
+              (mousedown)="startOfferDrag($event)"
+              (mouseleave)="endOfferDrag()"
+              (mouseup)="endOfferDrag()"
+              (mousemove)="doOfferDrag($event)">
+              
+              @for (offer of businessOffers(); track offer.id) {
+                  <app-offer-card 
+                    [offer]="offer"
+                    class="snap-center block"
+                    [class.min-w-[280px]]="businessOffers().length > 1"
+                    [class.w-[280px]]="businessOffers().length > 1"
+                    [class.w-full]="businessOffers().length === 1"
+                    (click)="handleOfferClick(offer)">
+                  </app-offer-card>
+              }
+            </div>
+         </div>
+       }
+
+       <!-- Events Section -->
+       @if (businessEvents().length > 0) {
+         <div>
+            <h2 class="text-md font-bold text-[#1A1C1E] mb-3">Events</h2>
+            <div 
+              #eventContainer
+              class="flex gap-3 pb-8 -mx-6 px-6 scrollbar-hide snap-x cursor-grab active:cursor-grabbing select-none"
+              [class.overflow-x-auto]="businessEvents().length > 1"
+              (mousedown)="startEventDrag($event)"
+              (mouseleave)="endEventDrag()"
+              (mouseup)="endEventDrag()"
+              (mousemove)="doEventDrag($event)">
+              
+              @for (event of businessEvents(); track event.id) {
+                  <app-event-card 
+                    [event]="event"
+                    class="snap-center block"
+                    [class.min-w-[280px]]="businessEvents().length > 1"
+                    [class.w-[280px]]="businessEvents().length > 1"
+                    [class.w-full]="businessEvents().length === 1"
+                    (click)="handleEventClick(event)">
+                  </app-event-card>
+              }
+            </div>
+         </div>
+       }
+
+       <!-- Menu/Catalog Section (Placed above Gallery) -->
+       @if (biz.menuUrl) {
+         <div class="mb-8">
+            <h2 class="text-md font-bold text-[#1A1C1E] mb-3">{{ isRestaurant() ? 'Menu' : 'Catalog' }}</h2>
+            <button (click)="openMenu()" class="w-full bg-gray-50 rounded-2xl p-3 flex items-center justify-between group active:scale-[0.98] transition-transform">
+               <div class="flex items-center gap-4">
+                  <div class="w-8 h-8 flex items-center justify-center shrink-0 text-[rgb(154,161,173)]">
+                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-6 h-6">
+                        <path opacity="0.4" d="M13.89 2.88014L9.19999 2.14014C5.28999 1.53014 3.47999 2.85014 2.85999 6.76014L2.11999 11.4501C1.71999 14.0101 2.13999 15.6701 3.58999 16.6801C4.34999 17.2201 5.38999 17.5801 6.73999 17.7901L11.43 18.5301C15.34 19.1401 17.15 17.8201 17.77 13.9101L18.5 9.22014C18.62 8.45014 18.67 7.76014 18.63 7.15014C18.5 4.65014 17.03 3.37014 13.89 2.88014ZM8.23999 9.35014C7.06999 9.35014 6.11999 8.40014 6.11999 7.24014C6.11999 6.07014 7.06999 5.12014 8.23999 5.12014C9.39999 5.12014 10.35 6.07014 10.35 7.24014C10.35 8.40014 9.39999 9.35014 8.23999 9.35014Z" fill="currentColor"/>
+                        <path d="M20.4998 13.4699L18.9998 17.9799C17.7498 21.7399 15.7498 22.7399 11.9898 21.4899L7.47984 19.9899C5.20984 19.2399 3.94984 18.1999 3.58984 16.6799C4.34984 17.2199 5.38984 17.5799 6.73984 17.7899L11.4298 18.5299C15.3398 19.1399 17.1498 17.8199 17.7698 13.9099L18.4998 9.2199C18.6198 8.4499 18.6698 7.7599 18.6298 7.1499C21.0198 8.4199 21.5398 10.3399 20.4998 13.4699Z" fill="currentColor"/>
+                        <path d="M10.3501 7.24012C10.3501 8.40012 9.40012 9.35012 8.24012 9.35012C7.07012 9.35012 6.12012 8.40012 6.12012 7.24012C6.12012 6.07012 7.07012 5.12012 8.24012 5.12012C9.40012 5.12012 10.3501 6.07012 10.3501 7.24012Z" fill="currentColor"/>
+                     </svg>
+                  </div>
+                  <div class="text-left">
+                     <span class="block text-sm font-bold text-[#1A1C1E]">{{ isRestaurant() ? 'View Full Menu' : 'View Full Catalog' }}</span>
+                  </div>
+               </div>
+               <div class="w-8 h-8 flex items-center justify-center text-gray-400">
+                  <ion-icon name="chevron-forward" class="text-xl"></ion-icon>
+               </div>
+            </button>
+         </div>
+       }
+
+       <!-- Gallery Section -->
        @if (galleryImages().length > 0) {
         <div class="mb-8 relative group/gallery">
             <div class="flex justify-between items-center mb-3 px-1">
                 <h2 class="text-md font-bold text-[#1A1C1E]">
                     Gallery <span class="text-gray-400 font-medium text-sm ml-1">({{ galleryImages().length }})</span>
                 </h2>
-                
-                <!-- Menu Button Overlay (If URL exists) -->
-                @if (biz.menuUrl) {
-                    <button (click)="openMenu()" class="text-xs font-bold text-[#083594] flex items-center gap-1 active:opacity-70">
-                        <span>View Menu</span>
-                        <ion-icon name="restaurant-outline"></ion-icon>
-                    </button>
-                }
             </div>
 
-            <!-- Horizontal Scroll Container -->
             <div 
               #galleryContainer
-              class="flex overflow-x-auto gap-3 pb-2 -mx-6 px-6 scrollbar-hide snap-x cursor-grab active:cursor-grabbing select-none"
+              class="flex overflow-x-auto gap-3 pb-8 -mx-6 px-6 scrollbar-hide snap-x cursor-grab active:cursor-grabbing select-none"
               (mousedown)="startDrag($event)"
               (mouseleave)="endDrag()"
               (mouseup)="endDrag()"
@@ -115,7 +197,7 @@
          </div>
        }
 
-       <!-- Location Section (Updated with Map) -->
+       <!-- Location Section -->
        @if (biz.location) {
          <div class="mb-8">
             <h2 class="text-md font-bold text-[#1A1C1E] mb-3">Location</h2>
@@ -127,7 +209,6 @@
                    <img src="https://i.ibb.co/hyg73xG/map-placeholder.png" class="w-full h-full object-cover" alt="Map">
                 }
                 
-                <!-- Transparent overlay to intercept clicks -->
                 <div class="absolute inset-0 z-10 bg-transparent"></div>
 
                 <div class="absolute inset-0 flex items-center justify-center pointer-events-none z-20 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -139,21 +220,69 @@
          </div>
        }
 
+       <!-- Contact Information (Grouped Phones/Emails) -->
+       @if ((biz.phones && biz.phones.length > 0) || (biz.emails && biz.emails.length > 0) || biz.website) {
+         <div class="mb-8">
+            <h2 class="text-md font-bold text-[#1A1C1E] mb-3">Contact Information</h2>
+            <div class="bg-gray-50 rounded-2xl p-5 space-y-4">
+               
+               <!-- Phones Group -->
+               @if (biz.phones && biz.phones.length > 0) {
+                 <div class="flex justify-between items-start text-sm">
+                    <div class="flex items-center gap-2 font-bold text-[#1A1C1E] shrink-0 mt-0.5 text-left w-24">
+                        <ion-icon name="call-outline" class="text-lg text-gray-400"></ion-icon>
+                        <span>Phone</span>
+                    </div>
+                    <div class="flex flex-col items-end gap-1.5 flex-1">
+                       @for (phone of biz.phones; track phone) {
+                          <a [href]="'tel:' + phone" class="font-medium text-gray-500 hover:text-[#083594] transition-colors text-right leading-tight">{{ phone }}</a>
+                       }
+                    </div>
+                 </div>
+               }
+               
+               <!-- Emails Group -->
+               @if (biz.emails && biz.emails.length > 0) {
+                 <div class="flex justify-between items-start text-sm">
+                    <div class="flex items-center gap-2 font-bold text-[#1A1C1E] shrink-0 mt-0.5 text-left w-24">
+                        <ion-icon name="mail-outline" class="text-lg text-gray-400"></ion-icon>
+                        <span>Email</span>
+                    </div>
+                    <div class="flex flex-col items-end gap-1.5 flex-1">
+                       @for (email of biz.emails; track email) {
+                          <a [href]="'mailto:' + email" class="font-medium text-gray-500 hover:text-[#083594] transition-colors truncate max-w-[220px] text-right leading-tight">{{ email }}</a>
+                       }
+                    </div>
+                 </div>
+               }
+
+               <!-- Website -->
+               @if (biz.website) {
+                 <div class="flex justify-between items-start text-sm">
+                    <div class="flex items-center gap-2 font-bold text-[#1A1C1E] shrink-0 mt-0.5 text-left w-24">
+                        <ion-icon name="globe-outline" class="text-lg text-gray-400"></ion-icon>
+                        <span>Website</span>
+                    </div>
+                    <div class="pt-0.5">
+                        <a [href]="biz.website" target="_blank" class="font-medium text-gray-500 hover:text-[#083594] transition-colors truncate max-w-[220px] text-right leading-tight block">{{ biz.website }}</a>
+                    </div>
+                 </div>
+               }
+            </div>
+         </div>
+       }
+
     </div>
 
   </ion-content>
 
   <!-- Sticky Footer -->
-  <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 px-5 pt-4 pb-[calc(1.5rem+env(safe-area-inset-bottom))] z-20 shadow-[0_-10px_30px_rgba(0,0,0,0.03)] flex gap-4">
-     <!-- Call Button -->
-     <a [href]="'tel:' + biz.phone" class="w-[3.5rem] h-[3.5rem] rounded-[1.2rem] border border-gray-200 flex items-center justify-center text-[#1A1C1E] active:bg-gray-50 transition-colors shadow-sm">
-        <ion-icon name="call" class="text-xl"></ion-icon>
-     </a>
-     
-     <!-- Reservation Button -->
-     <button class="flex-1 h-[3.5rem] bg-[#083594] text-white font-bold text-[0.95rem] rounded-[1.2rem] shadow-lg shadow-[#083594]/20 flex items-center justify-center gap-2 active:scale-[0.98] transition-transform">
-        <ion-icon name="calendar" class="text-lg"></ion-icon>
-        Make a Reservation
+  <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 px-5 pt-4 pb-[calc(1.5rem+env(safe-area-inset-bottom))] z-20 shadow-[0_-10px_30px_rgba(0,0,0,0.03)]">
+     <button 
+        (click)="handleAction()" 
+        class="w-full h-[3.25rem] bg-[#083594] text-white font-bold text-[0.95rem] rounded-full shadow-lg shadow-[#083594]/20 flex items-center justify-center gap-2.5 active:scale-[0.98] transition-transform">
+        <ion-icon [name]="actionButtonConfig()?.icon || 'call'" class="text-lg"></ion-icon>
+        <span>{{ actionButtonConfig()?.label }}</span>
      </button>
   </div>
 }
@@ -163,20 +292,16 @@
   <ng-template>
      <div class="w-full h-full flex flex-col items-center justify-center relative" (click)="closeLightbox()">
         
-        <!-- Close Button -->
         <button (click)="closeLightbox()" class="absolute top-10 right-5 z-50 w-10 h-10 bg-white/10 rounded-full flex items-center justify-center text-white backdrop-blur-md active:bg-white/20 transition-colors">
            <ion-icon name="close" class="text-2xl"></ion-icon>
         </button>
 
-        <!-- Image -->
         <img [src]="galleryImages()[activeLightboxIndex()]" class="max-w-full max-h-full object-contain transition-all duration-300 shadow-2xl" (click)="$event.stopPropagation()">
 
-        <!-- Image Counter -->
         <div class="absolute bottom-10 left-1/2 -translate-x-1/2 bg-black/40 backdrop-blur-md px-4 py-1.5 rounded-full text-white font-bold text-sm pointer-events-none">
             {{ activeLightboxIndex() + 1 }} / {{ galleryImages().length }}
         </div>
 
-        <!-- Controls -->
         <button (click)="prevImage($event)" class="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/10 rounded-full flex items-center justify-center text-white backdrop-blur-md active:bg-white/20 transition-colors">
             <ion-icon name="chevron-back" class="text-2xl"></ion-icon>
         </button>
@@ -185,5 +310,26 @@
         </button>
 
      </div>
+  </ng-template>
+</ion-modal>
+
+<!-- Menu Modal -->
+<ion-modal [isOpen]="isMenuOpen()" (didDismiss)="closeMenu()">
+  <ng-template>
+    <ion-header class="ion-no-border shadow-sm">
+      <div class="bg-[#083594] nav-overlay-safe pb-2">
+        <ion-toolbar class="bg-transparent text-white" style="--background: transparent; --color: white;">
+          <ion-title class="font-bold text-white text-sm">{{ isRestaurant() ? 'Menu' : 'Catalog' }} - {{ business()?.name }}</ion-title>
+          <ion-buttons slot="end">
+            <ion-button (click)="closeMenu()" class="text-white">
+               <ion-icon name="close" class="text-2xl"></ion-icon>
+            </ion-button>
+          </ion-buttons>
+        </ion-toolbar>
+      </div>
+    </ion-header>
+    <ion-content class="bg-white">
+       <iframe [src]="menuSafeUrl()" class="w-full h-full border-0 block" width="100%" height="100%" style="-webkit-overflow-scrolling: touch;"></iframe>
+    </ion-content>
   </ng-template>
 </ion-modal>

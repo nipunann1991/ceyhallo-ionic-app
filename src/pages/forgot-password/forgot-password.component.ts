@@ -1,6 +1,7 @@
-import { Component, ChangeDetectionStrategy, signal, inject } from '@angular/core';
+
+import { Component, ChangeDetectionStrategy, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { IonicModule, NavController } from '@ionic/angular';
+import { IonicModule, NavController, ToastController } from '@ionic/angular';
 import { AuthService } from '../../services/auth.service';
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -21,16 +22,18 @@ import { FormsModule } from '@angular/forms';
     imports: [CommonModule, IonicModule, RouterLink, FormsModule]
 })
 export class ForgotPasswordComponent {
-    private authService = inject(AuthService);
-    private navCtrl: NavController = inject(NavController);
-    
     // State Management
     isLoading = signal(false);
     errorMessage = signal('');
-    linkSent = signal(false);
+    emailSent = signal(false);
 
-    // User Input
     email = signal('');
+
+    constructor(
+        private authService: AuthService,
+        private navCtrl: NavController,
+        private toastCtrl: ToastController
+    ) {}
 
     async sendResetLink() {
         const emailVal = this.email().trim();
@@ -47,20 +50,26 @@ export class ForgotPasswordComponent {
         
         this.isLoading.set(true);
         this.errorMessage.set('');
-
-        // Call the AuthService to send the official Firebase password reset email
+        
         const result = await this.authService.resetPassword(emailVal);
-        
         this.isLoading.set(false);
-        
+
         if (result.success) {
-            this.linkSent.set(true);
+            this.emailSent.set(true);
+            const toast = await this.toastCtrl.create({
+                message: `Reset link sent to ${emailVal}`,
+                color: 'success',
+                duration: 3000,
+                position: 'top',
+                cssClass: 'toast-custom-text'
+            });
+            await toast.present();
         } else {
-            this.errorMessage.set(result.error || 'Failed to send reset link. Please try again.');
+            this.errorMessage.set(result.error || 'Failed to send reset link.');
         }
     }
 
-    goBackToLogin() {
-      this.navCtrl.navigateBack('/login');
+    goBack() {
+        this.navCtrl.back();
     }
 }

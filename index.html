@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -38,9 +39,15 @@
       font-family: 'Inter', sans-serif;
       --ion-font-family: 'Inter', sans-serif;
     }
+    
+    /* Set base font size to 14.5px globally as requested */
+    html {
+      font-size: 14px;
+    }
+    
     /* Increase base font size on iPhones for better readability and larger touch targets. */
     html.is-iphone {
-      font-size: 15.5px;
+      font-size: 14.5px;
     }
 
     /* --- Common Safe Area Overlay --- */
@@ -95,19 +102,31 @@
       line-height: inherit;
     }
 
-    /* Custom Toast Style to ensure white text */
+    /* Custom Toast Style */
     ion-toast.toast-custom-text {
       --color: #ffffff !important;
       --icon-color: #ffffff !important;
       --button-color: #ffffff !important;
       font-weight: 600 !important;
+
+      /* Override Success Color to #22B43A */
+      --ion-color-success: #22B43A;
+      --ion-color-success-rgb: 34, 180, 58;
+      --ion-color-success-shade: #1e9e33;
+      --ion-color-success-tint: #38bc4e;
     }
+    
     ion-toast.toast-custom-text::part(message) {
       color: #ffffff;
       font-weight: 600;
     }
     ion-toast.toast-custom-text::part(icon) {
       color: #ffffff;
+    }
+
+    /* iOS: Move top toasts down dynamically to avoid Dynamic Island/Notch */
+    html.is-iphone ion-toast.toast-custom-text {
+       transform: translateY(calc(4rem + var(--ion-safe-area-top, 0px)));
     }
   </style>
 <script type="importmap">
@@ -133,10 +152,17 @@
     "firebase/firestore": "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js",
     "@angular/forms": "https://esm.sh/@angular/forms@^21.1.1?external=rxjs",
     "@capacitor/core": "https://esm.sh/@capacitor/core@^8.0.1?external=rxjs",
-    "@capacitor-firebase/messaging": "https://esm.sh/@capacitor-firebase/messaging"
+    "@capacitor-firebase/messaging": "https://esm.sh/@capacitor-firebase/messaging",
+    "@capacitor/app": "https://esm.sh/@capacitor/app@^8.0.0?external=rxjs",
+    "@google/genai": "https://esm.sh/@google/genai@^1.41.0?external=rxjs",
+    "@angular/common/": "https://esm.sh/@angular/common@^21.1.4/",
+    "@ionic/angular/": "https://esm.sh/@ionic/angular@^8.7.17/",
+    "firebase/": "https://esm.sh/firebase@^12.9.0/",
+    "rxjs/": "https://esm.sh/rxjs@^7.8.2/"
   }
 }
 </script>
+<link rel="stylesheet" href="/index.css">
 </head>
 <body class="bg-[#F2F4F7]">
   <app-root></app-root>

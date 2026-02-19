@@ -1,3 +1,4 @@
+
 import { Component, ChangeDetectionStrategy, input, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { IonicModule } from '@ionic/angular';
@@ -18,12 +19,15 @@ import { IonicModule } from '@ionic/angular';
 })
 export class PageHeaderComponent {
   title = input.required<string>();
+  titleSuffix = input<string>('');
   searchPlaceholder = input<string>('Search...');
   searchValue = input<string>('');
   isModal = input<boolean>(false);
+  showSort = input<boolean>(false);
 
   searchChange = output<string>();
   back = output<void>();
+  sort = output<void>();
 
   onSearchInput(ev: any) {
     this.searchChange.emit(ev.target.value || '');
@@ -31,5 +35,9 @@ export class PageHeaderComponent {
 
   onBack() {
     this.back.emit();
+  }
+
+  onSort() {
+    this.sort.emit();
   }
 }

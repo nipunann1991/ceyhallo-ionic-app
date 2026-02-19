@@ -1,3 +1,4 @@
+
 export interface Business {
   id: string;
   name: string;
@@ -6,13 +7,20 @@ export interface Business {
   rating: number;
   reviewCount: number;
   imageUrl: string;
+  logo?: string;
   isPromoted: boolean;
+  isVerified?: boolean;
   description: string;
-  phone: string;
-  email: string;
+  phone: string;       // Primary phone for backward compatibility
+  phones?: string[];   // Multiple phones
+  email: string;       // Primary email for backward compatibility
+  emails?: string[];   // Multiple emails
   website: string;
   priceRange?: string;
   openingHours?: { days: string; time: string; }[];
   gallery?: string[];
   menuUrl?: string;
+  actionType?: string;
+  actionTarget?: string;
+  actionLabel?: string;
 }

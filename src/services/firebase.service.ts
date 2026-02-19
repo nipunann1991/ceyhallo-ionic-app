@@ -1,8 +1,9 @@
+
 import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
-// Ensure Auth module is loaded for side-effects
+// This side-effect import is still a good safety measure to ensure the auth module is registered.
 import 'firebase/auth';
-import { Auth, initializeAuth, getAuth, indexedDBLocalPersistence, browserLocalPersistence } from 'firebase/auth';
-import { getFirestore, Firestore } from 'firebase/firestore';
+import { Auth, initializeAuth, indexedDBLocalPersistence, browserLocalPersistence } from 'firebase/auth';
+import { getFirestore } from 'firebase/firestore';
 
 const firebaseConfig = {
   apiKey: "AIzaSyA9t9nkALn-Y8XobFFCX4YtpE3N8qSPO2Y",
@@ -18,30 +19,12 @@ const firebaseConfig = {
 // Initialize Firebase at the module level.
 const app: FirebaseApp = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 
-// Robust Auth Initialization
-let authInstance: Auth;
-
-try {
-  // Try to initialize with persistence (Preferred for Hybrid/Mobile)
-  authInstance = initializeAuth(app, {
-    persistence: [indexedDBLocalPersistence, browserLocalPersistence]
-  });
-} catch (e: any) {
-  // If already initialized, or if persistence is blocked (e.g. Incognito/Iframes), use getAuth
-  if (e.code === 'auth/already-initialized') {
-    authInstance = getAuth(app);
-  } else {
-    // Fallback for environment restriction errors
-    try {
-        authInstance = getAuth(app);
-    } catch (finalError) {
-        console.error('Firebase Auth Init Error:', finalError);
-        throw finalError;
-    }
-  }
-}
-
-export const auth = authInstance;
+// Use initializeAuth for better control in hybrid environments like Ionic.
+// This allows specifying persistence, which is crucial for a good user experience,
+// ensuring users stay logged in across app sessions.
+export const auth: Auth = initializeAuth(app, {
+  persistence: [indexedDBLocalPersistence, browserLocalPersistence]
+});
 
 // Initialize and export the Firestore instance for use in services.
-export const firestore: Firestore = getFirestore(app);
+export const firestore = getFirestore(app);

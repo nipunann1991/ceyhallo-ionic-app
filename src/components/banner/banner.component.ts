@@ -20,6 +20,9 @@ export class BannerComponent implements OnDestroy {
   scrollContainer = viewChild<ElementRef>('scrollContainer');
   
   activeBannerIndex = signal(0);
+  loadedImages = signal<Set<string>>(new Set());
+  failedImages = signal<Set<string>>(new Set());
+
   private autoSlideInterval: any;
   private isInteracting = false;
 
@@ -44,15 +47,14 @@ export class BannerComponent implements OnDestroy {
   startAutoSlide() {
     this.stopAutoSlide();
     
-    // Only auto-slide if multiple banners exist
-    if (this.banners().length <= 1) return;
-
-    this.autoSlideInterval = setInterval(() => {
-      // Don't auto-slide if user is interacting (touch or mouse drag)
-      if (!this.isInteracting && !this.isDown) {
-        this.nextBanner();
-      }
-    }, 5000);
+    // Only auto-slide if there are multiple banners
+    if (this.banners().length > 1) {
+      this.autoSlideInterval = setInterval(() => {
+        if (!this.isInteracting) {
+          this.nextBanner();
+        }
+      }, 5000); // 5 seconds per slide
+    }
   }
 
   stopAutoSlide() {
@@ -103,6 +105,32 @@ export class BannerComponent implements OnDestroy {
       return;
     }
     this.bannerClick.emit(banner);
+  }
+  
+  onImageLoad(id: string) {
+    this.loadedImages.update(set => {
+      const newSet = new Set(set);
+      newSet.add(id);
+      return newSet;
+    });
+  }
+
+  onImageError(id: string) {
+    this.failedImages.update(set => {
+        const newSet = new Set(set);
+        newSet.add(id);
+        return newSet;
+    });
+    // Mark as loaded so skeleton disappears
+    this.onImageLoad(id);
+  }
+
+  isLoaded(id: string): boolean {
+    return this.loadedImages().has(id);
+  }
+
+  isFailed(id: string): boolean {
+    return this.failedImages().has(id);
   }
   
   // Touch Interaction

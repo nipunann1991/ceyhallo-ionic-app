@@ -1,9 +1,11 @@
-import { Component, ChangeDetectionStrategy, inject, signal, OnInit, computed } from '@angular/core';
+
+import { Component, ChangeDetectionStrategy, signal, OnInit, computed, Signal, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { IonicModule, NavController } from '@ionic/angular';
+import { IonicModule, NavController, ModalController } from '@ionic/angular';
 import { ActivatedRoute } from '@angular/router';
 import { DataService } from '../../services/data.service';
 import { handleImageError } from '../../utils/image.utils';
+import { LegalDocument } from '../../models/legal.model';
 
 @Component({
   selector: 'app-legal',
@@ -12,34 +14,57 @@ import { handleImageError } from '../../utils/image.utils';
   imports: [CommonModule, IonicModule],
 })
 export class LegalPageComponent implements OnInit {
-  private route: ActivatedRoute = inject(ActivatedRoute);
-  private dataService = inject(DataService);
-  private navCtrl: NavController = inject(NavController);
+  @Input() docIdInput?: string;
+  @Input() isModal: boolean = false;
 
   docId = signal<string>('');
-  
-  // Get all legal docs from data service
-  allDocs = this.dataService.getLegalDocs();
+  allDocs: Signal<LegalDocument[]>;
+  document: Signal<(LegalDocument & { title: string }) | null>;
 
-  // Compute the current document based on the route ID
-  document = computed(() => {
-    const id = this.docId();
-    if (!id) return null;
-    return this.allDocs().find(doc => doc.id === id);
-  });
+  constructor(
+    private route: ActivatedRoute,
+    private dataService: DataService,
+    private navCtrl: NavController,
+    private modalCtrl: ModalController
+  ) {
+    this.allDocs = this.dataService.getLegalDocs();
+    
+    this.document = computed(() => {
+        const id = this.docId();
+        if (!id) return null;
+        const doc = this.allDocs().find(doc => doc.id === id);
+        
+        if (!doc) return null;
+    
+        // Strict title mapping as requested
+        let title = doc.title;
+        if (id === 'privacy') title = 'Privacy Policy';
+        if (id === 'terms') title = 'Terms & Conditions';
+    
+        return { ...doc, title };
+    });
+  }
 
   ngOnInit() {
-    this.route.paramMap.subscribe(params => {
-      const id = params.get('id');
-      if (id) {
-        this.docId.set(id);
-      }
-    });
+    if (this.docIdInput) {
+      this.docId.set(this.docIdInput);
+    } else {
+      this.route.paramMap.subscribe(params => {
+        const id = params.get('id');
+        if (id) {
+          this.docId.set(id);
+        }
+      });
+    }
   }
 
   handleImgError = handleImageError;
 
   goBack() {
-    this.navCtrl.back();
+    if (this.isModal) {
+      this.modalCtrl.dismiss();
+    } else {
+      this.navCtrl.navigateBack('/tabs/profile');
+    }
   }
 }

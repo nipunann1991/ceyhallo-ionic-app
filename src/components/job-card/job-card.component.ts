@@ -1,8 +1,10 @@
-import { Component, ChangeDetectionStrategy, input } from '@angular/core';
+
+import { Component, ChangeDetectionStrategy, input, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { IonicModule } from '@ionic/angular';
 import { Job } from '../../models/job.model';
 import { handleImageError } from '../../utils/image.utils';
+import { getRelativeTime } from '../../utils/date.utils';
 
 @Component({
   selector: 'app-job-card',
@@ -16,4 +18,8 @@ import { handleImageError } from '../../utils/image.utils';
 export class JobCardComponent {
   job = input.required<Job>();
   handleImgError = handleImageError;
+
+  formattedTime = computed(() => {
+    return getRelativeTime(this.job().postedDate);
+  });
 }

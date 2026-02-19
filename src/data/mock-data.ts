@@ -1,10 +1,135 @@
 
-
-
-
-
-
 export const MOCK_DATA = {
+  settings: {
+    "app_config": {
+      "showSocialLogin": false,
+      "showAiBot": true,
+      "homeSections": [
+        {
+          "id": "sec_1770482316511",
+          "template": "banners",
+          "dataSource": "banners",
+          "title": "",
+          "subTitle": "",
+          "filterType": "all",
+          "filterValue": "",
+          "limit": 10,
+          "enabled": true,
+          "order": 1,
+          "type": "content_carousel"
+        },
+        {
+          "id": "sec_1770482465754",
+          "template": "categories",
+          "dataSource": "categories",
+          "title": "",
+          "subTitle": "",
+          "filterType": "",
+          "filterValue": "",
+          "limit": 10,
+          "enabled": true,
+          "order": 2,
+          "type": "category_grid"
+        },
+        {
+          "id": "sec_1770482549463",
+          "template": "latest_offers",
+          "dataSource": "offers",
+          "title": "Latest Offers",
+          "subTitle": "(Food)",
+          "filterType": "category",
+          "filterValue": "Food",
+          "limit": 10,
+          "enabled": true,
+          "order": 3,
+          "type": "content_carousel"
+        },
+        {
+          "id": "sec_1770482669748",
+          "template": "featured_businesses",
+          "dataSource": "restaurants",
+          "title": "Featured Restaurants",
+          "subTitle": "",
+          "filterType": "isFeatured",
+          "filterValue": "true",
+          "limit": 10,
+          "enabled": true,
+          "order": 4,
+          "type": "content_carousel"
+        },
+        {
+          "id": "sec_1770481130640",
+          "template": "latest_offers",
+          "dataSource": "offers",
+          "title": "Special Offers",
+          "subTitle": "",
+          "filterType": "category",
+          "filterValue": "Business",
+          "limit": 10,
+          "enabled": true,
+          "order": 5,
+          "type": "content_carousel"
+        },
+        {
+          "id": "sec_1770482837330",
+          "template": "featured_businesses",
+          "dataSource": "businesses",
+          "title": "Featured Businesses",
+          "subTitle": "",
+          "filterType": "isFeatured",
+          "filterValue": "true",
+          "limit": 10,
+          "enabled": true,
+          "order": 6,
+          "type": "content_carousel"
+        },
+        {
+          "id": "sec_1770482395299",
+          "template": "news_feed",
+          "dataSource": "news",
+          "title": "Latest News",
+          "subTitle": "",
+          "filterType": "",
+          "filterValue": "",
+          "limit": 10,
+          "enabled": true,
+          "order": 7,
+          "type": "content_list"
+        }
+      ]
+    }
+  },
+  banners: {
+    "b-1": {
+        "category": "Highlight",
+        "title": "Welcome to CeyHallo",
+        "description": "Your community app for everything Sri Lankan in UAE.",
+        "image": "https://images.unsplash.com/photo-1596422846543-75c6fc197f07?q=80&w=2232&auto=format&fit=crop",
+        "active": true,
+        "order": 1
+    },
+    "b-2": {
+        "category": "Event",
+        "title": "Music Fest 2025",
+        "description": "Get your tickets now for the biggest musical event.",
+        "image": "https://images.unsplash.com/photo-1459749411177-d4a414c9ff86?q=80&w=2670&auto=format&fit=crop",
+        "active": true,
+        "targetId": "evt-1",
+        "targetType": "event",
+        "order": 2
+    },
+    "b-3": {
+        "category": "Food",
+        "title": "Taste of Lanka",
+        "description": "Discover authentic flavors near you.",
+        "image": "https://images.unsplash.com/photo-1601050690597-df0568f70950?q=80&w=2670&auto=format&fit=crop",
+        "active": true,
+        "targetId": "r-001",
+        "targetType": "restaurant",
+        "navigationType": "internal",
+        "order": 3
+    }
+  },
   users: {
     "MOVIjqGHEffplb52Fot4xnOl9Yr2": {
         "id": "MOVIjqGHEffplb52Fot4xnOl9Yr2",
@@ -50,6 +175,77 @@ export const MOCK_DATA = {
       "read": true,
       "type": "info",
       "link": "/jobs"
+    }
+  },
+  offers: {
+    "off-1": {
+        "title": "Weekend Special",
+        "businessName": "Colombo Bites",
+        "discount": "20% OFF",
+        "description": "Get 20% off on all short eats this weekend.",
+        "image": "https://images.unsplash.com/photo-1626804475297-411d0c1737e2?q=80&w=800&auto=format&fit=crop",
+        "expiryDate": "2025-12-31T23:59:59Z",
+        "businessId": "r-001",
+        "color": "#FEF2F2",
+        "isSectionBanner": true,
+        "linkType": "restaurants",
+        "isHomeBanner": true,
+        "isActive": true
+    },
+    "off-1-b": {
+        "title": "Seafood Night",
+        "businessName": "Ceylonka",
+        "discount": "30% OFF",
+        "description": "Fresh catch prepared your way. Reserve now!",
+        "image": "https://images.unsplash.com/photo-1559339352-11d035aa65de?q=80&w=800&auto=format&fit=crop",
+        "expiryDate": "2025-12-31T23:59:59Z",
+        "businessId": "r-002",
+        "color": "#EFF6FF",
+        "isSectionBanner": true,
+        "linkType": "restaurants",
+        "isHomeBanner": false,
+        "isActive": true
+    },
+    "off-2": {
+        "title": "Deep Clean Promo",
+        "businessName": "Sparkle Solutions",
+        "discount": "AED 50 OFF",
+        "description": "Save AED 50 on your first deep cleaning service.",
+        "image": "https://images.unsplash.com/photo-1581578731117-104f2a412727?q=80&w=800&auto=format&fit=crop",
+        "expiryDate": "2025-11-30T23:59:59Z",
+        "businessId": "biz-001",
+        "color": "#F0F9FF",
+        "isSectionBanner": true,
+        "linkType": "businesses",
+        "isHomeBanner": true,
+        "isActive": true
+    },
+    "off-2-b": {
+        "title": "Global Shipping",
+        "businessName": "Island Logistics",
+        "discount": "15% OFF",
+        "description": "Discount on sea freight to Sri Lanka.",
+        "image": "https://images.unsplash.com/photo-1494412651409-ae1e3ad26160?q=80&w=2670&auto=format&fit=crop",
+        "expiryDate": "2025-11-30T23:59:59Z",
+        "businessId": "biz-002",
+        "color": "#FFFBEB",
+        "isSectionBanner": true,
+        "linkType": "businesses",
+        "isHomeBanner": false,
+        "isActive": true
+    },
+    "off-3": {
+        "title": "Family Feast",
+        "businessName": "Ceylonka",
+        "discount": "Buy 1 Get 1",
+        "description": "Buy one main course and get another for free.",
+        "image": "https://images.unsplash.com/photo-1559339352-11d035aa65de?q=80&w=800&auto=format&fit=crop",
+        "expiryDate": "2025-10-15T23:59:59Z",
+        "businessId": "r-002",
+        "color": "#FFFBEB",
+        "isHomeBanner": true,
+        "linkType": "restaurants",
+        "isActive": true
     }
   },
   news: {
@@ -100,7 +296,8 @@ export const MOCK_DATA = {
       "tags": ["Cocktails", "Snacks"],
       "isFeatured": true,
       "isVerified": true,
-      "isPremium": true
+      "isPremium": true,
+      "isPublished": true
     },
     "r-002": {
       "title": "Ceylonka Fine Dining",
@@ -123,7 +320,8 @@ export const MOCK_DATA = {
         "https://images.unsplash.com/photo-1559339352-11d035aa65de?q=80&w=800&auto=format&fit=crop",
         "https://images.unsplash.com/photo-1544148103-0773bf10d330?q=80&w=800&auto=format&fit=crop",
         "https://images.unsplash.com/photo-1550966871-3ed3c47e2ce2?q=80&w=800&auto=format&fit=crop"
-      ]
+      ],
+      "isPublished": true
     },
     "r-003": {
       "title": "Lanka Plate Street Food",
@@ -136,7 +334,8 @@ export const MOCK_DATA = {
       "imageUrl": "https://images.unsplash.com/photo-1504674900247-0877df9cc836?q=80&w=2670&auto=format&fit=crop",
       "tags": ["Street Food", "Spicy"],
       "isFeatured": true,
-      "isVerified": true
+      "isVerified": true,
+      "isPublished": true
     },
     "r-004": {
       "title": "Abu Dhabi Hopper House",
@@ -149,7 +348,8 @@ export const MOCK_DATA = {
       "imageUrl": "https://images.unsplash.com/photo-1601050690597-df0568f70950?q=80&w=2670&auto=format&fit=crop",
       "tags": ["Hoppers", "Breakfast"],
       "isFeatured": false,
-      "isVerified": false
+      "isVerified": false,
+      "isPublished": true
     },
     "r-005": {
       "title": "Kandy Express",
@@ -162,7 +362,8 @@ export const MOCK_DATA = {
       "imageUrl": "https://images.unsplash.com/photo-1625398407796-b3a6cd6d8170?q=80&w=2670&auto=format&fit=crop",
       "tags": ["Fast Food", "Kottu"],
       "isFeatured": false,
-      "isVerified": false
+      "isVerified": false,
+      "isPublished": true
     },
     "r-006": {
       "title": "The Cinnamon Room",
@@ -175,7 +376,8 @@ export const MOCK_DATA = {
       "imageUrl": "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?q=80&w=2670&auto=format&fit=crop",
       "tags": ["Spices", "Dinner"],
       "isFeatured": true,
-      "isVerified": true
+      "isVerified": true,
+      "isPublished": true
     },
     "r-007": {
       "title": "RAK Kottu Station",
@@ -188,7 +390,8 @@ export const MOCK_DATA = {
       "imageUrl": "https://images.unsplash.com/photo-1606471191009-63994c53433b?q=80&w=2574&auto=format&fit=crop",
       "tags": ["Kottu", "Cheese"],
       "isFeatured": false,
-      "isVerified": false
+      "isVerified": false,
+      "isPublished": true
     },
     "r-008": {
       "title": "Ajman Seafood Hut",
@@ -201,7 +404,8 @@ export const MOCK_DATA = {
       "imageUrl": "https://images.unsplash.com/photo-1599084993091-1cb5c0721cc6?q=80&w=2670&auto=format&fit=crop",
       "tags": ["Seafood", "Fresh"],
       "isFeatured": false,
-      "isVerified": true
+      "isVerified": true,
+      "isPublished": true
     },
     "r-009": {
       "title": "Fujairah Flavours",
@@ -214,7 +418,8 @@ export const MOCK_DATA = {
       "imageUrl": "https://images.unsplash.com/photo-1559339352-11d035aa65de?q=80&w=2574&auto=format&fit=crop",
       "tags": ["Buffet", "Family"],
       "isFeatured": false,
-      "isVerified": false
+      "isVerified": false,
+      "isPublished": true
     },
     "r-010": {
       "title": "Sharjah Lamprais Corner",
@@ -227,7 +432,8 @@ export const MOCK_DATA = {
       "imageUrl": "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?q=80&w=2581&auto=format&fit=crop",
       "tags": ["Lamprais", "Lunch"],
       "isFeatured": true,
-      "isVerified": true
+      "isVerified": true,
+      "isPublished": true
     },
     "r-011": {
       "title": "Mangrove Deck",
@@ -240,7 +446,8 @@ export const MOCK_DATA = {
       "imageUrl": "https://images.unsplash.com/photo-1515669097368-22e6f156953c?q=80&w=2670&auto=format&fit=crop",
       "tags": ["View", "Outdoor"],
       "isFeatured": false,
-      "isVerified": true
+      "isVerified": true,
+      "isPublished": true
     },
     "r-012": {
       "title": "East Coast Grill",
@@ -253,7 +460,8 @@ export const MOCK_DATA = {
       "imageUrl": "https://images.unsplash.com/photo-1533777857889-4be7c70b33f7?q=80&w=2670&auto=format&fit=crop",
       "tags": ["BBQ", "Family"],
       "isFeatured": true,
-      "isVerified": true
+      "isVerified": true,
+      "isPublished": true
     }
   },
   businesses: {
@@ -268,7 +476,8 @@ export const MOCK_DATA = {
       "description": "Sparkle Solutions brings you premium residential and commercial cleaning services. Our team is fully trained, background-checked, and dedicated to making your space shine. We use eco-friendly products and state-of-the-art equipment.",
       "phone": "+971 50 123 4567",
       "email": "hello@sparklesolutions.ae",
-      "website": "www.sparklesolutions.ae"
+      "website": "www.sparklesolutions.ae",
+      "isPublished": true
     },
     "biz-002": {
       "name": "Island Logistics",
@@ -281,7 +490,8 @@ export const MOCK_DATA = {
       "description": "Reliable and fast shipping solutions for all your logistics needs. We specialize in international freight forwarding, warehousing, and last-mile delivery. Your cargo is safe with us.",
       "phone": "+971 4 888 9999",
       "email": "support@islandlogistics.com",
-      "website": "www.islandlogistics.com"
+      "website": "www.islandlogistics.com",
+      "isPublished": true
     },
     "biz-1": {
         "title": "Super Cleaners",
@@ -296,241 +506,114 @@ export const MOCK_DATA = {
         "description": "Super Cleaners is a top-rated cleaning service in Dubai. We offer deep cleaning, sofa cleaning, and carpet shampooing services at affordable rates. Satisfaction guaranteed.",
         "phone": "+971 55 987 6543",
         "email": "contact@supercleaners.ae",
-        "website": "www.supercleaners.ae"
+        "website": "www.supercleaners.ae",
+        "isPublished": true
      }
   },
-  banners: {
-    "banner-001": {
-      "category": "COMMUNITY",
-      "title": "Uniting Sri Lankans",
-      "description": "CeyHallo proudly brings together Sri Lankans living across the UAE and Qatar...",
-      "image": "https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?q=80&w=2613&auto=format&fit=crop",
-      "active": true
+  organizations: {
+    "org-1": {
+      "name": "Sri Lankan Welfare Association",
+      "category": "Community",
+      "location": "Bur Dubai, Dubai",
+      "rating": 4.9,
+      "reviewCount": 150,
+      "imageUrl": "https://images.unsplash.com/photo-1559027615-cd4628902d4a?q=80&w=2674&auto=format&fit=crop",
+      "isPromoted": true,
+      "description": "Supporting the community through various welfare programs and events.",
+      "phone": "+971 4 333 4444",
+      "email": "info@slwa.ae",
+      "website": "www.slwa.ae",
+      "menuUrl": "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
+      "isPublished": true
     },
-    "banner-002": {
-      "category": "EVENTS",
-      "title": "Dubai Expo City Return",
-      "description": "Experience the magic again as Expo City opens its doors for the winter season.",
-      "image": "https://images.unsplash.com/photo-1546412414-e1885259563a?q=80&w=2574&auto=format&fit=crop",
-      "active": true
-    }
-  },
-  countries: {
-    "AE": {
-      "name": "United Arab Emirates",
-      "flagUrl": "https://flagcdn.com/w80/ae.png",
-      "cities": [
-        { "code": "DXB", "name": "Dubai" },
-        { "code": "AUH", "name": "Abu Dhabi" },
-        { "code": "SHJ", "name": "Sharjah" },
-        { "code": "AJM", "name": "Ajman" },
-        { "code": "UAQ", "name": "Umm Al Quwain" },
-        { "code": "RAK", "name": "Ras Al Khaimah" },
-        { "code": "FUJ", "name": "Fujairah" }
-      ]
-    },
-    "QA": {
-      "name": "Qatar",
-      "flagUrl": "https://flagcdn.com/w80/qa.png",
-      "cities": [
-        { "code": "DOH", "name": "Doha" },
-        { "code": "RAY", "name": "Al Rayyan" }
-      ]
-    },
-    "LK": {
-      "name": "Sri Lanka",
-      "flagUrl": "https://flagcdn.com/w80/lk.png",
-      "cities": [
-        { "code": "CMB", "name": "Colombo" },
-        { "code": "KCY", "name": "Kandy" }
-      ]
-    }
-  },
-  categories: {
-    "cat-0": {
-      "id": "cat-0",
-      "label": "News",
-      "icon": "https://cdn-icons-png.flaticon.com/512/2965/2965879.png",
-      "tab": "news",
-      "order": 0,
-      "hasNotification": true
-    },
-    "cat-1": {
-      "id": "cat-1",
-      "label": "Jobs",
-      "icon": "https://cdn-icons-png.flaticon.com/512/942/942748.png",
-      "tab": "jobs",
-      "order": 1,
-      "hasNotification": false
-    },
-    "cat-2": {
-      "id": "cat-2",
-      "label": "Restaurants",
-      "icon": "https://picsum.photos/51",
-      "tab": "restaurants",
-      "order": 2,
-      "hasNotification": false
-    },
-    "cat-3": {
-      "id": "cat-3",
-      "label": "Businesses",
-      "icon": "https://cdn-icons-png.flaticon.com/512/3201/3201479.png",
-      "tab": "businesses",
-      "order": 3,
-      "hasNotification": false
-    },
-    "cat-4": {
-      "id": "cat-4",
-      "label": "Events",
-      "icon": "https://cdn-icons-png.flaticon.com/512/2602/2602414.png",
-      "tab": "events",
-      "order": 4,
-      "hasNotification": true
+    "org-2": {
+      "name": "Lanka Lions Sports Club",
+      "category": "Sports",
+      "location": "Sharjah",
+      "rating": 4.7,
+      "reviewCount": 85,
+      "imageUrl": "https://images.unsplash.com/photo-1526232761682-d26e03ac148e?q=80&w=2629&auto=format&fit=crop",
+      "isPromoted": false,
+      "description": "Promoting sportsmanship and athletic excellence among Sri Lankans in UAE.",
+      "phone": "+971 6 555 6666",
+      "email": "sports@lankalions.ae",
+      "website": "www.lankalions.ae",
+      "isPublished": true
     }
   },
   events: {
-    "event-seed-001": {
-      "title": "Community BBQ at the Park",
-      "description": "Join us for a fun-filled day with food, music, and games at Zabeel Park. A great chance to meet new people!",
-      "fullDate": "25 December 2024",
-      "startTime": "12:00",
-      "endTime": "18:00",
-      "allDayEvent": false,
-      "location": "Zabeel Park, Gate 4, Dubai",
-      "imageUrl": "https://images.unsplash.com/photo-1504754524776-8f4f37790774?q=80&w=2670&auto=format&fit=crop",
-      "organizer": "CeyHallo Community",
-      "category": "Social",
-      "isFeatured": true,
-      "isPublished": true,
-      "countryCode": "AE",
-      "cityCode": "DXB",
-      "publishedDate": "2024-10-01T10:00:00Z",
-      "createdDate": "2024-09-28T10:00:00Z"
+    "evt-1": {
+        "title": "Community BBQ",
+        "description": "Join us for a fun weekend BBQ with the community.",
+        "content": "<p>Full details about the BBQ event.</p>",
+        "imageUrl": "https://images.unsplash.com/photo-1555244162-803834f70033?q=80&w=2670&auto=format&fit=crop",
+        "date": "2024-11-15T16:00:00Z",
+        "location": "Zabeel Park, Dubai",
+        "category": "Social",
+        "organizer": "Sri Lankan Welfare Association",
+        "organizerId": "org-1",
+        "isFeatured": true,
+        "isPublished": true,
+        "gallery": [
+            "https://images.unsplash.com/photo-1555244162-803834f70033?q=80&w=800&auto=format&fit=crop",
+            "https://images.unsplash.com/photo-1529124781585-e35f5f43152c?q=80&w=800&auto=format&fit=crop",
+            "https://images.unsplash.com/photo-1533777324565-a040eb52facd?q=80&w=800&auto=format&fit=crop"
+        ]
     },
-    "event-seed-002": {
-      "title": "Business Networking Gala",
-      "description": "Connect with professionals and entrepreneurs from the Sri Lankan community in the UAE. Keynote speakers and dinner.",
-      "fullDate": "30 November 2024",
-      "startTime": "19:30",
-      "endTime": "23:00",
-      "allDayEvent": false,
-      "location": "Armani Hotel, Burj Khalifa, Dubai",
-      "imageUrl": "https://images.unsplash.com/photo-1528605248644-14dd04022da1?q=80&w=2670&auto=format&fit=crop",
-      "organizer": "SL Business Council",
-      "category": "Business",
-      "isFeatured": true,
-      "isPublished": true,
-      "countryCode": "AE",
-      "cityCode": "DXB",
-      "publishedDate": "2024-10-15T10:00:00Z",
-      "createdDate": "2024-10-12T10:00:00Z"
-    },
-    "event-seed-003": {
-      "title": "Community Sports Day",
-      "description": "A fun-filled day of sports and activities for the whole family. Cricket, volleyball, and more!",
-      "fullDate": "07 December 2024",
-      "startTime": "09:00",
-      "endTime": "17:00",
-      "allDayEvent": false,
-      "location": "Sharjah Cricket Stadium, Sharjah",
-      "imageUrl": "https://images.unsplash.com/photo-1579952363873-27f3bade9f55?q=80&w=2570&auto=format&fit=crop",
-      "organizer": "Community Group",
-      "category": "Sports",
-      "isFeatured": false,
-      "isPublished": true,
-      "countryCode": "AE",
-      "cityCode": "SHJ",
-      "publishedDate": "2024-10-20T10:00:00Z",
-      "createdDate": "2024-10-18T10:00:00Z"
+    "evt-2": {
+        "title": "Tech Talk: AI Future",
+        "description": "Discussing the future of AI in business.",
+        "content": "<p>Join industry leaders for a discussion on AI.</p>",
+        "imageUrl": "https://images.unsplash.com/photo-1544531586-fde5298cdd40?q=80&w=2670&auto=format&fit=crop",
+        "date": "2024-12-01T10:00:00Z",
+        "location": "DIFC, Dubai",
+        "category": "Technology",
+        "organizer": "Tech UAE",
+        "isFeatured": false,
+        "isPublished": true
     }
   },
   jobs: {
     "job-1": {
-      "title": "Senior Frontend Developer",
-      "company": "Innovate Solutions Inc.",
-      "companyLogo": "https://cdn.dribbble.com/users/1061323/screenshots/11186120/media/f95157b8561c28c6e088562a1b5518a4.png?compress=1&resize=400x300",
-      "location": "Dubai, UAE",
-      "jobType": "Full-time",
-      "salaryRange": "AED 15,000 - 20,000 / month",
-      "postedDate": "2025-10-28T00:00:00Z",
-      "isFeatured": true,
-      "description": "We are seeking a highly skilled Senior Frontend Developer to join our dynamic team in Dubai. The ideal candidate will have extensive experience with React, TypeScript, and modern frontend build pipelines. You will be responsible for developing and maintaining high-quality web applications, collaborating with cross-functional teams to define, design, and ship new features.",
-      "responsibilities": [
-        "Develop new user-facing features using React.js",
-        "Build reusable components and front-end libraries for future use",
-        "Translate designs and wireframes into high-quality code",
-        "Optimize components for maximum performance across a vast array of web-capable devices and browsers"
-      ],
-      "qualifications": [
-        "5+ years of professional experience in frontend development.",
-        "Strong proficiency in JavaScript, including DOM manipulation and the JavaScript object model.",
-        "Thorough understanding of React.js and its core principles.",
-        "Experience with popular React.js workflows (such as Flux or Redux).",
-        "Familiarity with RESTful APIs."
-      ],
-      "skills": ["React", "TypeScript", "Redux", "Webpack", "CSS-in-JS", "Jest"],
-      "countryCode": "AE",
-      "cityCode": "DXB"
+        "title": "Senior Frontend Developer",
+        "company": "Tech Solutions",
+        "companyLogo": "https://ui-avatars.com/api/?name=TS&background=random",
+        "location": "Dubai Internet City",
+        "jobType": "Full-time",
+        "salaryRange": "AED 15k - 20k",
+        "postedDate": "2024-10-25T09:00:00Z",
+        "isFeatured": true,
+        "description": "<p>We are looking for an experienced Angular developer.</p>",
+        "responsibilities": ["Develop UI components", "Optimize performance"],
+        "qualifications": ["5+ years experience", "Expert in Angular"],
+        "skills": ["Angular", "TypeScript", "Tailwind"],
+        "isPublished": true
     },
     "job-2": {
-      "title": "Digital Marketing Manager",
-      "company": "Creative Hub",
-      "companyLogo": "https://cdn.dribbble.com/users/1615584/screenshots/14015462/media/4c6a6a49191054b02341235157158376.jpg?compress=1&resize=400x300",
-      "location": "Abu Dhabi, UAE",
-      "jobType": "Full-time",
-      "salaryRange": "AED 12,000 - 16,000 / month",
-      "postedDate": "2025-10-25T00:00:00Z",
-      "isFeatured": false,
-      "description": "Creative Hub is looking for an experienced Digital Marketing Manager to develop, implement, track and optimize our digital marketing campaigns across all digital channels.",
-      "responsibilities": [
-        "Plan and execute all digital marketing, including SEO/SEM, marketing database, email, social media and display advertising campaigns",
-        "Measure and report performance of all digital marketing campaigns",
-        "Identify trends and insights, and optimize spend and performance based on the insights"
-      ],
-      "qualifications": [
-        "BS/MS degree in marketing or a related field",
-        "Proven working experience in digital marketing",
-        "Demonstrable experience leading and managing SEO/SEM, marketing database, email, social media and/or display advertising campaigns"
-      ],
-      "skills": ["SEO", "SEM", "Google Analytics", "Social Media Marketing", "Content Marketing"],
-      "countryCode": "AE",
-      "cityCode": "AUH"
-    },
-    "job-3": {
-      "title": "UI/UX Designer",
-      "company": "Pixel Perfect Designs",
-      "companyLogo": "https://cdn.dribbble.com/users/385418/screenshots/11192511/media/07f4a2185295b75b85558197931327c6.png?compress=1&resize=400x300",
-      "location": "Sharjah, UAE",
-      "jobType": "Part-time",
-      "salaryRange": "AED 8,000 - 10,000 / month",
-      "postedDate": "2025-10-22T00:00:00Z",
-      "isFeatured": false,
-      "description": "We are looking for a talented UI/UX Designer to create amazing user experiences. The ideal candidate should have an eye for clean and artful design, possess superior UI skills and be able to translate high-level requirements into interaction flows and artifacts, and transform them into beautiful, intuitive, and functional user interfaces.",
-      "responsibilities": [
-        "Collaborate with product management and engineering to define and implement innovative solutions for the product direction, visuals and experience",
-        "Execute all visual design stages from concept to final hand-off to engineering",
-        "Create wireframes, storyboards, user flows, process flows and site maps to effectively communicate interaction and design ideas"
-      ],
-      "qualifications": [
-        "Proven UI experience with a strong portfolio",
-        "Solid experience in creating wireframes, storyboards, user flows, process flows and site maps",
-        "Proficiency in Figma, Sketch, Photoshop, Illustrator, or other visual design and wire-framing tools"
-      ],
-      "skills": ["Figma", "Sketch", "Adobe XD", "Prototyping", "User Research"],
-      "countryCode": "AE",
-      "cityCode": "SHJ"
+        "title": "Marketing Manager",
+        "company": "Brand Boost",
+        "companyLogo": "https://ui-avatars.com/api/?name=BB&background=random",
+        "location": "Business Bay, Dubai",
+        "jobType": "Full-time",
+        "postedDate": "2024-10-20T10:00:00Z",
+        "isFeatured": false,
+        "description": "<p>Lead our marketing team.</p>",
+        "responsibilities": ["Manage campaigns", "Analyze data"],
+        "qualifications": ["Marketing degree", "3 years experience"],
+        "skills": ["SEO", "Social Media", "Analytics"],
+        "isPublished": true
     }
   },
   legal: {
     "privacy": {
       "title": "Privacy Policy",
-      "content": "<h2>1. Introduction</h2><p>Welcome to CeyHallo. We value your privacy and are committed to protecting your personal data. This Privacy Policy explains how we collect, use, and safeguard your information when you use our app.</p><h2>2. Information We Collect</h2><p>We collect information that you provide directly to us, such as when you create an account, update your profile, or communicate with us. This may include your name, email address, and profile picture.</p><h2>3. How We Use Your Information</h2><p>We use the information we collect to provide, maintain, and improve our services, to develop new features, and to protect CeyHallo and our users.</p><h2>4. Contact Us</h2><p>If you have any questions about this Privacy Policy, please contact us at support@ceyhallo.com.</p>",
-      "lastUpdated": "2024-10-01T00:00:00Z"
+      "content": "<h2>1. Introduction</h2><p>Welcome to CeyHallo. We respect your privacy and are committed to protecting your personal data. This privacy policy will inform you as to how we look after your personal data when you visit our website (regardless of where you visit it from) and tell you about your privacy rights and how the law protects you.</p><h2>2. Important Information and Who We Are</h2><h3>Controller</h3><p>CeyHallo is the controller and responsible for your personal data.</p><h3>Contact Details</h3><p>If you have any questions about this privacy policy or our privacy practices, please contact us at support@ceyhallo.com.</p><h2>3. The Data We Collect About You</h2><p>We may collect, use, store and transfer different kinds of personal data about you which we have grouped together as follows:</p><ul><li><strong>Identity Data:</strong> includes first name, last name, username or similar identifier.</li><li><strong>Contact Data:</strong> includes email address and telephone numbers.</li><li><strong>Technical Data:</strong> includes internet protocol (IP) address, your login data, browser type and version, time zone setting and location, browser plug-in types and versions, operating system and platform, and other technology on the devices you use to access this website.</li><li><strong>Profile Data:</strong> includes your username and password, purchases or orders made by you, your interests, preferences, feedback and survey responses.</li><li><strong>Usage Data:</strong> includes information about how you use our website, products and services.</li></ul><h2>4. How We Use Your Personal Data</h2><p>We will only use your personal data when the law allows us to. Most commonly, we will use your personal data in the following circumstances:</p><ul><li>Where we need to perform the contract we are about to enter into or have entered into with you.</li><li>Where it is necessary for our legitimate interests (or those of a third party) and your interests and fundamental rights do not override those interests.</li><li>Where we need to comply with a legal obligation.</li></ul><h2>5. Data Security</h2><p>We have put in place appropriate security measures to prevent your personal data from being accidentally lost, used or accessed in an unauthorized way, altered or disclosed. In addition, we limit access to your personal data to those employees, agents, contractors and other third parties who have a business need to know.</p><h2>6. Data Retention</h2><p>We will only retain your personal data for as long as reasonably necessary to fulfill the purposes we collected it for, including for the purposes of satisfying any legal, regulatory, tax, accounting or reporting requirements.</p>",
+      "lastUpdated": "2024-10-26T00:00:00Z"
     },
     "terms": {
       "title": "Terms & Conditions",
-      "content": "<h2>1. Acceptance of Terms</h2><p>By accessing or using the CeyHallo app, you agree to be bound by these Terms & Conditions. If you do not agree, please do not use the app.</p><h2>2. User Accounts</h2><p>You are responsible for safeguarding your account information and for any activity that occurs under your account. You agree to notify us immediately of any unauthorized use.</p><h2>3. Prohibited Conduct</h2><p>You agree not to use the app for any illegal or unauthorized purpose, including but not limited to violating intellectual property rights or transmitting harmful code.</p><h2>4. Termination</h2><p>We reserve the right to suspend or terminate your account at our sole discretion, without notice, for conduct that we believe violates these Terms.</p>",
-      "lastUpdated": "2024-10-01T00:00:00Z"
+      "content": "<h2>1. Agreement to Terms</h2><p>These Terms of Use constitute a legally binding agreement made between you, whether personally or on behalf of an entity (“you”) and CeyHallo (“we,” “us” or “our”), concerning your access to and use of the CeyHallo application as well as any other media form, media channel, mobile website or mobile application related, linked, or otherwise connected thereto (collectively, the “Site”).</p><h2>2. Intellectual Property Rights</h2><p>Unless otherwise indicated, the Site is our proprietary property and all source code, databases, functionality, software, website designs, audio, video, text, photographs, and graphics on the Site (collectively, the “Content”) and the trademarks, service marks, and logos contained therein (the “Marks”) are owned or controlled by us or licensed to us, and are protected by copyright and trademark laws and various other intellectual property rights.</p><h2>3. User Representations</h2><p>By using the Site, you represent and warrant that:</p><ul><li>All registration information you submit will be true, accurate, current, and complete.</li><li>You will maintain the accuracy of such information and promptly update such registration information as necessary.</li><li>You have the legal capacity and you agree to comply with these Terms of Use.</li><li>You are not a minor in the jurisdiction in which you reside.</li><li>You will not access the Site through automated or non-human means, whether through a bot, script or otherwise.</li><li>You will not use the Site for any illegal or unauthorized purpose.</li></ul><h2>4. Prohibited Activities</h2><p>You may not access or use the Site for any purpose other than that for which we make the Site available. The Site may not be used in connection with any commercial endeavors except those that are specifically endorsed or approved by us.</p><h2>5. User Generated Contributions</h2><p>The Site may invite you to chat, contribute to, or participate in blogs, message boards, online forums, and other functionality, and may provide you with the opportunity to create, submit, post, display, transmit, perform, publish, distribute, or broadcast content and materials to us or on the Site, including but not limited to text, writings, video, audio, photographs, graphics, comments, suggestions, or personal information or other material (collectively, \"Contributions\"). Contributions may be viewable by other users of the Site and the Marketplace and through third-party websites.</p><h2>6. Contribution License</h2><p>By posting your Contributions to any part of the Site, you automatically grant, and you represent and warrant that you have the right to grant, to us an unrestricted, unlimited, irrevocable, perpetual, non-exclusive, transferable, royalty-free, fully-paid, worldwide right, and license to host, use, copy, reproduce, disclose, sell, resell, publish, broadcast, retitle, archive, store, cache, publicly perform, publicly display, reformat, translate, transmit, excerpt (in whole or in part), and distribute such Contributions.</p><h2>7. Term and Termination</h2><p>These Terms of Use shall remain in full force and effect while you use the Site. WITHOUT LIMITING ANY OTHER PROVISION OF THESE TERMS OF USE, WE RESERVE THE RIGHT TO, IN OUR SOLE DISCRETION AND WITHOUT NOTICE OR LIABILITY, DENY ACCESS TO AND USE OF THE SITE (INCLUDING BLOCKING CERTAIN IP ADDRESSES), TO ANY PERSON FOR ANY REASON OR FOR NO REASON, INCLUDING WITHOUT LIMITATION FOR BREACH OF ANY REPRESENTATION, WARRANTY, OR COVENANT CONTAINED IN THESE TERMS OF USE OR OF ANY APPLICABLE LAW OR REGULATION.</p>",
+      "lastUpdated": "2024-10-26T00:00:00Z"
     }
   },
   support: {

@@ -1,4 +1,5 @@
-import { Component, ChangeDetectionStrategy, inject, signal } from '@angular/core';
+
+import { Component, ChangeDetectionStrategy, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { IonicModule, NavController, ToastController } from '@ionic/angular';
 import { AuthService } from '../../services/auth.service';
@@ -11,17 +12,19 @@ import { FormsModule } from '@angular/forms';
   imports: [CommonModule, IonicModule, FormsModule],
 })
 export class ChangePasswordComponent {
-  private authService = inject(AuthService);
-  private navCtrl: NavController = inject(NavController);
-  private toastCtrl: ToastController = inject(ToastController);
-
   oldPassword = signal('');
   newPassword = signal('');
   confirmPassword = signal('');
   isLoading = signal(false);
 
+  constructor(
+    private authService: AuthService,
+    private navCtrl: NavController,
+    private toastCtrl: ToastController
+  ) {}
+
   goBack() {
-    this.navCtrl.back();
+    this.navCtrl.navigateBack('/tabs/profile');
   }
 
   async save() {
@@ -47,7 +50,7 @@ export class ChangePasswordComponent {
 
     if (result.success) {
       await this.showToast('Password changed successfully', 'success');
-      this.navCtrl.back();
+      this.navCtrl.navigateBack('/tabs/profile');
     } else {
       await this.showToast(result.error || 'Failed to change password', 'danger');
     }

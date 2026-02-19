@@ -1,4 +1,5 @@
-import { Component, ChangeDetectionStrategy, inject, computed } from '@angular/core';
+
+import { Component, ChangeDetectionStrategy, computed, Signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { IonicModule, AlertController, ToastController } from '@ionic/angular';
 import { AuthService } from '../../services/auth.service';
@@ -27,26 +28,30 @@ import { DataService } from '../../services/data.service';
   imports: [CommonModule, IonicModule, RouterLink],
 })
 export class ProfileComponent {
-  authService = inject(AuthService);
-  private dataService = inject(DataService);
-  private alertCtrl: AlertController = inject(AlertController);
-  private toastCtrl: ToastController = inject(ToastController);
+  user: Signal<any>;
 
-  user = computed(() => {
-    // Prefer extended profile from Firestore, fallback to Auth
-    const profile = this.authService.userProfile();
-    const firebaseUser = this.authService.currentUser();
-    const countries = this.dataService.getCountries()(); // FIX: Call signal to get array value
-    const country = countries.find(c => c.id === profile?.region);
-    
-    return {
-      name: profile?.name || firebaseUser?.displayName || 'User',
-      city: profile?.city || '',
-      isVerified: profile?.isVerified ?? firebaseUser?.emailVerified,
-      avatar: profile?.photoURL || firebaseUser?.photoURL || `https://i.pravatar.cc/300?u=${profile?.email || 'user'}`,
-      flagUrl: country?.flagUrl || ''
-    };
-  });
+  constructor(
+    public authService: AuthService,
+    private dataService: DataService,
+    private alertCtrl: AlertController,
+    private toastCtrl: ToastController
+  ) {
+    this.user = computed(() => {
+        // Prefer extended profile from Firestore, fallback to Auth
+        const profile = this.authService.userProfile();
+        const firebaseUser = this.authService.currentUser();
+        const countries = this.dataService.getCountries()(); 
+        const country = countries.find(c => c.id === profile?.region);
+        
+        return {
+          name: profile?.name || firebaseUser?.displayName || 'User',
+          city: profile?.city || '',
+          isVerified: profile?.isVerified ?? firebaseUser?.emailVerified,
+          avatar: profile?.photoURL || firebaseUser?.photoURL || `https://i.pravatar.cc/300?u=${profile?.email || 'user'}`,
+          flagUrl: country?.flagUrl || ''
+        };
+    });
+  }
 
   handleImgError = handleImageError;
 
@@ -68,7 +73,7 @@ export class ProfileComponent {
       message: toastMessage,
       duration: 3000,
       color: toastColor,
-      position: 'bottom',
+      position: 'top',
       icon: toastColor === 'success' ? 'checkmark-circle' : 'alert-circle',
       cssClass: 'toast-custom-text'
     });
@@ -105,7 +110,7 @@ export class ProfileComponent {
                 message: 'Password is required to delete your account.',
                 duration: 3000,
                 color: 'danger',
-                position: 'bottom',
+                position: 'top',
                 icon: 'alert-circle',
                 cssClass: 'toast-custom-text'
               });
@@ -119,7 +124,7 @@ export class ProfileComponent {
                 message: 'Your account has been successfully deleted.',
                 duration: 3000,
                 color: 'success',
-                position: 'bottom',
+                position: 'top',
                 icon: 'checkmark-circle',
                 cssClass: 'toast-custom-text'
               });
@@ -129,7 +134,7 @@ export class ProfileComponent {
                 message: result.error || 'An error occurred. Please try again.',
                 duration: 5000,
                 color: 'danger',
-                position: 'bottom',
+                position: 'top',
                 icon: 'alert-circle',
                 cssClass: 'toast-custom-text'
               });

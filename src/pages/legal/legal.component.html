@@ -1,8 +1,9 @@
+
 @if (document(); as doc) {
   <ion-content [fullscreen]="true" class="bg-white" [forceOverscroll]="false">
     
     <!-- Hero Section -->
-    <div class="relative w-full h-72">
+    <div class="relative w-full h-[14rem]">
       <!-- Legal Image (Generic Office/Contract Image) -->
       <img src="https://images.unsplash.com/photo-1450101499163-c8848c66ca85?q=80&w=2670&auto=format&fit=crop" 
            (error)="handleImgError($event)" 
@@ -26,8 +27,8 @@
        
        <!-- Date / Category style -->
        <div class="flex justify-center mb-1">
-         <span class="text-[#083594] font-bold text-[0.75rem] tracking-[0.05em] uppercase">
-            LEGAL • {{ doc.lastUpdated | date:'mediumDate' }}
+         <span class="text-[#083594] font-bold text-[0.75rem] tracking-[0.05em]">
+            Legal Document • {{ doc.lastUpdated | date:'mediumDate' }}
          </span>
        </div>
 

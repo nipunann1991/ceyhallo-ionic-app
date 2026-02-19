@@ -1,4 +1,5 @@
-import { Component, ChangeDetectionStrategy, computed, signal, OnInit, Input } from '@angular/core';
+
+import { Component, ChangeDetectionStrategy, computed, signal, OnInit, Input, Signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { IonicModule, ModalController, ToastController, NavController } from '@ionic/angular';
 import { Router, ActivatedRoute } from '@angular/router';
@@ -16,7 +17,24 @@ import { JobDetailComponent } from '../job-detail/job-detail.component';
   imports: [CommonModule, IonicModule],
 })
 export class NewsDetailComponent implements OnInit {
-  // Use constructor injection
+  @Input() articleId?: string;
+  @Input() articleData?: NewsArticle;
+  // Default to Close/Back since Share is now in the header
+  @Input() actionType: 'share' | 'external' | 'internal' | 'close' = 'close';
+  @Input() actionLabel: string = 'Back';
+  @Input() actionIcon: string = 'arrow-back';
+  @Input() targetUrl?: string;
+  @Input() targetType?: 'news' | 'business' | 'restaurant' | 'event' | 'job';
+
+  private readonly articleIdSignal = signal<string | undefined>(undefined);
+  private readonly articleDataSignal = signal<NewsArticle | undefined>(undefined);
+  
+  // Lightbox State
+  isLightboxOpen = signal(false);
+  
+  private isRouteDriven = false;
+  article: Signal<NewsArticle | undefined>;
+
   constructor(
     private modalCtrl: ModalController,
     private toastCtrl: ToastController,
@@ -24,37 +42,26 @@ export class NewsDetailComponent implements OnInit {
     private router: Router,
     private route: ActivatedRoute,
     private navCtrl: NavController
-  ) {}
-  
-  @Input() articleId?: string;
-  @Input() articleData?: NewsArticle;
-  @Input() actionType: 'share' | 'external' | 'internal' | 'close' = 'share';
-  @Input() actionLabel: string = 'Share Article';
-  @Input() actionIcon: string = 'share-social';
-  @Input() targetUrl?: string;
-  @Input() targetType?: 'news' | 'business' | 'restaurant' | 'event' | 'job';
-
-  private readonly articleIdSignal = signal<string | undefined>(undefined);
-  private readonly articleDataSignal = signal<NewsArticle | undefined>(undefined);
-  
-  private isRouteDriven = false;
-
-  article = computed(() => {
-    const directData = this.articleDataSignal();
-    if (directData) return directData;
-
-    const id = this.articleIdSignal();
-    if (id === undefined) return undefined;
-    return this.dataService.getNews()().find(a => a.id === id);
-  });
+  ) {
+    this.article = computed(() => {
+        const directData = this.articleDataSignal();
+        if (directData) return directData;
+    
+        const id = this.articleIdSignal();
+        if (id === undefined) return undefined;
+        return this.dataService.getNews()().find(a => a.id === id);
+    });
+  }
 
   ngOnInit() {
     const routeId = this.route.snapshot.paramMap.get('id');
     if (routeId) {
        this.isRouteDriven = true;
        this.articleIdSignal.set(routeId);
-       this.actionType = 'share';
-       this.actionLabel = 'Share Article';
+       // Route driven also defaults to Back for the footer, Share is in header
+       this.actionType = 'close';
+       this.actionLabel = 'Back';
+       this.actionIcon = 'arrow-back';
     } else {
        if (this.articleId) this.articleIdSignal.set(this.articleId);
        if (this.articleData) this.articleDataSignal.set(this.articleData);
@@ -69,6 +76,16 @@ export class NewsDetailComponent implements OnInit {
     } else {
         this.modalCtrl.dismiss();
     }
+  }
+
+  openLightbox() {
+    if (this.article()?.imageUrl) {
+        this.isLightboxOpen.set(true);
+    }
+  }
+
+  closeLightbox() {
+    this.isLightboxOpen.set(false);
   }
 
   async handleAction() {
@@ -100,27 +117,55 @@ export class NewsDetailComponent implements OnInit {
     }
   }
 
-  async openStackedModal(type: string, id: string) {
+  async navigateToSource() {
+    // Specifically handle the header click navigation
+    // This typically mirrors the footer action if it's 'internal', but specifically checks targetUrl
+    if (this.targetUrl) {
+        if (this.actionType === 'internal' || this.targetType) {
+             if (!this.isRouteDriven && this.targetType) {
+                await this.openStackedModal(this.targetType, this.targetUrl);
+             } else {
+                this.modalCtrl.dismiss();
+                this.router.navigateByUrl(this.targetUrl);
+             }
+        } else if (this.actionType === 'external') {
+             window.open(this.targetUrl, '_system');
+        }
+    }
+  }
+
+  async openStackedModal(type: string, idOrUrl: string) {
     let component: any;
     let props: any = {};
+
+    // Extract ID if a full URL path is provided (e.g., /business/biz-001 -> biz-001)
+    let cleanId = idOrUrl;
+    if (idOrUrl.includes('/')) {
+        const parts = idOrUrl.split('/');
+        // Filter out empty strings in case of trailing slash
+        const segments = parts.filter(p => p.length > 0);
+        if (segments.length > 0) {
+            cleanId = segments[segments.length - 1];
+        }
+    }
 
     switch (type) {
         case 'business':
         case 'restaurant':
             component = BusinessDetailComponent;
-            props = { businessId: id };
+            props = { businessId: cleanId };
             break;
         case 'event':
             component = EventDetailComponent;
-            props = { eventId: id };
+            props = { eventId: cleanId };
             break;
         case 'job':
             component = JobDetailComponent;
-            props = { jobId: id };
+            props = { jobId: cleanId };
             break;
         case 'news':
             component = NewsDetailComponent;
-            props = { articleId: id };
+            props = { articleId: cleanId };
             break;
         default:
             this.modalCtrl.dismiss();
@@ -147,14 +192,16 @@ export class NewsDetailComponent implements OnInit {
           url: window.location.href
         });
       } catch (err) {
-        console.log('Share canceled');
+        // Share cancelled, no op
       }
     } else {
         const toast = await this.toastCtrl.create({
           message: 'Sharing is not supported on this device.',
-          duration: 2000,
-          color: 'medium',
-          position: 'bottom'
+          duration: 3000,
+          color: 'danger',
+          icon: 'alert-circle',
+          position: 'top',
+          cssClass: 'toast-custom-text'
         });
         await toast.present();
     }

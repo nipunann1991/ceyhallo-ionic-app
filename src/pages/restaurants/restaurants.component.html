@@ -1,3 +1,4 @@
+
 <ion-content [fullscreen]="true" class="[--background:#F2F4F7]">
   
   <app-page-header 
@@ -11,15 +12,57 @@
 
   <div class="px-5 pb-8">
 
-    <!-- Featured Banner -->
-    @if (selectedCategory() === 'All' && searchTerm() === '' && featuredRestaurant(); as featured) {
-      <app-featured-banner
-        [title]="featured.name"
-        [category]="featured.category"
-        [imageUrl]="featured.imageUrl"
-        variant="restaurant"
-        (click)="openRestaurant(featured)">
-      </app-featured-banner>
+    <!-- Top Section: Featured / Latest Offers (Replaces Banner) -->
+    @if (sectionOffers().length > 0 && selectedCategory() === 'All' && searchTerm() === '') {
+      <div class="mb-6">
+        
+        <div 
+          #sectionOfferContainer
+          class="flex gap-3 pb-2 scrollbar-hide -mx-5 px-5 snap-x cursor-grab active:cursor-grabbing select-none"
+          [class.overflow-x-auto]="sectionOffers().length > 1"
+          (mousedown)="startSectionDrag($event)"
+          (mouseleave)="endSectionDrag()"
+          (mouseup)="endSectionDrag()"
+          (mousemove)="doSectionDrag($event)">
+          
+          @for (offer of sectionOffers(); track offer.id) {
+              <app-offer-card 
+                [offer]="offer"
+                class="snap-center block"
+                [class.min-w-[300px]]="sectionOffers().length > 1"
+                [class.w-[300px]]="sectionOffers().length > 1"
+                [class.w-full]="sectionOffers().length === 1"
+                (click)="handleOfferClick(offer, true)">
+              </app-offer-card>
+          }
+        </div>
+      </div>
+    }
+
+    <!-- Other Offers (More Deals) -->
+    @if (otherOffers().length > 0 && selectedCategory() === 'All' && searchTerm() === '') {
+      <div class="mb-6">
+        <div class="flex items-center justify-between mb-3">
+            <h2 class="text-lg font-bold text-[#1A1C1E] tracking-tight">More Deals</h2>
+        </div>
+        
+        <div 
+          #offerContainer
+          class="flex overflow-x-auto gap-3 pb-2 scrollbar-hide -mx-5 px-5 snap-x cursor-grab active:cursor-grabbing select-none"
+          (mousedown)="startOfferDrag($event)"
+          (mouseleave)="endOfferDrag()"
+          (mouseup)="endOfferDrag()"
+          (mousemove)="doOfferDrag($event)">
+          
+          @for (offer of otherOffers(); track offer.id) {
+              <app-offer-card 
+                [offer]="offer"
+                class="snap-center block min-w-[300px] w-[300px]"
+                (click)="handleOfferClick(offer, false)">
+              </app-offer-card>
+          }
+        </div>
+      </div>
     }
 
     <!-- Category Filter Chips (Cities) -->
@@ -59,7 +102,7 @@
         }
       } @else {
         <!-- No Results State -->
-        <div class="flex items-center justify-center h-[40vh]">
+        <div class="flex items-center justify-center h-[36vh]">
           <div class="text-center text-gray-400">
             <ion-icon name="restaurant-outline" class="text-7xl mb-2 text-gray-300"></ion-icon>
             <h1 class="text-xl font-bold mt-2">No Restaurants Found</h1>

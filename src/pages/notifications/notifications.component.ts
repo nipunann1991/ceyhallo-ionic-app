@@ -1,8 +1,10 @@
-import { Component, ChangeDetectionStrategy, inject, signal } from '@angular/core';
+
+import { Component, ChangeDetectionStrategy, signal, Signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { IonicModule, NavController } from '@ionic/angular';
 import { DataService } from '../../services/data.service';
 import { Router } from '@angular/router';
+import { Notification } from '../../models/notification.model';
 
 @Component({
   selector: 'app-notifications',
@@ -11,14 +13,18 @@ import { Router } from '@angular/router';
   imports: [CommonModule, IonicModule],
 })
 export class NotificationsComponent {
-  private dataService = inject(DataService);
-  private navCtrl: NavController = inject(NavController);
-  private router: Router = inject(Router);
-
-  notifications = this.dataService.getNotifications();
+  notifications: Signal<Notification[]>;
   
-  // Local state for read status for UI feedback (in a real app, this would update backend)
+  // Local state for read status for UI feedback
   readState = signal<Set<string>>(new Set());
+
+  constructor(
+    private dataService: DataService,
+    private navCtrl: NavController,
+    private router: Router
+  ) {
+    this.notifications = this.dataService.getNotifications();
+  }
 
   goBack() {
     this.navCtrl.back();

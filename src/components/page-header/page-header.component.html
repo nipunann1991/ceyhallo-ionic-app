@@ -1,3 +1,4 @@
+
 <!-- Custom Header (Non-Sticky) -->
 <div class="relative flex items-center justify-between px-4 page-header-safe pb-4 bg-[#F2F4F7]">
   <!-- Back Button -->
@@ -8,7 +9,21 @@
   </button>
   
   <!-- Title -->
-  <h1 class="text-2xl font-bold text-[#1A1C1E] tracking-tight text-center flex-1">{{ title() }}</h1>
+  <h1 class="text-2xl font-bold text-[#1A1C1E] tracking-tight text-center flex-1 flex items-center justify-center gap-2">
+    <span>{{ title() }}</span>
+    @if (titleSuffix()) {
+      <span class="text-base font-normal text-gray-500 mt-1">{{ titleSuffix() }}</span>
+    }
+  </h1>
+
+  <!-- Sort Button (Right Side) -->
+  @if (showSort()) {
+    <button 
+      (click)="onSort()"
+      class="absolute right-5 text-gray-900 text-xl active:scale-90 transition-transform z-10 w-10 h-10 flex items-center justify-center bg-white rounded-full shadow-sm">
+      <ion-icon name="swap-vertical-outline" class="text-xl"></ion-icon>
+    </button>
+  }
 </div>
 
 <!-- Search Bar -->
