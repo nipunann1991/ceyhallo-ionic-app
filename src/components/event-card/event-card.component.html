@@ -15,6 +15,11 @@
        <!-- Title -->
        <h4 class="text-sm font-bold text-[#1A1C1E] leading-[1.35] line-clamp-2 mb-1">{{ event().title }}</h4>
        
+       <!-- Organizer -->
+       @if (event().organizer) {
+         <p class="text-[0.7rem] text-gray-500 font-medium mb-1 truncate">{{ event().organizer }}</p>
+       }
+       
        <!-- Location -->
        <div class="flex items-center gap-1.5 text-gray-500 mt-auto">
           <ion-icon name="location" class="text-xs shrink-0"></ion-icon>
