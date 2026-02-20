@@ -13,6 +13,7 @@ import { Notification } from '../models/notification.model';
 import { Offer } from '../models/offer.model';
 import { AppConfig } from '../models/settings.model';
 import { HubSection } from '../models/hub.model';
+import { Grocery } from '../models/grocery.model';
 import { FirestoreService } from './firestore.service';
 
 @Injectable({
@@ -36,6 +37,7 @@ export class DataService {
   
   // Hub Data
   private rawHubSections = signal<HubSection[]>([]);
+  private groceries = signal<Grocery[]>([]);
 
   // Derived Hub State
   public hubSections = computed(() => {
@@ -63,6 +65,7 @@ export class DataService {
     this.listenToNotifications();
     this.listenToOffers();
     this.listenToSettings();
+    this.listenToGroceries();
     
     // Hub Data Listener
     this.listenToHubSections();
@@ -82,6 +85,7 @@ export class DataService {
   getNotifications() { return this.notifications.asReadonly(); }
   getOffers() { return this.offers.asReadonly(); }
   getAppSettings() { return this.appSettings.asReadonly(); }
+  getGroceries() { return this.groceries.asReadonly(); }
   
   // Return the computed signal directly
   getHubSections() { return this.hubSections; }
@@ -629,6 +633,47 @@ export class DataService {
             colorClass: item.colorClass,
             order: item.order || 99
           })).sort((a: any, b: any) => (a.order || 99) - (b.order || 99))
+        };
+      }
+    );
+  }
+
+  private listenToGroceries(): void {
+    this.firestoreService.listenToCollectionMapped<any, Grocery>(
+      'groceries',
+      this.groceries,
+      (id, data) => {
+        if (data['isPublished'] === false) {
+          return null;
+        }
+
+        const { phones, emails } = this.extractContacts(data);
+        const contact = data['contact'] || {};
+        
+        const isPromoted = data['isPromoted'] || data['isFeatured'] || false;
+
+        return {
+          id: id,
+          name: data['name'] || data['title'] || 'Grocery Name',
+          category: data['category'] || 'Grocery',
+          location: data['location'] || 'Unknown Location',
+          rating: data['rating'] || 0,
+          reviewCount: data['reviewCount'] || data['reviews'] || 0,
+          imageUrl: data['imageUrl'] || '',
+          logo: data['logo'] || data['logoUrl'],
+          isPromoted: isPromoted,
+          isVerified: data['isVerified'] ?? false,
+          description: data['description'] || 'Providing fresh groceries to our valued customers.',
+          phone: phones.length > 0 ? phones[0] : '',
+          phones: phones,
+          email: emails.length > 0 ? emails[0] : '',
+          emails: emails,
+          website: data['website'] || contact['website'] || '',
+          openingHours: data['openingHours'] || [],
+          gallery: data['gallery'] || [],
+          actionType: data['actionType'],
+          actionTarget: data['actionTarget'],
+          actionLabel: data['actionLabel']
         };
       }
     );

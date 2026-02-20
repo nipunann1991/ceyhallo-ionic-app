@@ -17,7 +17,9 @@
        
        <!-- Organizer -->
        @if (event().organizer) {
-         <p class="text-[0.7rem] text-gray-500 font-medium mb-1 truncate">{{ event().organizer }}</p>
+         <div class="flex items-center gap-1 text-gray-500 mb-1">
+           <p class="text-[0.7rem] font-medium truncate"><span class="font-bold text-gray-700">By</span> {{ event().organizer }}</p>
+         </div>
        }
        
        <!-- Location -->

@@ -34,13 +34,6 @@
     <!-- Content Card (Overlapping) -->
     <div class="relative -mt-12 z-10 bg-white rounded-t-[2.5rem] px-6 pt-10 pb-40 min-h-[60vh] shadow-[0_-10px_40px_rgba(0,0,0,0.05)]">
        
-       <!-- Date & Time -->
-       <div class="flex justify-center mb-1">
-         <span class="text-[#083594] font-bold text-[0.75rem] tracking-[0.05em] uppercase">
-            {{ event.date | date:'EEE, MMM d, y' }} • {{ event.date | date:'shortTime' }}
-         </span>
-       </div>
-
        <!-- Title -->
        <h1 class="text-xl font-extrabold text-[#1A1C1E] tracking-tight mb-2 text-center leading-tight">
          {{ event.title }}
@@ -62,15 +55,39 @@
          </div>
        }
        
-       <!-- Location Badge -->
-       @if (event.location) {
-        <div class="w-full bg-[#F8F9FA] rounded-xl p-3 flex items-center gap-3 text-left mb-6">
-            <div class="w-8 h-8 rounded-full bg-white flex items-center justify-center shadow-sm text-[#083594] shrink-0">
-               <ion-icon name="location" class="text-lg"></ion-icon>
-            </div>
-            <span class="text-[0.9rem] font-semibold text-[#1A1C1E] leading-tight">{{ event.location }}</span>
-        </div>
-       }
+       <!-- Event Info Box (Unified Ticket Style) -->
+       <div class="flex bg-[#F8F9FA] rounded-[2rem] overflow-hidden mb-8 border border-gray-100 shadow-sm">
+          <!-- Date Section -->
+          <div class="w-24 bg-[#ffd700] flex flex-col items-center justify-center text-black py-4 shrink-0">
+             <span class="text-[0.65rem] font-bold uppercase tracking-[0.15em] opacity-70 mb-1">{{ event.date | date:'MMM' }}</span>
+             <span class="text-3xl font-black leading-none">{{ event.date | date:'dd' }}</span>
+             <span class="text-[0.65rem] font-bold mt-1 opacity-70">{{ event.date | date:'yyyy' }}</span>
+          </div>
+          
+          <!-- Details Section -->
+          <div class="flex-1 p-5 flex flex-col justify-center gap-4">
+             <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-full bg-white flex items-center justify-center shadow-sm text-[#083594]">
+                   <ion-icon name="time-outline" class="text-lg"></ion-icon>
+                </div>
+                <div class="flex flex-col">
+                   <span class="text-[0.7rem] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Time</span>
+                   <span class="text-[0.9rem] font-bold text-[#1A1C1E] leading-none">{{ event.date | date:'shortTime' }}</span>
+                </div>
+             </div>
+             @if (event.location) {
+               <div class="flex items-center gap-3">
+                  <div class="w-8 h-8 rounded-full bg-white flex items-center justify-center shadow-sm text-[#083594]">
+                     <ion-icon name="location-outline" class="text-lg"></ion-icon>
+                  </div>
+                  <div class="flex flex-col">
+                     <span class="text-[0.7rem] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Location</span>
+                     <span class="text-[0.9rem] font-bold text-[#1A1C1E] leading-tight">{{ event.location }}</span>
+                  </div>
+               </div>
+             }
+          </div>
+       </div>
 
        <!-- Article Content -->
        <div class="article-content text-sm text-gray-600 leading-relaxed font-normal mb-8" [innerHTML]="event.content"></div>

@@ -113,8 +113,10 @@ export class FirestoreService {
   // Update a document
   async updateDocument(path: string, id: string, data: any): Promise<void> {
     try {
+        // Remove undefined values to prevent Firestore errors
+        const cleanData = Object.fromEntries(Object.entries(data).filter(([_, v]) => v !== undefined));
         const docRef = doc(this.firestore, path, id);
-        await setDoc(docRef, data, { merge: true });
+        await setDoc(docRef, cleanData, { merge: true });
     } catch (error: any) {
         this.logError(`updateDocument('${path}/${id}')`, error);
 

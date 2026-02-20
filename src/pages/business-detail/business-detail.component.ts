@@ -60,6 +60,7 @@ export class BusinessDetailComponent implements OnInit {
   businessEvents: Signal<Event[]>;
   isRestaurant: Signal<boolean>;
   isOrganization: Signal<boolean>;
+  isGrocery: Signal<boolean>;
   isOpenNow: Signal<boolean | null>;
   galleryImages: Signal<string[]>;
   mapSafeUrl: Signal<SafeResourceUrl | null>;
@@ -88,7 +89,11 @@ export class BusinessDetailComponent implements OnInit {
         if (rest) return rest;
 
         // Then organizations
-        return this.dataService.getOrganizations()().find(b => b.id === id);
+        const org = this.dataService.getOrganizations()().find(b => b.id === id);
+        if (org) return org;
+
+        // Finally groceries
+        return this.dataService.getGroceries()().find(b => b.id === id);
     });
 
     this.businessOffers = computed(() => {
@@ -113,6 +118,12 @@ export class BusinessDetailComponent implements OnInit {
         const id = this.businessIdSignal();
         if (!id) return false;
         return this.dataService.getOrganizations()().some(o => o.id === id);
+    });
+
+    this.isGrocery = computed(() => {
+        const id = this.businessIdSignal();
+        if (!id) return false;
+        return this.dataService.getGroceries()().some(g => g.id === id);
     });
 
     this.isOpenNow = computed(() => {
@@ -221,6 +232,7 @@ export class BusinessDetailComponent implements OnInit {
         let defaultLabel = 'Contact Business';
         if (this.isRestaurant()) defaultLabel = 'Contact Restaurant';
         if (this.isOrganization()) defaultLabel = 'Contact Association';
+        if (this.isGrocery()) defaultLabel = 'Contact Grocery';
 
         const label = biz.actionLabel || defaultLabel;
         

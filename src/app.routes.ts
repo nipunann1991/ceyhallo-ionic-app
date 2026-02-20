@@ -79,6 +79,10 @@ export const APP_ROUTES: Routes = [
     loadComponent: () => import('./pages/restaurants/restaurants.component').then(m => m.RestaurantsComponent),
   },
   {
+    path: 'groceries',
+    loadComponent: () => import('./pages/groceries/groceries.component').then(m => m.GroceriesComponent),
+  },
+  {
     path: 'businesses',
     loadComponent: () => import('./pages/businesses/businesses.component').then(m => m.BusinessesComponent),
   },

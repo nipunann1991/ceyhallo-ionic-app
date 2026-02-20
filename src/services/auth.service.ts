@@ -210,11 +210,20 @@ export class AuthService {
 
     try {
       // 1. Update Firebase Auth Profile if name/photo changed
-      if (data.name || data.photoURL) {
-          await updateProfile(user, { 
-              displayName: data.name || user.displayName, 
-              photoURL: data.photoURL || user.photoURL 
-          });
+      const authUpdate: any = {};
+      let shouldUpdateAuth = false;
+
+      if (data.name !== undefined && data.name !== user.displayName) {
+          authUpdate.displayName = data.name;
+          shouldUpdateAuth = true;
+      }
+      if (data.photoURL !== undefined && data.photoURL !== user.photoURL) {
+          authUpdate.photoURL = data.photoURL;
+          shouldUpdateAuth = true;
+      }
+
+      if (shouldUpdateAuth) {
+          await updateProfile(user, authUpdate);
           await user.reload(); 
           this.currentUser.set({ ...auth.currentUser } as User); 
       }

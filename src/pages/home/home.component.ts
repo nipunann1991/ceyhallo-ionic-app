@@ -23,6 +23,7 @@ import { Country } from '../../models/country.model';
 import { Category } from '../../models/category.model';
 import { AppConfig, HomeSection } from '../../models/settings.model';
 import { Business } from '../../models/business.model';
+import { Grocery } from '../../models/grocery.model';
 
 @Component({
   selector: 'app-home',
@@ -245,19 +246,20 @@ import { Business } from '../../models/business.model';
         }
       }
 
-      <!-- Featured Businesses / Restaurants Section -->
+      <!-- Featured Businesses / Restaurants / Groceries Section -->
       @case ('featured_businesses') {
         @if (data.length > 0) {
           <div class="relative z-10 pl-5" [class.pb-4]="!isLast" [class.-mt-12]="i === 0" [class.mt-4]="i !== 0">
             <!-- Header -->
             <div class="flex items-center justify-between pr-5 mb-4">
-              <a [routerLink]="section.dataSource === 'restaurants' ? '/restaurants' : '/businesses'" class="text-[1.1rem] font-bold text-[#1A1C1E] tracking-tight hover:text-[#083594] transition-colors flex items-center" [class.text-white]="i === 0" [class.drop-shadow-md]="i === 0" [class.hover:text-blue-200]="i === 0">
+              @let targetPath = section.dataSource === 'restaurants' ? '/restaurants' : (section.dataSource === 'groceries' ? '/groceries' : '/businesses');
+              <a [routerLink]="targetPath" class="text-[1.1rem] font-bold text-[#1A1C1E] tracking-tight hover:text-[#083594] transition-colors flex items-center" [class.text-white]="i === 0" [class.drop-shadow-md]="i === 0" [class.hover:text-blue-200]="i === 0">
                 {{ section.title }}
                 @if (section.subTitle) {
                   <span class="text-[0.8rem] font-medium text-gray-500 ml-1.5" [class.text-blue-100]="i === 0">{{ section.subTitle }}</span>
                 }
               </a>
-              <button [routerLink]="section.dataSource === 'restaurants' ? '/restaurants' : '/businesses'" class="text-sm font-bold text-gray-400 hover:text-[#083594] transition-colors" [class.text-blue-200]="i === 0" [class.hover:text-white]="i === 0">See all</button>
+              <button [routerLink]="targetPath" class="text-sm font-bold text-gray-400 hover:text-[#083594] transition-colors" [class.text-blue-200]="i === 0" [class.hover:text-white]="i === 0">See all</button>
             </div>
 
             @if (section.dataSource === 'restaurants') {
@@ -274,7 +276,25 @@ import { Business } from '../../models/business.model';
                     <app-business-card 
                       [business]="biz"
                       class="min-w-[230px] w-[230px] snap-center block"
-                      (click)="handleBusinessClick(biz.id, true)">
+                      (click)="handleBusinessClick(biz.id, 'restaurant')">
+                    </app-business-card>
+                }
+              </div>
+            } @else if (section.dataSource === 'groceries') {
+              <!-- Scroll Container for Groceries -->
+              <div 
+                #groceryContainer
+                class="flex overflow-x-auto gap-3 pb-4 pr-5 scrollbar-hide snap-x cursor-grab active:cursor-grabbing select-none"
+                (mousedown)="startGroceryDrag($event)"
+                (mouseleave)="endGroceryDrag()"
+                (mouseup)="endGroceryDrag()"
+                (mousemove)="doGroceryDrag($event)">
+                
+                @for (biz of data; track biz.id) {
+                    <app-business-card 
+                      [business]="biz"
+                      class="min-w-[230px] w-[230px] snap-center block"
+                      (click)="handleBusinessClick(biz.id, 'grocery')">
                     </app-business-card>
                 }
               </div>
@@ -292,7 +312,7 @@ import { Business } from '../../models/business.model';
                     <app-business-card 
                       [business]="biz"
                       class="min-w-[230px] w-[230px] snap-center block"
-                      (click)="handleBusinessClick(biz.id, false)">
+                      (click)="handleBusinessClick(biz.id, 'business')">
                     </app-business-card>
                 }
               </div>
@@ -485,6 +505,7 @@ export class HomeComponent implements OnInit {
   
   private allBusinesses: Signal<Business[]>;
   private allRestaurants: Signal<Business[]>;
+  private allGroceries: Signal<Grocery[]>;
 
   sectionsWithData: Signal<{ section: HomeSection, data: any[] }[]>;
   user: Signal<any>;
@@ -495,6 +516,7 @@ export class HomeComponent implements OnInit {
   
   featuredRestaurants: Signal<Business[]>;
   generalBusinesses: Signal<Business[]>;
+  featuredGroceries: Signal<Grocery[]>;
   currentCountry: Signal<Country | null>;
 
   selectedCountryId: Signal<string>;
@@ -533,6 +555,12 @@ export class HomeComponent implements OnInit {
   private scrollBusinessLeft = 0;
   public isBusinessDragging = false;
 
+  groceryContainer = viewChild<ElementRef>('groceryContainer');
+  private isGroceryDown = false;
+  private startGroceryX = 0;
+  private scrollGroceryLeft = 0;
+  public isGroceryDragging = false;
+
   constructor(
     private dataService: DataService,
     private authService: AuthService,
@@ -549,6 +577,7 @@ export class HomeComponent implements OnInit {
     this.offers = this.dataService.getOffers();
     this.allBusinesses = this.dataService.getBusinesses();
     this.allRestaurants = this.dataService.getRestaurants();
+    this.allGroceries = this.dataService.getGroceries();
     this.selectedCountryId = this.dataService.selectedCountryId;
 
     this.user = computed(() => {
@@ -650,6 +679,21 @@ export class HomeComponent implements OnInit {
         });
     });
 
+    this.featuredGroceries = computed(() => {
+        const list = this.allGroceries().filter(g => g.isPromoted);
+        const cid = this.selectedCountryId();
+        const country = this.countries().find(c => c.id === cid);
+        
+        if (!country || !country.cities || country.cities.length === 0) return list;
+
+        const validCities = country.cities.map(c => c.name.toLowerCase());
+        
+        return list.filter(g => {
+            const loc = (g.location || '').toLowerCase();
+            return validCities.some(city => loc.includes(city));
+        });
+    });
+
     this.currentCountry = computed(() => {
         const list = this.countries();
         const selected = list.find(c => c.id === this.selectedCountryId());
@@ -686,6 +730,9 @@ export class HomeComponent implements OnInit {
                     break;
                 case 'restaurants': 
                     data = this.featuredRestaurants(); 
+                    break;
+                case 'groceries':
+                    data = this.featuredGroceries();
                     break;
                 case 'businesses': 
                     data = this.generalBusinesses(); 
@@ -789,6 +836,7 @@ export class HomeComponent implements OnInit {
         if (label.includes('organization') || label.includes('association')) path = '/organizations';
         else if (label.includes('business')) path = '/businesses';
         else if (label.includes('restaurant')) path = '/restaurants';
+        else if (label.includes('grocery') || label.includes('supermarket')) path = '/groceries';
         else if (label.includes('news')) path = '/news';
         else if (label.includes('job')) path = '/jobs';
         else if (label.includes('event')) path = '/events';
@@ -798,7 +846,7 @@ export class HomeComponent implements OnInit {
 
     // Known valid paths
     const validPaths = [
-        '/news', '/restaurants', '/businesses', '/organizations', '/organization', 
+        '/news', '/restaurants', '/groceries', '/businesses', '/organizations', '/organization', 
         '/events', '/jobs', '/offers', '/support', '/navigate'
     ];
     
@@ -1001,6 +1049,42 @@ export class HomeComponent implements OnInit {
     }
   }
 
+  startGroceryDrag(e: MouseEvent) {
+    this.isGroceryDown = true;
+    this.isGroceryDragging = false;
+    const slider = this.groceryContainer()?.nativeElement;
+    if (slider) {
+      this.startGroceryX = e.pageX - slider.offsetLeft;
+      this.scrollGroceryLeft = slider.scrollLeft;
+      slider.style.scrollBehavior = 'auto';
+      slider.style.scrollSnapType = 'none';
+    }
+  }
+
+  endGroceryDrag() {
+    if (!this.isGroceryDown) return;
+    this.isGroceryDown = false;
+    const slider = this.groceryContainer()?.nativeElement;
+    if (slider) {
+      slider.style.scrollBehavior = 'smooth';
+      slider.style.scrollSnapType = 'x mandatory';
+    }
+  }
+
+  doGroceryDrag(e: MouseEvent) {
+    if (!this.isGroceryDown) return;
+    e.preventDefault();
+    const slider = this.groceryContainer()?.nativeElement;
+    if (slider) {
+      const x = e.pageX - slider.offsetLeft;
+      const walk = (x - this.startGroceryX) * 2;
+      slider.scrollLeft = this.scrollGroceryLeft - walk;
+      if (Math.abs(walk) > 5) {
+        this.isGroceryDragging = true;
+      }
+    }
+  }
+
   async handleNewsClick(articleId: string) {
     if (this.isDragging) {
       this.isDragging = false;
@@ -1082,11 +1166,15 @@ export class HomeComponent implements OnInit {
     await modal.present();
   }
   
-  async handleBusinessClick(businessId: string, isRestaurantContext = false) {
-    const dragging = isRestaurantContext ? this.isRestaurantDragging : this.isBusinessDragging;
+  async handleBusinessClick(businessId: string, context: 'restaurant' | 'business' | 'grocery' = 'business') {
+    let dragging = false;
+    if (context === 'restaurant') dragging = this.isRestaurantDragging;
+    else if (context === 'grocery') dragging = this.isGroceryDragging;
+    else dragging = this.isBusinessDragging;
     
     if (dragging) {
-      if (isRestaurantContext) this.isRestaurantDragging = false;
+      if (context === 'restaurant') this.isRestaurantDragging = false;
+      else if (context === 'grocery') this.isGroceryDragging = false;
       else this.isBusinessDragging = false;
       return;
     }
