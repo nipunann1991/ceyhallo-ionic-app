@@ -1,5 +1,5 @@
 
-import { inject, Injectable, signal } from '@angular/core';
+import { Injectable, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { auth } from './firebase.service';
 import { 
@@ -38,9 +38,6 @@ export class AuthService {
   userProfile = signal<UserProfile | null>(null);
   
   private userProfileUnsubscribe: Unsubscribe | null = null;
-  router: Router;
-  firestoreService: FirestoreService;
-  emailService: EmailService;
 
   constructor() {
     this.router = inject(Router);
