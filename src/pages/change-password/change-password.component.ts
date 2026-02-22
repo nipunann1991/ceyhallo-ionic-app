@@ -1,5 +1,5 @@
 
-import { Component, ChangeDetectionStrategy, signal } from '@angular/core';
+import { Component, ChangeDetectionStrategy, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { IonicModule, NavController, ToastController } from '@ionic/angular';
 import { AuthService } from '../../services/auth.service';
@@ -110,16 +110,16 @@ import { FormsModule } from '@angular/forms';
   imports: [CommonModule, IonicModule, FormsModule],
 })
 export class ChangePasswordComponent {
+  private authService = inject(AuthService);
+  private navCtrl = inject(NavController);
+  private toastCtrl = inject(ToastController);
+
   oldPassword = signal('');
   newPassword = signal('');
   confirmPassword = signal('');
   isLoading = signal(false);
 
-  constructor(
-    private authService: AuthService,
-    private navCtrl: NavController,
-    private toastCtrl: ToastController
-  ) {}
+  constructor() {}
 
   goBack() {
     this.navCtrl.navigateBack('/tabs/profile');

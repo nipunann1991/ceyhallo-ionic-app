@@ -1,5 +1,6 @@
 
-import { Injectable, signal, computed } from '@angular/core';
+import { Injectable, computed } from '@angular/core';
+import * as appState from '../state/data.state';
 import { NewsArticle } from '../models/news.model';
 import { Banner } from '../models/banner.model';
 import { Category } from '../models/category.model';
@@ -20,35 +21,17 @@ import { FirestoreService } from './firestore.service';
   providedIn: 'root',
 })
 export class DataService {
-  private articles = signal<NewsArticle[]>([]);
-  private banners = signal<Banner[]>([]);
-  private categories = signal<Category[]>([]);
-  private countries = signal<Country[]>([]);
-  private businesses = signal<Business[]>([]);
-  private restaurants = signal<Business[]>([]);
-  private organizations = signal<Business[]>([]);
-  private events = signal<Event[]>([]);
-  private jobs = signal<Job[]>([]);
-  private legalDocs = signal<LegalDocument[]>([]);
-  private supportInfo = signal<SupportInfo | null>(null);
-  private notifications = signal<Notification[]>([]);
-  private offers = signal<Offer[]>([]);
-  private appSettings = signal<AppConfig | null>(null);
-  
-  // Hub Data
-  private rawHubSections = signal<HubSection[]>([]);
-  private groceries = signal<Grocery[]>([]);
+
 
   // Derived Hub State
   public hubSections = computed(() => {
-    const sections = this.rawHubSections();
+    const sections = appState.rawHubSections();
     return sections
       .filter(s => s.enabled)
       .sort((a, b) => a.order - b.order);
   });
 
-  // Global State for Location Selection
-  readonly selectedCountryId = signal<string>('AE');
+  readonly selectedCountryId = appState.selectedCountryId;
 
   constructor(private firestoreService: FirestoreService) {
     this.listenToNews();
@@ -69,23 +52,26 @@ export class DataService {
     
     // Hub Data Listener
     this.listenToHubSections();
+
+    // Hub Data Listener
+    this.listenToHubSections();
   }
 
-  getNews() { return this.articles.asReadonly(); }
-  getBanners() { return this.banners.asReadonly(); }
-  getCategories() { return this.categories.asReadonly(); }
-  getCountries() { return this.countries.asReadonly(); }
-  getBusinesses() { return this.businesses.asReadonly(); }
-  getRestaurants() { return this.restaurants.asReadonly(); }
-  getOrganizations() { return this.organizations.asReadonly(); }
-  getEvents() { return this.events.asReadonly(); }
-  getJobs() { return this.jobs.asReadonly(); }
-  getLegalDocs() { return this.legalDocs.asReadonly(); }
-  getSupportInfo() { return this.supportInfo.asReadonly(); }
-  getNotifications() { return this.notifications.asReadonly(); }
-  getOffers() { return this.offers.asReadonly(); }
-  getAppSettings() { return this.appSettings.asReadonly(); }
-  getGroceries() { return this.groceries.asReadonly(); }
+  getNews() { return appState.articles.asReadonly(); }
+  getBanners() { return appState.banners.asReadonly(); }
+  getCategories() { return appState.categories.asReadonly(); }
+  getCountries() { return appState.countries.asReadonly(); }
+  getBusinesses() { return appState.businesses.asReadonly(); }
+  getRestaurants() { return appState.restaurants.asReadonly(); }
+  getOrganizations() { return appState.organizations.asReadonly(); }
+  getEvents() { return appState.events.asReadonly(); }
+  getJobs() { return appState.jobs.asReadonly(); }
+  getLegalDocs() { return appState.legalDocs.asReadonly(); }
+  getSupportInfo() { return appState.supportInfo.asReadonly(); }
+  getNotifications() { return appState.notifications.asReadonly(); }
+  getOffers() { return appState.offers.asReadonly(); }
+  getAppSettings() { return appState.appSettings.asReadonly(); }
+  getGroceries() { return appState.groceries.asReadonly(); }
   
   // Return the computed signal directly
   getHubSections() { return this.hubSections; }
@@ -106,7 +92,7 @@ export class DataService {
   private listenToNews(): void {
     this.firestoreService.listenToCollectionMapped<any, NewsArticle>(
       'news',
-      this.articles,
+      appState.articles,
       // Mapper function
       (id, data) => {
         // Filter: Only allow published news.
@@ -143,7 +129,7 @@ export class DataService {
   private listenToBanners(): void {
     this.firestoreService.listenToCollectionMapped<any, Banner>(
       'banners',
-      this.banners,
+      appState.banners,
       (id, data) => {
         // Filter: Show only active banners (Check both 'active' and 'isActive' for robustness)
         const isActive = data['active'] === true || data['isActive'] === true;
@@ -172,7 +158,7 @@ export class DataService {
   private listenToCategories(): void {
     this.firestoreService.listenToCollectionMapped<any, Category>(
       'categories',
-      this.categories,
+      appState.categories,
       (id, data) => ({
         id: id,
         label: data['label'] || data['name'] || 'Category',
@@ -190,7 +176,7 @@ export class DataService {
   private listenToCountries(): void {
     this.firestoreService.listenToCollectionMapped<any, Country>(
       'countries',
-      this.countries,
+      appState.countries,
       (id, data) => {
         // Filter: Show only active countries. Default to true if property is missing.
         if (data['isActive'] === false) {
@@ -234,7 +220,7 @@ export class DataService {
   private listenToBusinesses(): void {
     this.firestoreService.listenToCollectionMapped<any, Business>(
       'businesses',
-      this.businesses,
+      appState.businesses,
       (id, data) => {
         if (data['isPublished'] === false) {
           return null;
@@ -257,6 +243,8 @@ export class DataService {
           logo: data['logo'] || data['logoUrl'],
           isPromoted: isPromoted,
           isVerified: data['isVerified'] ?? false,
+          cityCode: data['cityCode'],
+          countryCode: data['countryCode'],
           description: data['description'] || 'Providing excellent service to our valued customers. Contact us for more information about our products and services.',
           phone: phones.length > 0 ? phones[0] : '', // Backward compat
           phones: phones,
@@ -277,7 +265,7 @@ export class DataService {
   private listenToRestaurants(): void {
     this.firestoreService.listenToCollectionMapped<any, Business>(
       'restaurants',
-      this.restaurants,
+      appState.restaurants,
       (id, data) => {
         if (data['isPublished'] === false) {
           return null;
@@ -299,6 +287,8 @@ export class DataService {
           logo: data['logo'] || data['logoUrl'],
           isPromoted: isPromoted,
           isVerified: data['isVerified'] ?? false,
+          cityCode: data['cityCode'],
+          countryCode: data['countryCode'],
           description: data['description'] || 'Authentic flavors and great ambiance.',
           phone: phones.length > 0 ? phones[0] : '', // Backward compat
           phones: phones,
@@ -320,7 +310,7 @@ export class DataService {
   private listenToOrganizations(): void {
     this.firestoreService.listenToCollectionMapped<any, Business>(
       'organizations',
-      this.organizations,
+      appState.organizations,
       (id, data) => {
         if (data['isPublished'] === false) {
           return null;
@@ -340,6 +330,8 @@ export class DataService {
           logo: data['logo'] || data['logoUrl'],
           isPromoted: data['isPromoted'] ?? false,
           isVerified: data['isVerified'] ?? false,
+          cityCode: data['cityCode'],
+          countryCode: data['countryCode'],
           description: data['description'] || 'Serving the community.',
           phone: phones.length > 0 ? phones[0] : '',
           phones: phones,
@@ -360,7 +352,7 @@ export class DataService {
   private listenToEvents(): void {
     this.firestoreService.listenToCollectionMapped<any, Event>(
       'events',
-      this.events,
+      appState.events,
       // Mapper function
       (id, data) => {
         // Debugging for Iftar Event issues
@@ -426,18 +418,28 @@ export class DataService {
           actionType: data['actionType'],
           actionTarget: data['actionTarget'],
           actionLabel: data['actionLabel'],
-          countryCode: data['countryCode']
+          countryCode: data['countryCode'],
+          cityCode: data['cityCode']
         };
       },
       // Processor function
-      (events) => events.sort((a, b) => b.date.getTime() - a.date.getTime()) // Sort by newest/future first (Descending)
+      (events) => {
+        const now = new Date();
+        const upcoming = events.filter(e => e.date >= now);
+        const past = events.filter(e => e.date < now);
+
+        upcoming.sort((a, b) => a.date.getTime() - b.date.getTime()); // Ascending for upcoming
+        past.sort((a, b) => b.date.getTime() - a.date.getTime()); // Descending for past
+
+        return [...upcoming, ...past];
+      }
     );
   }
 
   private listenToJobs(): void {
     this.firestoreService.listenToCollectionMapped<any, Job>(
       'jobs',
-      this.jobs,
+      appState.jobs,
       (id, data) => {
         // Filter: Only allow published jobs.
         if (data['isPublished'] === false) {
@@ -479,7 +481,7 @@ export class DataService {
   private listenToLegal(): void {
     this.firestoreService.listenToCollectionMapped<any, LegalDocument>(
       'legal',
-      this.legalDocs,
+      appState.legalDocs,
       (id, data) => {
         let date: Date = new Date();
         if (data['lastUpdated'] && typeof data['lastUpdated'] === 'string') {
@@ -502,7 +504,7 @@ export class DataService {
     this.firestoreService.listenToPath<{ [key: string]: any }>('support', (data) => {
         const info = data['info'];
         if (info) {
-            this.supportInfo.set({
+            appState.supportInfo.set({
                 id: 'info',
                 phone: info.phone || '',
                 email: info.email || '',
@@ -517,7 +519,7 @@ export class DataService {
   private listenToNotifications(): void {
     this.firestoreService.listenToCollectionMapped<any, Notification>(
       'notifications',
-      this.notifications,
+      appState.notifications,
       (id, data) => {
         let date: Date = new Date();
         if (data['date'] && typeof data['date'] === 'string') {
@@ -544,10 +546,10 @@ export class DataService {
   private listenToOffers(): void {
     this.firestoreService.listenToCollectionMapped<any, Offer>(
       'offers',
-      this.offers,
+      appState.offers,
       (id, data) => {
-        // Filter: Show only active offers
-        if (data['isActive'] !== true) {
+        // Filter: Show only active offers (support both isActive and isPublished)
+        if (data['isActive'] === false || data['isPublished'] === false) {
           return null;
         }
 
@@ -572,7 +574,9 @@ export class DataService {
             order: data['order'],
             isSectionBanner: data['isSectionBanner'] ?? false,
             linkType: data['linkType'],
-            isHomeBanner: data['isHomeBanner'] ?? false
+            isHomeBanner: data['isHomeBanner'] ?? false,
+            cityCode: data['cityCode'],
+            countryCode: data['countryCode']
         };
       },
       // Sort by order (ascending)
@@ -583,7 +587,7 @@ export class DataService {
   private listenToSettings(): void {
     this.firestoreService.listenToDocument<AppConfig>('settings', 'app_config', (data) => {
        if (data) {
-         this.appSettings.set(data);
+         appState.appSettings.set(data);
        }
     });
   }
@@ -593,7 +597,7 @@ export class DataService {
   private listenToHubSections(): void {
     this.firestoreService.listenToCollectionMapped<any, HubSection>(
       'hub_sections',
-      this.rawHubSections,
+      appState.rawHubSections,
       (id, data) => {
         const title = data['title'] || '';
         
@@ -641,7 +645,7 @@ export class DataService {
   private listenToGroceries(): void {
     this.firestoreService.listenToCollectionMapped<any, Grocery>(
       'groceries',
-      this.groceries,
+      appState.groceries,
       (id, data) => {
         if (data['isPublished'] === false) {
           return null;
@@ -663,6 +667,8 @@ export class DataService {
           logo: data['logo'] || data['logoUrl'],
           isPromoted: isPromoted,
           isVerified: data['isVerified'] ?? false,
+          cityCode: data['cityCode'],
+          countryCode: data['countryCode'],
           description: data['description'] || 'Providing fresh groceries to our valued customers.',
           phone: phones.length > 0 ? phones[0] : '',
           phones: phones,

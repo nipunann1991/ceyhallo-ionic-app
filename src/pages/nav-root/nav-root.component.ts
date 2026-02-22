@@ -11,7 +11,9 @@ import { NavPageComponent } from '../nav-page/nav-page.component';
 })
 export class NavRootComponent {
   // Use constructor injection to prevent NG0203 errors
-  constructor(private elementRef: ElementRef) {}
+  constructor() {
+    this.elementRef = inject(ElementRef);
+  }
 
   pushPage() {
     const nav = this.elementRef.nativeElement.closest('ion-nav');

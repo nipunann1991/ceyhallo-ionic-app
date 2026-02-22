@@ -1,5 +1,5 @@
 
-import { Component, ChangeDetectionStrategy, computed, signal, OnInit, Input, Signal, viewChild, ElementRef } from '@angular/core';
+import { Component, ChangeDetectionStrategy, computed, signal, OnInit, Input, Signal, viewChild, ElementRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { IonicModule, ModalController, NavController, ToastController } from '@ionic/angular';
 import { DataService } from '../../services/data.service';
@@ -20,6 +20,13 @@ import { BusinessDetailComponent } from '../business-detail/business-detail.comp
   imports: [CommonModule, IonicModule],
 })
 export class EventDetailComponent implements OnInit {
+  private modalCtrl = inject(ModalController);
+  private dataService = inject(DataService);
+  private sanitizer = inject(DomSanitizer);
+  private route = inject(ActivatedRoute);
+  private navCtrl = inject(NavController);
+  private toastCtrl = inject(ToastController);
+
   @Input() eventId!: string;
   private readonly eventIdSignal = signal<string | undefined>(undefined);
   private isRouteDriven = false;
@@ -27,6 +34,7 @@ export class EventDetailComponent implements OnInit {
   event: Signal<Event | undefined>;
   mapSafeUrl: Signal<SafeResourceUrl | null>;
   galleryImages: Signal<string[]>;
+  daysToGo: Signal<string | null>;
   
   actionButtonConfig: Signal<{ label: string, icon: string } | null>;
 
@@ -43,14 +51,7 @@ export class EventDetailComponent implements OnInit {
   // Hero Image Lightbox
   isHeroLightboxOpen = signal(false);
 
-  constructor(
-    private modalCtrl: ModalController,
-    private dataService: DataService,
-    private sanitizer: DomSanitizer,
-    private route: ActivatedRoute,
-    private navCtrl: NavController,
-    private toastCtrl: ToastController
-  ) {
+  constructor() {
     this.event = computed(() => {
         const id = this.eventIdSignal();
         if (id === undefined) return undefined;
@@ -84,6 +85,34 @@ export class EventDetailComponent implements OnInit {
         if (evt.actionType === 'register') icon = 'create-outline';
         
         return { label, icon };
+    });
+
+    this.daysToGo = computed(() => {
+        const evt = this.event();
+        if (!evt || !evt.date) return null;
+
+        const eventDate = new Date(evt.date);
+        const now = new Date();
+        
+        // Reset time part to compare dates only
+        eventDate.setHours(0, 0, 0, 0);
+        now.setHours(0, 0, 0, 0);
+
+        const diffTime = eventDate.getTime() - now.getTime();
+        
+        if (diffTime < 0) {
+            return 'Expired';
+        }
+
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+        if (diffDays === 0) {
+            return 'Happening Today';
+        } else if (diffDays === 1) {
+            return 'Happening Tomorrow';
+        } else {
+            return `in ${diffDays} days`;
+        }
     });
   }
 

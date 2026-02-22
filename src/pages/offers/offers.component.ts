@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, signal, computed, OnInit, Signal } from '@angular/core';
+import { Component, ChangeDetectionStrategy, signal, computed, OnInit, Signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { IonicModule, ModalController, NavController } from '@ionic/angular';
 import { DataService } from '../../services/data.service';
@@ -18,6 +18,12 @@ import { ActivatedRoute } from '@angular/router';
   imports: [CommonModule, IonicModule, OfferCardComponent, PageHeaderComponent],
 })
 export class OffersComponent implements OnInit {
+  private dataService = inject(DataService);
+  private authService = inject(AuthService);
+  private modalCtrl = inject(ModalController);
+  private navCtrl = inject(NavController);
+  private route = inject(ActivatedRoute);
+
   public isModal = false;
   readonly isModalSignal = signal(false);
 
@@ -32,13 +38,7 @@ export class OffersComponent implements OnInit {
   filteredOffers: Signal<Offer[]>;
   pageSuffix: Signal<string>;
 
-  constructor(
-    private dataService: DataService,
-    private authService: AuthService,
-    private modalCtrl: ModalController,
-    private navCtrl: NavController,
-    private route: ActivatedRoute
-  ) {
+  constructor() {
     this.allOffers = this.dataService.getOffers();
     
     this.filteredOffers = computed(() => {

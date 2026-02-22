@@ -39,11 +39,10 @@ export class AuthService {
   
   private userProfileUnsubscribe: Unsubscribe | null = null;
 
-  constructor(
-    private router: Router,
-    private firestoreService: FirestoreService,
-    private emailService: EmailService
-  ) {
+  constructor() {
+    this.router = inject(Router);
+    this.firestoreService = inject(FirestoreService);
+    this.emailService = inject(EmailService);
     onAuthStateChanged(auth, (user) => {
       this.isLoggedIn.set(!!user);
       this.currentUser.set(user);
@@ -87,8 +86,9 @@ export class AuthService {
     try {
       await signInWithEmailAndPassword(auth, email, password);
       return { success: true };
-    } catch (error: any) {
-      return { success: false, error: this.mapFirebaseAuthError(error.code) };
+    } catch (error: unknown) {
+      const firebaseError = error as { code: string };
+      return { success: false, error: this.mapFirebaseAuthError(firebaseError.code) };
     }
   }
 
@@ -122,8 +122,9 @@ export class AuthService {
       }
       
       return { success: true };
-    } catch (error: any) {
-      return { success: false, error: this.mapFirebaseAuthError(error.code) };
+    } catch (error: unknown) {
+      const firebaseError = error as { code: string };
+      return { success: false, error: this.mapFirebaseAuthError(firebaseError.code) };
     }
   }
 
@@ -138,8 +139,9 @@ export class AuthService {
     try {
       await sendEmailVerification(user);
       return { success: true };
-    } catch (error: any) {
-      return { success: false, error: this.mapFirebaseAuthError(error.code) };
+    } catch (error: unknown) {
+      const firebaseError = error as { code: string };
+      return { success: false, error: this.mapFirebaseAuthError(firebaseError.code) };
     }
   }
 
@@ -158,8 +160,9 @@ export class AuthService {
         url: 'https://ceyhallo.com/auth-action' 
       });
       return { success: true };
-    } catch (error: any) {
-      return { success: false, error: this.mapFirebaseAuthError(error.code) };
+    } catch (error: unknown) {
+      const firebaseError = error as { code: string };
+      return { success: false, error: this.mapFirebaseAuthError(firebaseError.code) };
     }
   }
 
@@ -171,8 +174,9 @@ export class AuthService {
     try {
       const email = await verifyPasswordResetCode(auth, code);
       return { success: true, email };
-    } catch (error: any) {
-      return { success: false, error: error.message };
+    } catch (error: unknown) {
+      const firebaseError = error as { message: string };
+      return { success: false, error: firebaseError.message };
     }
   }
 
@@ -183,8 +187,9 @@ export class AuthService {
     try {
       await confirmPasswordReset(auth, code, newPassword);
       return { success: true };
-    } catch (error: any) {
-      return { success: false, error: this.mapFirebaseAuthError(error.code) };
+    } catch (error: unknown) {
+      const firebaseError = error as { code: string };
+      return { success: false, error: this.mapFirebaseAuthError(firebaseError.code) };
     }
   }
 
@@ -210,7 +215,7 @@ export class AuthService {
 
     try {
       // 1. Update Firebase Auth Profile if name/photo changed
-      const authUpdate: any = {};
+      const authUpdate: { displayName?: string; photoURL?: string } = {};
       let shouldUpdateAuth = false;
 
       if (data.name !== undefined && data.name !== user.displayName) {
@@ -231,7 +236,8 @@ export class AuthService {
       // 2. Update Firestore Document using real UID
       try {
           await this.firestoreService.updateDocument('users', user.uid, data);
-      } catch (fsError: any) {
+      } catch (error: unknown) {
+          const fsError = error as { code: string; message: string };
           // Gracefully handle permission errors (common in demo/restricted environments)
           // Since we already performed an optimistic update, we can report success to the UI
           if (fsError.code === 'permission-denied' || 
@@ -244,8 +250,9 @@ export class AuthService {
       }
       
       return { success: true };
-    } catch (error: any) {
-      return { success: false, error: error.message };
+    } catch (error: unknown) {
+      const firebaseError = error as { message: string };
+      return { success: false, error: firebaseError.message };
     }
   }
 
@@ -260,14 +267,15 @@ export class AuthService {
       
       await updatePassword(user, newPassword);
       return { success: true };
-    } catch (error: any) {
-      if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+    } catch (error: unknown) {
+      const firebaseError = error as { code: string; message: string };
+      if (firebaseError.code === 'auth/wrong-password' || firebaseError.code === 'auth/invalid-credential') {
           return { success: false, error: 'The current password you entered is incorrect.' };
       }
-      if (error.code === 'auth/requires-recent-login') {
+      if (firebaseError.code === 'auth/requires-recent-login') {
          return { success: false, error: 'For security reasons, please log out and log in again before changing your password.' };
       }
-      return { success: false, error: this.mapFirebaseAuthError(error.code) || error.message };
+      return { success: false, error: this.mapFirebaseAuthError(firebaseError.code) || firebaseError.message };
     }
   }
 
@@ -293,7 +301,8 @@ export class AuthService {
       // First, attempt to delete Firestore data (Best Effort)
       try {
         await this.firestoreService.deleteDocument('users', user.uid);
-      } catch (fsError: any) {
+      } catch (error: unknown) {
+        const fsError = error as { code: string; message: string };
         // If it's a permission error, we expect this in some environments. Log info instead of warn.
         if (fsError.code === 'permission-denied' || fsError.message?.includes('Missing or insufficient permissions')) {
             console.log("Firestore profile delete skipped (permissions), proceeding with Auth delete.");
@@ -309,13 +318,14 @@ export class AuthService {
       this.router.navigate(['/login']); 
       return { success: true };
   
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const firebaseError = error as { code: string; message: string };
       // FIX: Log only the message to prevent circular structure error
-      console.error("Error deleting account:", error.message || 'Unknown error during deletion');
-      if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+      console.error("Error deleting account:", firebaseError.message || 'Unknown error during deletion');
+      if (firebaseError.code === 'auth/wrong-password' || firebaseError.code === 'auth/invalid-credential') {
         return { success: false, error: 'The password you entered is incorrect.' };
       }
-      if (error.code === 'auth/requires-recent-login') {
+      if (firebaseError.code === 'auth/requires-recent-login') {
         return { success: false, error: 'This is a sensitive operation. Please sign in again before deleting your account.' };
       }
       return { success: false, error: 'Failed to delete account. Please try again later.' };

@@ -55,37 +55,47 @@
          </div>
        }
        
-       <!-- Event Info Box (Unified Ticket Style) -->
-       <div class="flex bg-[#F8F9FA] rounded-[2rem] overflow-hidden mb-8 border border-gray-100 shadow-sm">
-          <!-- Date Section -->
-          <div class="w-24 bg-[#ffd700] flex flex-col items-center justify-center text-black py-4 shrink-0">
-             <span class="text-[0.65rem] font-bold uppercase tracking-[0.15em] opacity-70 mb-1">{{ event.date | date:'MMM' }}</span>
-             <span class="text-3xl font-black leading-none">{{ event.date | date:'dd' }}</span>
-             <span class="text-[0.65rem] font-bold mt-1 opacity-70">{{ event.date | date:'yyyy' }}</span>
-          </div>
-          
-          <!-- Details Section -->
-          <div class="flex-1 p-5 flex flex-col justify-center gap-4">
-             <div class="flex items-center gap-3">
-                <div class="w-8 h-8 rounded-full bg-white flex items-center justify-center shadow-sm text-[#083594]">
-                   <ion-icon name="time-outline" class="text-lg"></ion-icon>
-                </div>
-                <div class="flex flex-col">
-                   <span class="text-[0.7rem] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Time</span>
-                   <span class="text-[0.9rem] font-bold text-[#1A1C1E] leading-none">{{ event.date | date:'shortTime' }}</span>
-                </div>
+       <!-- Event Info Box Container -->
+       <div class="relative mb-8">
+          <!-- Status Badge (Top Right) -->
+          @if(daysToGo(); as days) {
+            <div class="absolute top-0 right-0 z-10 -mt-2 -mr-2">
+                <span 
+                  class="text-[0.6rem] font-medium tracking-wider px-2.5 py-1 rounded-full shadow-md text-white"
+                  [class.bg-green-500]="days !== 'Expired'"
+                  [class.bg-red-500]="days === 'Expired'"
+                >{{ days }}</span>
+            </div>
+          }
+
+          <!-- Main Card -->
+          <div class="flex bg-[#F8F9FA] rounded-[1.5rem] overflow-hidden border border-gray-100/80">
+             <!-- Date Section -->
+             <div class="w-24 bg-[#ffd700] flex flex-col items-center justify-center text-black py-4 shrink-0">
+                <span class="text-[0.65rem] font-bold uppercase tracking-[0.15em] opacity-70 mb-1">{{ event.date | date:'MMM' }}</span>
+                <span class="text-3xl font-black leading-none">{{ event.date | date:'dd' }}</span>
+                <span class="text-[0.65rem] font-bold mt-1 opacity-70">{{ event.date | date:'yyyy' }}</span>
              </div>
-             @if (event.location) {
-               <div class="flex items-center gap-3">
-                  <div class="w-8 h-8 rounded-full bg-white flex items-center justify-center shadow-sm text-[#083594]">
-                     <ion-icon name="location-outline" class="text-lg"></ion-icon>
-                  </div>
-                  <div class="flex flex-col">
-                     <span class="text-[0.7rem] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Location</span>
-                     <span class="text-[0.9rem] font-bold text-[#1A1C1E] leading-tight">{{ event.location }}</span>
-                  </div>
-               </div>
-             }
+             
+             <!-- Details Section -->
+             <div class="flex-1 p-4 flex flex-col justify-center gap-2.5">
+                <div class="flex items-center gap-2.5">
+                   <ion-icon name="time-outline" class="text-lg text-[#083594]"></ion-icon>
+                   <div class="flex flex-col">
+                      <span class="text-[0.65rem] font-normal text-gray-400 capitalize tracking-wider mb-px">Time</span>
+                      <span class="text-[0.8rem] font-semibold text-[#1A1C1E] leading-tight">{{ event.date | date:'shortTime' }}</span>
+                   </div>
+                </div>
+                @if (event.location) {
+                   <div class="flex items-center gap-2.5">
+                      <ion-icon name="location-outline" class="text-lg text-[#083594]"></ion-icon>
+                      <div class="flex flex-col">
+                         <span class="text-[0.65rem] font-normal text-gray-400 capitalize tracking-wider mb-px">Location</span>
+                         <span class="text-[0.8rem] font-semibold text-[#1A1C1E] leading-tight">{{ event.location }}</span>
+                      </div>
+                   </div>
+                }
+             </div>
           </div>
        </div>
 

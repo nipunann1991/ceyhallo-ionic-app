@@ -14,4 +14,6 @@ export interface Offer {
   isSectionBanner?: boolean;
   linkType?: string;
   isHomeBanner?: boolean;
+  cityCode?: string;
+  countryCode?: string;
 }

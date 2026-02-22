@@ -99,6 +99,32 @@ export const MOCK_DATA = {
       ]
     }
   },
+  countries: {
+    "AE": {
+        "name": "United Arab Emirates",
+        "flagUrl": "https://firebasestorage.googleapis.com/v0/b/ceyhallo-89e40.appspot.com/o/flags%2Fae.png?alt=media&token=7c15115c-8923-442a-9e54-315e1454171e",
+        "cities": [
+            { "id": "dubai", "name": "Dubai" },
+            { "id": "abu_dhabi", "name": "Abu Dhabi" },
+            { "id": "sharjah", "name": "Sharjah" },
+            { "id": "ajman", "name": "Ajman" },
+            { "id": "ras_al_khaimah", "name": "Ras Al Khaimah" },
+            { "id": "fujairah", "name": "Fujairah" },
+            { "id": "umm_al_quwain", "name": "Umm Al Quwain" }
+        ],
+        "isActive": true
+    },
+    "LK": {
+        "name": "Sri Lanka",
+        "flagUrl": "https://firebasestorage.googleapis.com/v0/b/ceyhallo-89e40.appspot.com/o/flags%2Flk.png?alt=media&token=e7f8e537-19cd-49a3-8588-639939edf789",
+        "cities": [
+            { "id": "colombo", "name": "Colombo" },
+            { "id": "kandy", "name": "Kandy" },
+            { "id": "galle", "name": "Galle" }
+        ],
+        "isActive": true
+    }
+  },
   banners: {
     "b-1": {
         "category": "Highlight",

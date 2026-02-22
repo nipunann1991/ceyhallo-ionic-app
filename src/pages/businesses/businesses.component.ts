@@ -65,12 +65,11 @@ export class BusinessesComponent implements OnInit {
   private scrollOfferLeft = 0;
   public isOfferDragging = false;
 
-  constructor(
-    private dataService: DataService,
-    private authService: AuthService,
-    private modalCtrl: ModalController,
-    private navCtrl: NavController
-  ) {
+  constructor() {
+    this.dataService = inject(DataService);
+    this.authService = inject(AuthService);
+    this.modalCtrl = inject(ModalController);
+    this.navCtrl = inject(NavController);
     this.allBusinesses = this.dataService.getBusinesses();
     this.offers = this.dataService.getOffers();
     this.countries = this.dataService.getCountries();

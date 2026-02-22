@@ -130,10 +130,10 @@ export class SupportComponent {
   // Accordion state
   openFaqId = signal<string | null>(null);
 
-  constructor(
-    private dataService: DataService,
-    private navCtrl: NavController
-  ) {
+  constructor() {
+    this.dataService = inject(DataService);
+    this.navCtrl = inject(NavController);
+  }
     this.supportInfo = this.dataService.getSupportInfo();
   }
 

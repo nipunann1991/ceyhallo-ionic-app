@@ -1,5 +1,5 @@
 
-import { Component, ChangeDetectionStrategy, signal, OnInit, computed, Signal, Input } from '@angular/core';
+import { Component, ChangeDetectionStrategy, signal, OnInit, computed, Signal, Input, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { IonicModule, NavController, ModalController } from '@ionic/angular';
 import { ActivatedRoute } from '@angular/router';
@@ -66,6 +66,11 @@ import { LegalDocument } from '../../models/legal.model';
   imports: [CommonModule, IonicModule],
 })
 export class LegalPageComponent implements OnInit {
+  private route = inject(ActivatedRoute);
+  private dataService = inject(DataService);
+  private navCtrl = inject(NavController);
+  private modalCtrl = inject(ModalController);
+
   @Input() docIdInput?: string;
   @Input() isModal: boolean = false;
 
@@ -73,12 +78,7 @@ export class LegalPageComponent implements OnInit {
   allDocs: Signal<LegalDocument[]>;
   document: Signal<(LegalDocument & { title: string }) | null>;
 
-  constructor(
-    private route: ActivatedRoute,
-    private dataService: DataService,
-    private navCtrl: NavController,
-    private modalCtrl: ModalController
-  ) {
+  constructor() {
     this.allDocs = this.dataService.getLegalDocs();
     
     this.document = computed(() => {

@@ -7,6 +7,7 @@ import { AiService } from '../../services/ai.service';
 
 @Component({
   selector: 'app-ai-chat',
+  standalone: true,
   template: `
 <ion-header class="ion-no-border shadow-sm">
   <ion-toolbar class="bg-[#083594]" style="--background: #083594; --color: white;">

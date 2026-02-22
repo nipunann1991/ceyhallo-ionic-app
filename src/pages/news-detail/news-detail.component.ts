@@ -1,5 +1,5 @@
 
-import { Component, ChangeDetectionStrategy, computed, signal, OnInit, Input, Signal } from '@angular/core';
+import { Component, ChangeDetectionStrategy, computed, signal, OnInit, Input, Signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { IonicModule, ModalController, ToastController, NavController } from '@ionic/angular';
 import { Router, ActivatedRoute } from '@angular/router';
@@ -17,6 +17,13 @@ import { JobDetailComponent } from '../job-detail/job-detail.component';
   imports: [CommonModule, IonicModule],
 })
 export class NewsDetailComponent implements OnInit {
+  private modalCtrl = inject(ModalController);
+  private toastCtrl = inject(ToastController);
+  private dataService = inject(DataService);
+  private router = inject(Router);
+  private route = inject(ActivatedRoute);
+  private navCtrl = inject(NavController);
+
   @Input() articleId?: string;
   @Input() articleData?: NewsArticle;
   // Default to Close/Back since Share is now in the header
@@ -35,14 +42,7 @@ export class NewsDetailComponent implements OnInit {
   private isRouteDriven = false;
   article: Signal<NewsArticle | undefined>;
 
-  constructor(
-    private modalCtrl: ModalController,
-    private toastCtrl: ToastController,
-    private dataService: DataService,
-    private router: Router,
-    private route: ActivatedRoute,
-    private navCtrl: NavController
-  ) {
+  constructor() {
     this.article = computed(() => {
         const directData = this.articleDataSignal();
         if (directData) return directData;

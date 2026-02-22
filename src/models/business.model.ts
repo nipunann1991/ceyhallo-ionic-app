@@ -10,6 +10,8 @@ export interface Business {
   logo?: string;
   isPromoted: boolean;
   isVerified?: boolean;
+  cityCode?: string;
+  countryCode?: string;
   description: string;
   phone: string;       // Primary phone for backward compatibility
   phones?: string[];   // Multiple phones

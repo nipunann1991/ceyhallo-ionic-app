@@ -16,4 +16,5 @@ export interface Event {
   actionTarget?: string;
   actionLabel?: string;
   countryCode?: string;
+  cityCode?: string;
 }

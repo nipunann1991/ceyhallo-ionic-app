@@ -196,13 +196,10 @@ import { LegalPageComponent } from '../legal/legal.component';
   imports: [CommonModule, IonicModule, RouterLink],
 })
 export class LoginComponent {
-  // Use constructor injection to ensure dependencies are resolved correctly when created via ModalController
-  constructor(
-    private authService: AuthService,
-    private dataService: DataService,
-    private router: Router,
-    private modalCtrl: ModalController
-  ) {}
+  private authService = inject(AuthService);
+  private dataService = inject(DataService);
+  private router = inject(Router);
+  private modalCtrl = inject(ModalController);
 
   @Input() isModal: boolean = false;
   @Input() message: string = '';
@@ -219,12 +216,14 @@ export class LoginComponent {
 
   passwordFieldType = computed(() => this.showPassword() ? 'text' : 'password');
 
-  onEmailInput(event: any) {
-    this.email.set(event.target.value);
+  constructor() {}
+
+  onEmailInput(event: Event) {
+    this.email.set((event.target as HTMLInputElement).value);
   }
 
-  onPasswordInput(event: any) {
-    this.password.set(event.target.value);
+  onPasswordInput(event: Event) {
+    this.password.set((event.target as HTMLInputElement).value);
   }
 
   togglePasswordVisibility() {

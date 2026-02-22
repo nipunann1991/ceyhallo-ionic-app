@@ -1,5 +1,5 @@
 
-import { Component, ChangeDetectionStrategy, signal } from '@angular/core';
+import { Component, ChangeDetectionStrategy, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { IonicModule, NavController, ToastController } from '@ionic/angular';
 import { AuthService } from '../../services/auth.service';
@@ -107,6 +107,10 @@ import { FormsModule } from '@angular/forms';
     imports: [CommonModule, IonicModule, RouterLink, FormsModule]
 })
 export class ForgotPasswordComponent {
+    private authService = inject(AuthService);
+    private navCtrl = inject(NavController);
+    private toastCtrl = inject(ToastController);
+
     // State Management
     isLoading = signal(false);
     errorMessage = signal('');
@@ -114,11 +118,7 @@ export class ForgotPasswordComponent {
 
     email = signal('');
 
-    constructor(
-        private authService: AuthService,
-        private navCtrl: NavController,
-        private toastCtrl: ToastController
-    ) {}
+    constructor() {}
 
     async sendResetLink() {
         const emailVal = this.email().trim();

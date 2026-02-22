@@ -24,12 +24,12 @@ type SearchResult = (NewsArticle & { type: 'news' }) | (Business & { type: 'busi
   imports: [CommonModule, IonicModule, PageHeaderComponent, NewsCardComponent, BusinessCardComponent, OfferCardComponent],
 })
 export class SearchComponent implements OnInit {
-  constructor(
-    private dataService: DataService,
-    private modalCtrl: ModalController,
-    private navCtrl: NavController,
-    private authService: AuthService
-  ) {}
+  constructor() {
+    this.dataService = inject(DataService);
+    this.modalCtrl = inject(ModalController);
+    this.navCtrl = inject(NavController);
+    this.authService = inject(AuthService);
+  }
 
   public isModal = false;
   readonly isModalSignal = signal(false);

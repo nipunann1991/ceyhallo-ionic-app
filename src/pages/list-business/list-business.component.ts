@@ -1,5 +1,5 @@
 
-import { Component, ChangeDetectionStrategy, signal, computed, Signal } from '@angular/core';
+import { Component, ChangeDetectionStrategy, signal, computed, Signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { IonicModule, NavController, ToastController } from '@ionic/angular';
 import { FormsModule } from '@angular/forms';
@@ -14,6 +14,11 @@ import { Country } from '../../models/country.model';
   imports: [CommonModule, IonicModule, FormsModule],
 })
 export class ListBusinessComponent {
+  private navCtrl = inject(NavController);
+  private toastCtrl = inject(ToastController);
+  private dataService = inject(DataService);
+  private authService = inject(AuthService);
+
   // Form Signals
   businessName = signal('');
   category = signal('');
@@ -29,12 +34,7 @@ export class ListBusinessComponent {
 
   isLoading = signal(false);
 
-  constructor(
-    private navCtrl: NavController,
-    private toastCtrl: ToastController,
-    private dataService: DataService,
-    private authService: AuthService
-  ) {
+  constructor() {
     this.countries = this.dataService.getCountries();
     this.availableCities = computed(() => {
         const selectedRegion = this.region();

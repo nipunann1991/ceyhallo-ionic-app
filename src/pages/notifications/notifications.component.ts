@@ -81,11 +81,11 @@ export class NotificationsComponent {
   // Local state for read status for UI feedback
   readState = signal<Set<string>>(new Set());
 
-  constructor(
-    private dataService: DataService,
-    private navCtrl: NavController,
-    private router: Router
-  ) {
+  constructor() {
+    this.dataService = inject(DataService);
+    this.navCtrl = inject(NavController);
+    this.router = inject(Router);
+  }
     this.notifications = this.dataService.getNotifications();
   }
 
@@ -101,11 +101,11 @@ export class NotificationsComponent {
     });
   }
 
-  isRead(notification: any) {
+  isRead(notification: Notification) {
       return notification.read || this.readState().has(notification.id);
   }
 
-  handleNotificationClick(notification: any) {
+  handleNotificationClick(notification: Notification) {
       this.markAsRead(notification.id);
       
       if (notification.link) {

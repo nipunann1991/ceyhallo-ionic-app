@@ -1,5 +1,5 @@
 
-import { Component, ChangeDetectionStrategy, signal, effect, computed, Signal } from '@angular/core';
+import { Component, ChangeDetectionStrategy, signal, effect, computed, Signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { IonicModule, NavController, ToastController } from '@ionic/angular';
 import { AuthService } from '../../services/auth.service';
@@ -167,8 +167,13 @@ import { Country } from '../../models/country.model';
   imports: [CommonModule, IonicModule, FormsModule],
 })
 export class EditProfileComponent {
-  userProfile: Signal<UserProfile | null>;
-  countries: Signal<Country[]>;
+  private authService = inject(AuthService);
+  private dataService = inject(DataService);
+  private navCtrl = inject(NavController);
+  private toastCtrl = inject(ToastController);
+
+  userProfile: Signal<UserProfile | null> = this.authService.userProfile;
+  countries: Signal<Country[]> = this.dataService.getCountries();
   availableCities: Signal<any[]>;
   
   // Form Signals
@@ -182,15 +187,7 @@ export class EditProfileComponent {
   
   isLoading = signal(false);
 
-  constructor(
-    private authService: AuthService,
-    private dataService: DataService,
-    private navCtrl: NavController,
-    private toastCtrl: ToastController
-  ) {
-    this.userProfile = this.authService.userProfile;
-    this.countries = this.dataService.getCountries();
-
+  constructor() {
     this.availableCities = computed(() => {
         const selectedRegion = this.region();
         const country = this.countries().find(c => c.id === selectedRegion);

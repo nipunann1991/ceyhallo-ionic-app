@@ -1,5 +1,5 @@
 
-import { Component, ChangeDetectionStrategy, computed, signal, OnInit, Input, Signal } from '@angular/core';
+import { Component, ChangeDetectionStrategy, computed, signal, OnInit, Input, Signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { IonicModule, ModalController, NavController } from '@ionic/angular';
 import { DataService } from '../../services/data.service';
@@ -15,6 +15,11 @@ import { Job } from '../../models/job.model';
   imports: [CommonModule, IonicModule],
 })
 export class JobDetailComponent implements OnInit {
+  private modalCtrl = inject(ModalController);
+  private dataService = inject(DataService);
+  private route = inject(ActivatedRoute);
+  private navCtrl = inject(NavController);
+
   @Input() jobId!: string;
   private readonly jobIdSignal = signal<string | undefined>(undefined);
   private isRouteDriven = false;
@@ -22,12 +27,7 @@ export class JobDetailComponent implements OnInit {
   job: Signal<Job | undefined>;
   formattedTime: Signal<string | null>;
 
-  constructor(
-    private modalCtrl: ModalController,
-    private dataService: DataService,
-    private route: ActivatedRoute,
-    private navCtrl: NavController
-  ) {
+  constructor() {
     this.job = computed(() => {
         const id = this.jobIdSignal();
         if (id === undefined) return undefined;

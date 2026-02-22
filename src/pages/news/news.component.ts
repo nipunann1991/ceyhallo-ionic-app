@@ -1,5 +1,5 @@
 
-import { Component, ChangeDetectionStrategy, OnInit, signal, computed, viewChild, ElementRef, Signal } from '@angular/core';
+import { Component, ChangeDetectionStrategy, OnInit, signal, computed, viewChild, ElementRef, Signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { IonicModule, ModalController, NavController, InfiniteScrollCustomEvent } from '@ionic/angular';
 import { DataService } from '../../services/data.service';
@@ -21,6 +21,11 @@ import { LoginComponent } from '../login/login.component';
   imports: [CommonModule, IonicModule, NewsCardComponent, BannerComponent, PageHeaderComponent],
 })
 export class NewsComponent implements OnInit {
+  private dataService = inject(DataService);
+  private authService = inject(AuthService);
+  private modalCtrl = inject(ModalController);
+  private navCtrl = inject(NavController);
+
   public isModal = false;
   readonly isModalSignal = signal(false);
 
@@ -43,12 +48,7 @@ export class NewsComponent implements OnInit {
   filteredNews: Signal<NewsArticle[]>;
   displayedNews: Signal<NewsArticle[]>;
 
-  constructor(
-    private dataService: DataService,
-    private authService: AuthService,
-    private modalCtrl: ModalController,
-    private navCtrl: NavController
-  ) {
+  constructor() {
     this.allNews = this.dataService.getNews();
 
     this.featuredBanners = computed(() => {

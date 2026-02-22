@@ -1,5 +1,6 @@
 
 import { Injectable, WritableSignal } from '@angular/core';
+import { MOCK_DATA } from '../data/mock-data';
 import { firestore } from './firebase.service';
 import { collection, onSnapshot, doc, getDoc, setDoc, deleteDoc, addDoc } from 'firebase/firestore';
 
@@ -28,6 +29,12 @@ export class FirestoreService {
     const colRef = collection(this.firestore, path);
     
     return onSnapshot(colRef, (snapshot: any) => {
+      if (snapshot.empty) {
+        console.warn(`[Firestore] No documents found in '${path}'. Falling back to mock data.`);
+        // @ts-ignore
+        callback(MOCK_DATA[path] || {});
+        return;
+      }
       const dataObject = snapshot.docs.reduce((acc: any, doc: any) => {
         acc[doc.id] = doc.data();
         return acc;

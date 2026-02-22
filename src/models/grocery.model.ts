@@ -10,6 +10,8 @@ export interface Grocery {
   logo?: string;
   isPromoted: boolean;
   isVerified?: boolean;
+  cityCode?: string;
+  countryCode?: string;
   description: string;
   phone: string;
   phones?: string[];

@@ -12,7 +12,9 @@ export class NavPageComponent implements OnInit {
   receivedMessage = signal('');
 
   // Use constructor injection with @Optional() to prevent NG0203 errors
-  constructor(@Optional() private navParams: NavParams) {}
+  constructor() {
+    this.navParams = inject(NavParams, { optional: true });
+  }
 
   ngOnInit() {
     if (this.navParams) {

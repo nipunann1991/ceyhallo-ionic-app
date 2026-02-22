@@ -140,12 +140,12 @@ export class ResetPasswordComponent implements OnInit {
   showPassword = signal(false);
   passwordFieldType = computed(() => this.showPassword() ? 'text' : 'password');
 
-  constructor(
-    private route: ActivatedRoute,
-    private authService: AuthService,
-    private navCtrl: NavController,
-    private toastCtrl: ToastController
-  ) {}
+  constructor() {
+    this.route = inject(ActivatedRoute);
+    this.authService = inject(AuthService);
+    this.navCtrl = inject(NavController);
+    this.toastCtrl = inject(ToastController);
+  }
 
   ngOnInit() {
     // Get the OOB code from query params

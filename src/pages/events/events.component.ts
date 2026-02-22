@@ -1,5 +1,5 @@
 
-import { Component, ChangeDetectionStrategy, OnInit, signal, computed, viewChild, ElementRef, Signal } from '@angular/core';
+import { Component, ChangeDetectionStrategy, OnInit, signal, computed, viewChild, ElementRef, Signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { IonicModule, ModalController, NavController, InfiniteScrollCustomEvent } from '@ionic/angular';
 import { DataService } from '../../services/data.service';
@@ -52,29 +52,48 @@ import { Country } from '../../models/country.model';
         <button 
           (click)="setCategory(cat)"
           class="px-4 py-[0.5rem] text-[0.8rem] font-bold rounded-full whitespace-nowrap transition-colors duration-200 border"
-          [class.bg-[#083594]]="selectedCategory() === cat"
-          [class.text-white]="selectedCategory() === cat"
-          [class.border-transparent]="selectedCategory() === cat"
-          [class.bg-white]="selectedCategory() !== cat"
-          [class.text-[#1A1C1E]]="selectedCategory() !== cat"
-          [class.border-gray-200]="selectedCategory() !== cat"
-          [class.hover:bg-gray-50]="selectedCategory() !== cat"
-          [class.shadow-sm]="selectedCategory() !== cat">
-          {{ cat }}
+          [class.bg-[#083594]]="selectedCategory() === cat.code"
+          [class.text-white]="selectedCategory() === cat.code"
+          [class.border-transparent]="selectedCategory() === cat.code"
+          [class.bg-white]="selectedCategory() !== cat.code"
+          [class.text-[#1A1C1E]]="selectedCategory() !== cat.code"
+          [class.border-gray-200]="selectedCategory() !== cat.code"
+          [class.hover:bg-gray-50]="selectedCategory() !== cat.code"
+          [class.shadow-sm]="selectedCategory() !== cat.code">
+          {{ cat.name }}
         </button>
       }
     </div>
 
     <!-- Events List -->
     <div class="flex flex-col gap-3.5">
-      @if (displayedEvents().length > 0) {
-        @for (item of displayedEvents(); track item.id) {
+      @if (upcomingEvents().length > 0) {
+        @for (item of upcomingEvents(); track item.id) {
           <app-event-card 
              [event]="item"
              (click)="openEvent(item)">
           </app-event-card>
         }
-      } @else {
+      }
+
+      @if (pastEvents().length > 0) {
+        <!-- Expired Separator -->
+        <div class="flex items-center gap-3 my-2">
+          <div class="flex-1 h-px bg-gray-200"></div>
+          <span class="text-xs font-bold text-gray-400 uppercase tracking-wider">Expired</span>
+          <div class="flex-1 h-px bg-gray-200"></div>
+        </div>
+
+        @for (item of pastEvents(); track item.id) {
+          <app-event-card 
+             [event]="item"
+             class="opacity-50 grayscale"
+             (click)="openEvent(item)">
+          </app-event-card>
+        }
+      }
+
+      @if (upcomingEvents().length === 0 && pastEvents().length === 0) {
         <!-- No Results State -->
         <div class="flex items-center justify-center h-[36vh]">
           <div class="text-center text-gray-400">
@@ -90,10 +109,7 @@ import { Country } from '../../models/country.model';
       }
     </div>
 
-    <!-- Infinite Scroll -->
-    <ion-infinite-scroll (ionInfinite)="onIonInfinite($event)" [disabled]="displayedEvents().length >= filteredEvents().length">
-       <ion-infinite-scroll-content loadingSpinner="bubbles" loadingText="Loading more events..."></ion-infinite-scroll-content>
-    </ion-infinite-scroll>
+
 
   </div>
 </ion-content>
@@ -106,6 +122,11 @@ import { Country } from '../../models/country.model';
   imports: [CommonModule, IonicModule, EventCardComponent, BannerComponent, PageHeaderComponent],
 })
 export class EventsComponent implements OnInit {
+  private dataService = inject(DataService);
+  private authService = inject(AuthService);
+  private modalCtrl = inject(ModalController);
+  private navCtrl = inject(NavController);
+
   public isModal = false;
   readonly isModalSignal = signal(false);
 
@@ -113,15 +134,15 @@ export class EventsComponent implements OnInit {
   countries: Signal<Country[]>;
   selectedCountryId: Signal<string>;
 
-  selectedCategory = signal('All');
+  selectedCategory = signal<string>('All');
   searchTerm = signal('');
-  limit = signal(10);
 
-  categories: Signal<string[]>;
+  categories: Signal<{ code: string; name: string; }[]>;
   countryEvents: Signal<Event[]>;
   featuredBanners: Signal<Banner[]>;
   filteredEvents: Signal<Event[]>;
-  displayedEvents: Signal<Event[]>;
+  upcomingEvents: Signal<Event[]>;
+  pastEvents: Signal<Event[]>;
 
   categoryContainer = viewChild<ElementRef>('categoryContainer');
   private isDown = false;
@@ -129,12 +150,7 @@ export class EventsComponent implements OnInit {
   private scrollLeft = 0;
   private isDragging = false;
 
-  constructor(
-    private dataService: DataService,
-    private authService: AuthService,
-    private modalCtrl: ModalController,
-    private navCtrl: NavController
-  ) {
+  constructor() {
     this.allEvents = this.dataService.getEvents();
     this.countries = this.dataService.getCountries();
     this.selectedCountryId = this.dataService.selectedCountryId;
@@ -142,53 +158,23 @@ export class EventsComponent implements OnInit {
     this.categories = computed(() => {
         const cid = this.selectedCountryId();
         const country = this.countries().find(c => c.id === cid);
-        const cities = country ? country.cities.map(c => c.name) : [];
-        return ['All', ...cities];
+        const cities = country ? country.cities : [];
+        return [{ code: 'All', name: 'All' }, ...cities];
     });
 
     this.countryEvents = computed(() => {
         const list = this.allEvents();
         const cid = this.selectedCountryId();
-        const country = this.countries().find(c => c.id === cid);
-        
-        // Relaxed constraint: If no country/cities found, return all events (Fallback)
-        if (!country || !country.cities || country.cities.length === 0) return list;
-
-        const cityNames = country.cities.map(c => c.name.toLowerCase());
-        
-        return list.filter(e => {
-           // Debug IFTAR specifically
-           const isIftar = e.title && (e.title.includes('IFTAR') || e.title.includes('Iftar'));
-
-           // 1. Precise Match via Country Code
-           if (e.countryCode) {
-               // Normalize logic: e.g. "AE" vs "ae"
-               const match = e.countryCode.toUpperCase() === cid.toUpperCase();
-               if (isIftar && !match) console.log(`Iftar filtered out by countryCode: ${e.countryCode} !== ${cid}`);
-               if (match) return true;
-           }
-
-           const loc = (e.location || '').toLowerCase();
-           
-           // 2. Fallback text matching
-           // Allow if location includes a city name OR if location includes the country name
-           const match = cityNames.some(city => loc.includes(city)) || loc.includes(country.name.toLowerCase());
-           
-           if (isIftar && !match && !e.countryCode) {
-               console.log(`Iftar filtered out by location text: '${loc}' not found in cities or '${country.name}'. Cities: ${cityNames.join(', ')}`);
-           }
-           
-           return match;
-        });
+        return list.filter(e => e.countryCode?.toUpperCase() === cid.toUpperCase());
     });
 
     this.featuredBanners = computed(() => {
-        const list = this.countryEvents();
-        let featured = list.filter(e => e.isFeatured);
+        const upcomingEvents = this.countryEvents().filter(e => !this.isEventExpired(e));
+        let featured = upcomingEvents.filter(e => e.isFeatured);
         
         // Fallback if no featured items found
-        if (featured.length === 0 && list.length > 0) {
-           featured = list.slice(0, 3);
+        if (featured.length === 0 && upcomingEvents.length > 0) {
+           featured = upcomingEvents.slice(0, 3);
         }
     
         return featured.map(e => ({
@@ -209,7 +195,7 @@ export class EventsComponent implements OnInit {
         const term = this.searchTerm().toLowerCase();
         
         if (cat !== 'All') {
-          list = list.filter(e => (e.location || '').toLowerCase().includes(cat.toLowerCase()));
+          list = list.filter(e => e.cityCode === cat);
         }
     
         if (term) {
@@ -217,16 +203,37 @@ export class EventsComponent implements OnInit {
         }
         
         list.sort((a, b) => {
+            const aIsPast = this.isEventExpired(a);
+            const bIsPast = this.isEventExpired(b);
+
+            // 1. Group by upcoming/past: upcoming first
+            if (!aIsPast && bIsPast) return -1;
+            if (aIsPast && !bIsPast) return 1;
+
+            // Within the same group (both upcoming or both past)
+            // 2. Prioritize featured events
             if (a.isFeatured && !b.isFeatured) return -1;
             if (!a.isFeatured && b.isFeatured) return 1;
-            return a.date.getTime() - b.date.getTime();
+
+            // 3. Sort by date
+            if (!aIsPast) {
+                // Both are upcoming, sort ascending (soonest first)
+                return a.date.getTime() - b.date.getTime();
+            } else {
+                // Both are past, sort descending (most recent past first)
+                return b.date.getTime() - a.date.getTime();
+            }
         });
     
         return list;
     });
 
-    this.displayedEvents = computed(() => {
-        return this.filteredEvents().slice(0, this.limit());
+    this.upcomingEvents = computed(() => {
+        return this.filteredEvents().filter(e => !this.isEventExpired(e));
+    });
+
+    this.pastEvents = computed(() => {
+        return this.filteredEvents().filter(e => this.isEventExpired(e));
     });
   }
 
@@ -234,18 +241,20 @@ export class EventsComponent implements OnInit {
     this.isModalSignal.set(this.isModal);
   }
 
-  setCategory(cat: string) {
+  isEventExpired(event: Event): boolean {
+    return new Date(event.date) < new Date();
+  }
+
+  setCategory(cat: { code: string; name: string; }) {
     if (this.isDragging) {
       this.isDragging = false;
       return;
     }
-    this.selectedCategory.set(cat);
-    this.limit.set(10);
+    this.selectedCategory.set(cat.code);
   }
 
   handleSearch(value: string) {
     this.searchTerm.set(value);
-    this.limit.set(10);
   }
 
   handleImgError = handleImageError;
@@ -287,13 +296,7 @@ export class EventsComponent implements OnInit {
     await modal.present();
   }
 
-  onIonInfinite(ev: any) {
-    const infiniteScroll = ev as InfiniteScrollCustomEvent;
-    setTimeout(() => {
-      this.limit.update(currentLimit => currentLimit + 10);
-      infiniteScroll.target.complete();
-    }, 500);
-  }
+
   
   startDrag(e: MouseEvent) {
     this.isDown = true;

@@ -206,14 +206,14 @@ import { DataService } from '../../services/data.service';
   imports: [CommonModule, IonicModule, RouterLink],
 })
 export class ProfileComponent {
-  user: Signal<any>;
+  user: Signal<{ name: string; city: string; isVerified: boolean; avatar: string; flagUrl: string }>;
 
-  constructor(
-    public authService: AuthService,
-    private dataService: DataService,
-    private alertCtrl: AlertController,
-    private toastCtrl: ToastController
-  ) {
+  constructor() {
+    this.authService = inject(AuthService);
+    this.dataService = inject(DataService);
+    this.alertCtrl = inject(AlertController);
+    this.toastCtrl = inject(ToastController);
+  }
     this.user = computed(() => {
         // Prefer extended profile from Firestore, fallback to Auth
         const profile = this.authService.userProfile();

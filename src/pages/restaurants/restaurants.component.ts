@@ -1,5 +1,5 @@
 
-import { Component, ChangeDetectionStrategy, OnInit, signal, computed, viewChild, ElementRef, Signal } from '@angular/core';
+import { Component, ChangeDetectionStrategy, OnInit, signal, computed, viewChild, ElementRef, Signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { IonicModule, ModalController, NavController, InfiniteScrollCustomEvent } from '@ionic/angular';
 import { DataService } from '../../services/data.service';
@@ -27,6 +27,11 @@ import { Country } from '../../models/country.model';
   imports: [CommonModule, IonicModule, BusinessCardComponent, OfferCardComponent, PageHeaderComponent],
 })
 export class RestaurantsComponent implements OnInit {
+  private dataService = inject(DataService);
+  private authService = inject(AuthService);
+  private modalCtrl = inject(ModalController);
+  private navCtrl = inject(NavController);
+
   public isModal = false;
   readonly isModalSignal = signal(false);
 
@@ -65,12 +70,7 @@ export class RestaurantsComponent implements OnInit {
   private scrollOfferLeft = 0;
   public isOfferDragging = false;
 
-  constructor(
-    private dataService: DataService,
-    private authService: AuthService,
-    private modalCtrl: ModalController,
-    private navCtrl: NavController
-  ) {
+  constructor() {
     this.allRestaurants = this.dataService.getRestaurants();
     this.offers = this.dataService.getOffers();
     this.countries = this.dataService.getCountries();

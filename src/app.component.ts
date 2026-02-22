@@ -80,7 +80,11 @@ export class AppComponent implements OnInit {
     return !!this.dataService.getAppSettings()()?.showAiBot;
   });
 
-  constructor(private router: Router, private zone: NgZone) {
+  constructor() {
+    this.router = inject(Router);
+    this.zone = inject(NgZone);
+    // This will initialize the DataService and start listening to the data sources
+    inject(DataService);
     // Detect if the device is an iPhone and apply a specific class to the html element
     const isIphone = /iPhone/i.test(navigator.userAgent);
     if (isIphone) {

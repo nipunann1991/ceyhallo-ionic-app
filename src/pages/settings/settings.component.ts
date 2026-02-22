@@ -84,10 +84,10 @@ import { PushNotificationService } from '../../services/push-notifications.servi
   imports: [CommonModule, IonicModule],
 })
 export class SettingsComponent {
-  constructor(
-    public pushService: PushNotificationService,
-    private toastCtrl: ToastController
-  ) {}
+  constructor() {
+    this.pushService = inject(PushNotificationService);
+    this.toastCtrl = inject(ToastController);
+  }
 
   async copyToken() {
     const token = this.pushService.fcmToken();

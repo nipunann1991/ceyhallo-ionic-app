@@ -68,14 +68,13 @@ export class BusinessDetailComponent implements OnInit {
   
   actionButtonConfig: Signal<{ label: string, icon: string } | null>;
 
-  constructor(
-    private modalCtrl: ModalController,
-    private dataService: DataService,
-    private sanitizer: DomSanitizer,
-    private route: ActivatedRoute,
-    private navCtrl: NavController,
-    private toastCtrl: ToastController
-  ) {
+  constructor() {
+    this.modalCtrl = inject(ModalController);
+    this.dataService = inject(DataService);
+    this.sanitizer = inject(DomSanitizer);
+    this.route = inject(ActivatedRoute);
+    this.navCtrl = inject(NavController);
+    this.toastCtrl = inject(ToastController);
     this.business = computed(() => {
         const id = this.businessIdSignal();
         if (id === undefined) return undefined;

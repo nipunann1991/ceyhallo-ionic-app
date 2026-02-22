@@ -1,5 +1,5 @@
 
-import { Component, ChangeDetectionStrategy, OnInit, signal, computed, viewChild, ElementRef, Signal } from '@angular/core';
+import { Component, ChangeDetectionStrategy, OnInit, signal, computed, viewChild, ElementRef, Signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { IonicModule, ModalController, NavController, InfiniteScrollCustomEvent } from '@ionic/angular';
 import { DataService } from '../../services/data.service';
@@ -22,6 +22,11 @@ import { Country } from '../../models/country.model';
   imports: [CommonModule, IonicModule, JobCardComponent, BannerComponent, PageHeaderComponent],
 })
 export class JobsComponent implements OnInit {
+  private dataService = inject(DataService);
+  private authService = inject(AuthService);
+  private modalCtrl = inject(ModalController);
+  private navCtrl = inject(NavController);
+
   public isModal = false;
   readonly isModalSignal = signal(false);
 
@@ -54,12 +59,7 @@ export class JobsComponent implements OnInit {
   private scrollLeft = 0;
   private isDragging = false;
 
-  constructor(
-    private dataService: DataService,
-    private authService: AuthService,
-    private modalCtrl: ModalController,
-    private navCtrl: NavController
-  ) {
+  constructor() {
     this.allJobs = this.dataService.getJobs();
     this.countries = this.dataService.getCountries();
     this.selectedCountryId = this.dataService.selectedCountryId;
