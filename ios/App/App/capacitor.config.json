@@ -1,0 +1,10 @@
+{
+	"appId": "com.ceyhallo.app",
+	"appName": "CeyHallo",
+	"webDir": "www",
+	"packageClassList": [
+		"FirebaseMessagingPlugin",
+		"AppPlugin",
+		"PushNotificationsPlugin"
+	]
+}

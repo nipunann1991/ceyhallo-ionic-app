@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="ic_launcher_background">#FFFFFF</color>
+    <string name="app_name">CeyHallo</string>
+    <string name="custom_url_scheme">com.ceyhallo.app</string>
+    <string name="default_web_client_id" translatable="false">253346274750-2s39r743nn8qe887vbl55den44ej02v4.apps.googleusercontent.com</string>
+    <string name="firebase_database_url" translatable="false">https://ceyhallo-89e40-default-rtdb.europe-west1.firebasedatabase.app</string>
+    <string name="gcm_defaultSenderId" translatable="false">253346274750</string>
+    <string name="google_api_key" translatable="false">AIzaSyBLbpdaQTNWxxNzLfexwPhfOCXLuKegsMQ</string>
+    <string name="google_app_id" translatable="false">1:253346274750:android:02ac25108b0091ae2b2def</string>
+    <string name="google_crash_reporting_api_key" translatable="false">AIzaSyBLbpdaQTNWxxNzLfexwPhfOCXLuKegsMQ</string>
+    <string name="google_storage_bucket" translatable="false">ceyhallo-89e40.firebasestorage.app</string>
+    <string name="package_name">com.ceyhallo.app</string>
+    <string name="project_id" translatable="false">ceyhallo-89e40</string>
+    <string name="title_activity_main">CeyHallo</string>
+    <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
+        
+        <item name="colorPrimary">@color/colorPrimary</item>
+        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
+        <item name="colorAccent">@color/colorAccent</item>
+    </style>
+    <style name="AppTheme.NoActionBar" parent="Theme.AppCompat.DayNight.NoActionBar">
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
+        <item name="android:background">@null</item>
+    </style>
+    <style name="AppTheme.NoActionBarLaunch" parent="Theme.SplashScreen">
+        <item name="android:background">@drawable/splash</item>
+    </style>
+</resources>

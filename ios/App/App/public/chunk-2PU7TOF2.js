@@ -1,0 +1,1 @@
+var s=e=>{let t=e.target;t.src="https://i.ibb.co/nNsGtRqn/placeholder-80x80.png",t.style.width="40px",t.style.height="40px",t.style.objectFit="contain",t.style.position="absolute",t.style.top="50%",t.style.left="50%",t.style.transform="translate(-50%, -50%)",t.style.backgroundColor="transparent",t.style.borderRadius="0",t.style.opacity="0.4"};export{s as a};

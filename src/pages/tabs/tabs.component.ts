@@ -1,5 +1,5 @@
 
-import { Component, ChangeDetectionStrategy, signal, OnInit } from '@angular/core';
+import { Component, ChangeDetectionStrategy, signal, OnInit, inject } from '@angular/core';
 import { IonicModule, ModalController } from '@ionic/angular';
 import { Router, NavigationEnd } from '@angular/router';
 import { filter } from 'rxjs/operators';
@@ -145,6 +145,9 @@ import { LoginComponent } from '../login/login.component';
 })
 export class TabsComponent implements OnInit {
   activeTab = signal<string>('home');
+  modalCtrl: ModalController;
+  authService: AuthService;
+  router: Router;
 
   constructor() {
     this.modalCtrl = inject(ModalController);
