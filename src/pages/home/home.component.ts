@@ -375,6 +375,20 @@ export class HomeComponent implements OnInit {
         if (this.settings()) {
             this.isLoading.set(false);
         }
+
+        const countries = this.countries();
+        const selectedId = this.selectedCountryId();
+        
+        if (countries.length > 0) {
+            const countryExists = countries.some(c => c.id === selectedId);
+            if (!countryExists) {
+                // The default ID is not in the list. Let's find 'AE' by name.
+                const aeCountry = countries.find(c => c.name.toLowerCase().includes('emirates') || c.name.toUpperCase() === 'AE');
+                if (aeCountry) {
+                    this.dataService.setSelectedCountry(aeCountry.id);
+                }
+            }
+        }
     }, { allowSignalWrites: true });
   }
 
