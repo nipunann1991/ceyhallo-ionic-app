@@ -81,11 +81,11 @@ export class NotificationsComponent {
   // Local state for read status for UI feedback
   readState = signal<Set<string>>(new Set());
 
-  constructor() {
-    this.dataService = inject(DataService);
-    this.navCtrl = inject(NavController);
-    this.router = inject(Router);
-  }
+  constructor(
+    private dataService: DataService,
+    private navCtrl: NavController,
+    private router: Router
+  ) {
     this.notifications = this.dataService.getNotifications();
   }
 

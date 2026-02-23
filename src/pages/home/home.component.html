@@ -54,9 +54,8 @@
               <div class="w-full h-full bg-white/20 animate-pulse"></div>
             }
          </button>
-         
-         <!-- Notification Bell -->
-         <button routerLink="/notifications" class="relative w-10 h-10 flex items-center justify-center bg-white/10 rounded-full text-white active:scale-90 transition-transform">
+                  <!-- Notification Bell -->
+          <button routerLink="/notifications" class="relative w-10 h-10 flex items-center justify-center bg-white/10 rounded-full text-white active:scale-90 transition-transform">
             <svg width="24" height="26" viewBox="0 0 29 31" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path fill-rule="evenodd" clip-rule="evenodd" d="M12.4513 24.6733C11.817 24.6733 11.3347 25.2646 11.6665 25.8051C12.2508 26.7571 13.3015 27.3921 14.5005 27.3921C15.6994 27.3921 16.75 26.7571 17.3345 25.8051C17.6663 25.2646 17.184 24.6733 16.5497 24.6733C16.146 24.6733 15.7993 24.9392 15.4958 25.2052C15.2301 25.4383 14.8817 25.5796 14.5005 25.5796C14.1191 25.5796 13.7709 25.4383 13.5051 25.2052C13.2016 24.9392 12.8549 24.6733 12.4513 24.6733Z" fill="white"/>
                 <mask id="mask0_283_630" style="mask-type:alpha" maskUnits="userSpaceOnUse" x="4" y="4" width="21" height="20">
@@ -81,8 +80,13 @@
                 </filter>
                 </defs>
             </svg>
-         </button>
-      </div>
+          </button>
+
+          <!-- Download Button -->
+          <button (click)="downloadApp()" class="relative w-10 h-10 flex items-center justify-center bg-white/10 rounded-full text-white active:scale-90 transition-transform">
+            <ion-icon name="download-outline" class="text-2xl"></ion-icon>
+          </button>
+       </div>
     </div>
   </div>
 

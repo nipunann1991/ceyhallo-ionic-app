@@ -10,10 +10,7 @@ import { NavPageComponent } from '../nav-page/nav-page.component';
   imports: [IonicModule, CommonModule],
 })
 export class NavRootComponent {
-  // Use constructor injection to prevent NG0203 errors
-  constructor() {
-    this.elementRef = inject(ElementRef);
-  }
+  constructor(private elementRef: ElementRef) {}
 
   pushPage() {
     const nav = this.elementRef.nativeElement.closest('ion-nav');

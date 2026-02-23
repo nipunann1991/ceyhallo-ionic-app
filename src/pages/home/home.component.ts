@@ -384,6 +384,18 @@ export class HomeComponent implements OnInit {
 
   handleImgError = handleImageError;
 
+  async downloadApp() {
+    const toast = await this.toastCtrl.create({
+      message: `App download will be available soon.`,
+      duration: 2500,
+      color: 'dark',
+      position: 'middle',
+      icon: 'information-circle',
+      cssClass: 'toast-custom-text'
+    });
+    await toast.present();
+  }
+
   async goToProfile() {
     if (this.authService.isLoggedIn()) {
       this.router.navigate(['/tabs/profile']);

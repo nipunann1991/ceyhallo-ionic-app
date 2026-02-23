@@ -208,12 +208,12 @@ import { DataService } from '../../services/data.service';
 export class ProfileComponent {
   user: Signal<{ name: string; city: string; isVerified: boolean; avatar: string; flagUrl: string }>;
 
-  constructor() {
-    this.authService = inject(AuthService);
-    this.dataService = inject(DataService);
-    this.alertCtrl = inject(AlertController);
-    this.toastCtrl = inject(ToastController);
-  }
+  constructor(
+    private authService: AuthService,
+    private dataService: DataService,
+    private alertCtrl: AlertController,
+    private toastCtrl: ToastController
+  ) {
     this.user = computed(() => {
         // Prefer extended profile from Firestore, fallback to Auth
         const profile = this.authService.userProfile();

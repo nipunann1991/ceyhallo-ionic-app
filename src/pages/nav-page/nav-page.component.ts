@@ -11,10 +11,7 @@ import { IonicModule, NavParams } from '@ionic/angular';
 export class NavPageComponent implements OnInit {
   receivedMessage = signal('');
 
-  // Use constructor injection with @Optional() to prevent NG0203 errors
-  constructor() {
-    this.navParams = inject(NavParams, { optional: true });
-  }
+  constructor(@Optional() private navParams: NavParams) {}
 
   ngOnInit() {
     if (this.navParams) {

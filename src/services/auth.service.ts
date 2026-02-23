@@ -39,10 +39,11 @@ export class AuthService {
   
   private userProfileUnsubscribe: Unsubscribe | null = null;
 
-  constructor() {
-    this.router = inject(Router);
-    this.firestoreService = inject(FirestoreService);
-    this.emailService = inject(EmailService);
+  constructor(
+    private router: Router,
+    private firestoreService: FirestoreService,
+    private emailService: EmailService
+  ) {
     onAuthStateChanged(auth, (user) => {
       this.isLoggedIn.set(!!user);
       this.currentUser.set(user);
