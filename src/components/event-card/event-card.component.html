@@ -1,0 +1,36 @@
+
+<div class="relative w-full bg-white p-3 rounded-[1.2rem] shadow-[0_4px_20px_rgba(0,0,0,0.08)] border border-gray-100 flex gap-3 active:scale-[0.99] transition-transform group cursor-pointer">
+    <!-- Image Section -->
+    <div class="w-[6rem] h-[6rem] shrink-0 rounded-[1rem] overflow-hidden bg-gray-100 relative">
+       <img [src]="event().imageUrl || 'https://i.ibb.co/nNsGtRqn/placeholder-80x80.png'" (error)="handleImgError($event)" class="w-full h-full object-cover pointer-events-none" [style.object-fit]="event().imageUrl ? 'cover' : 'none'" [class.bg-gray-200]="!event().imageUrl" [class.opacity-40]="!event().imageUrl" [alt]="event().title">
+    </div>
+
+    <!-- Content Section -->
+    <div class="flex-1 flex flex-col min-w-0 py-0.5 pr-6">
+       <!-- Date -->
+       <div class="flex items-center justify-between mb-1.5">
+         <p class="text-[0.65rem] font-bold text-[#083594] uppercase tracking-wide">{{ event().date | date:'MMM d, y' }} • {{ event().date | date:'shortTime' }}</p>
+       </div>
+       
+       <!-- Title -->
+       <h4 class="text-sm font-bold text-[#1A1C1E] leading-[1.35] line-clamp-2 mb-1">{{ event().title }}</h4>
+       
+       <!-- Organizer -->
+       @if (event().organizer) {
+         <div class="flex items-center gap-1 text-gray-500 mb-1">
+           <p class="text-[0.7rem] font-medium truncate"><span class="font-bold text-gray-700">By</span> {{ event().organizer }}</p>
+         </div>
+       }
+       
+       <!-- Location -->
+       <div class="flex items-center gap-1.5 text-gray-500 mt-auto">
+          <ion-icon name="location" class="text-xs shrink-0"></ion-icon>
+          <span class="text-[0.75rem] font-medium truncate">{{ event().location }}</span>
+       </div>
+    </div>
+
+    <!-- Bookmark Icon (Absolute Top Right) -->
+    <div class="absolute top-4 right-4 text-gray-300">
+        <ion-icon name="bookmark-outline" class="text-xl"></ion-icon>
+    </div>
+</div>

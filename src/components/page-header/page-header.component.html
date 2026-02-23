@@ -1,0 +1,40 @@
+
+<!-- Custom Header (Non-Sticky) -->
+<div class="relative flex items-center justify-between px-4 page-header-safe pb-4 bg-[#F2F4F7]">
+  <!-- Back Button -->
+  <button 
+    (click)="onBack()"
+    class="absolute left-5 text-gray-900 text-xl active:scale-90 transition-transform z-10">
+    <ion-icon [name]="isModal() ? 'close' : 'arrow-back'" class="text-2xl font-bold"></ion-icon>
+  </button>
+  
+  <!-- Title -->
+  <h1 class="text-2xl font-bold text-[#1A1C1E] tracking-tight text-center flex-1 flex items-center justify-center gap-2">
+    <span>{{ title() }}</span>
+    @if (titleSuffix()) {
+      <span class="text-base font-normal text-gray-500 mt-1">{{ titleSuffix() }}</span>
+    }
+  </h1>
+
+  <!-- Sort Button (Right Side) -->
+  @if (showSort()) {
+    <button 
+      (click)="onSort()"
+      class="absolute right-5 text-gray-900 text-xl active:scale-90 transition-transform z-10 w-10 h-10 flex items-center justify-center bg-white rounded-full shadow-sm">
+      <ion-icon name="swap-vertical-outline" class="text-xl"></ion-icon>
+    </button>
+  }
+</div>
+
+<!-- Search Bar -->
+<div class="px-5 mb-6">
+  <div class="relative shadow-sm rounded-full">
+     <ion-icon name="search-outline" class="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400 text-xl z-10"></ion-icon>
+     <input 
+       type="text" 
+       [placeholder]="searchPlaceholder()" 
+       [value]="searchValue()"
+       (input)="onSearchInput($event)"
+       class="w-full h-[3.25rem] bg-white rounded-full pl-12 pr-4 text-[0.95rem] font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#083594]/20 placeholder-gray-400">
+  </div>
+</div>

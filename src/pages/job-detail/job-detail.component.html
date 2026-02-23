@@ -1,0 +1,126 @@
+
+@if (job(); as job) {
+  <ion-content [fullscreen]="true" class="[--background:#F2F4F7]">
+    
+    <!-- Header Background (Gray) -->
+    <div class="relative bg-[#F2F4F7] pb-28 pt-[calc(4rem+env(safe-area-inset-top))] px-5 rounded-b-[2.5rem] shadow-sm z-0">
+      <div class="flex items-center justify-between relative z-10 text-[#1A1C1E]">
+        <!-- Back Button -->
+        <button (click)="close()" class="active:opacity-80 transition-opacity active:scale-90">
+           <ion-icon name="arrow-back" class="text-[1.75rem] text-[#1A1C1E]"></ion-icon>
+        </button>
+        
+        <!-- Header Title -->
+        <h1 class="text-2xl font-bold text-[#1A1C1E] tracking-tight">Job Details</h1>
+
+        <!-- Bookmark Button -->
+        <button class="active:opacity-80 transition-opacity active:scale-90">
+           <ion-icon name="bookmark-outline" class="text-[1.5rem] text-[#1A1C1E]"></ion-icon>
+        </button>
+      </div>
+    </div>
+
+    <!-- Main Content Overlay -->
+    <div class="px-5 -mt-16 relative z-10 pb-32">
+       
+       <!-- Job Header Card -->
+       <div class="bg-white rounded-[2rem] p-6 shadow-sm border border-gray-100 flex flex-col items-center text-center mb-5">
+          <!-- Logo -->
+          <div class="w-20 h-20 bg-white relative rounded-2xl shadow-sm border border-gray-100 -mt-14 mb-3 flex items-center justify-center overflow-hidden">
+              <img [src]="job.companyLogo || 'https://i.ibb.co/nNsGtRqn/placeholder-80x80.png'" (error)="handleImgError($event)" class="w-full h-full object-contain pointer-events-none" [alt]="job.company">
+          </div>
+          
+          <h2 class="text-xl font-extrabold text-[#1A1C1E] leading-tight mb-1 tracking-tight">{{ job.title }}</h2>
+          <!-- Company Name -->
+          <p class="text-[#083594] font-bold text-[0.75rem] tracking-[0.05em] uppercase mb-1">{{ job.company }}</p>
+          <!-- Posted Date (Relative or Absolute) -->
+          <p class="text-[0.7rem] font-medium text-gray-400 mb-5">
+            Posted 
+            @if (formattedTime(); as relative) {
+              {{ relative }}
+            } @else {
+              on {{ job.postedDate | date:'MMM d, y' }}
+            }
+          </p>
+
+          <!-- Metadata Pills -->
+          <div class="flex flex-wrap justify-center gap-2">
+              <div class="px-3.5 py-1.5 bg-gray-50 rounded-full border border-gray-100 flex items-center gap-1.5">
+                 <ion-icon name="location-outline" class="text-gray-400 text-xs"></ion-icon>
+                 <span class="text-xs font-bold text-gray-600">{{ job.location }}</span>
+              </div>
+              <div class="px-3.5 py-1.5 bg-gray-50 rounded-full border border-gray-100 flex items-center gap-1.5">
+                 <ion-icon name="briefcase-outline" class="text-gray-400 text-xs"></ion-icon>
+                 <span class="text-xs font-bold text-gray-600">{{ job.jobType }}</span>
+              </div>
+              @if(job.salaryRange) {
+                <div class="px-3.5 py-1.5 bg-[#F0F5FF] rounded-full border border-[#E0E7FF] flex items-center gap-1.5">
+                   <ion-icon name="cash-outline" class="text-[#083594] text-xs"></ion-icon>
+                   <span class="text-xs font-bold text-[#083594]">{{ job.salaryRange }}</span>
+                </div>
+              }
+          </div>
+       </div>
+
+       <!-- Details Sections -->
+       <div class="bg-white rounded-[2rem] p-6 shadow-sm border border-gray-100 space-y-7">
+          <!-- Description -->
+          <div>
+             <h3 class="text-md font-bold text-[#1A1C1E] mb-3">About the job</h3>
+             <div class="job-content text-sm text-gray-600 leading-relaxed font-normal" [innerHTML]="job.description"></div>
+          </div>
+
+          <!-- Responsibilities -->
+          @if(job.responsibilities?.length) {
+             <div>
+                <h3 class="text-md font-bold text-[#1A1C1E] mb-3">Responsibilities</h3>
+                <ul class="space-y-2.5">
+                   @for(item of job.responsibilities; track item) {
+                      <li class="flex gap-3 text-sm text-gray-600 leading-relaxed font-normal">
+                         <div class="w-1.5 h-1.5 rounded-full bg-[#083594] mt-2 shrink-0"></div>
+                         <span>{{ item }}</span>
+                      </li>
+                   }
+                </ul>
+             </div>
+          }
+
+          <!-- Qualifications -->
+          @if(job.qualifications?.length) {
+             <div>
+                <h3 class="text-md font-bold text-[#1A1C1E] mb-3">Qualifications</h3>
+                <ul class="space-y-2.5">
+                   @for(item of job.qualifications; track item) {
+                      <li class="flex gap-3 text-sm text-gray-600 leading-relaxed font-normal">
+                         <div class="w-1.5 h-1.5 rounded-full bg-[#083594] mt-2 shrink-0"></div>
+                         <span>{{ item }}</span>
+                      </li>
+                   }
+                </ul>
+             </div>
+          }
+
+          <!-- Skills -->
+          @if(job.skills?.length) {
+             <div>
+                <h3 class="text-md font-bold text-[#1A1C1E] mb-3">Skills</h3>
+                <div class="flex flex-wrap gap-2">
+                   @for(skill of job.skills; track skill) {
+                      <span class="px-3 py-1.5 bg-[#F0F5FF] text-[#083594] text-xs font-bold rounded-lg border border-[#E0E7FF]">{{ skill }}</span>
+                   }
+                </div>
+             </div>
+          }
+       </div>
+
+    </div>
+  </ion-content>
+
+  <!-- Sticky Footer -->
+  <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 px-5 pt-4 pb-[calc(1.5rem+env(safe-area-inset-bottom))] z-20 shadow-[0_-4px_20px_rgba(0,0,0,0.03)]">
+     <button class="w-full h-14 bg-[#083594] hover:bg-[#07308a] active:scale-[0.98] text-white font-bold text-[0.95rem] rounded-full shadow-lg shadow-[#083594]/20 flex items-center justify-center gap-2.5 transition-all">
+        <ion-icon name="paper-plane" class="text-xl"></ion-icon>
+        <span>Apply Now</span>
+     </button>
+  </div>
+}

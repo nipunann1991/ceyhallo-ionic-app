@@ -1,0 +1,103 @@
+
+<ion-content [fullscreen]="true" class="[--background:#F2F4F7]">
+  
+  <app-page-header 
+    title="News" 
+    searchPlaceholder="Search news..."
+    [searchValue]="searchTerm()"
+    [isModal]="isModalSignal()"
+    (searchChange)="handleSearch($event)"
+    (back)="goBack()">
+  </app-page-header>
+
+  <div class="px-5 pb-8">
+
+    <!-- Featured Banners (Swipeable) -->
+    @if (selectedCategory() === 'All' && searchTerm() === '') {
+      <div class="mb-6">
+        @if (isLoading()) {
+           <!-- Banner Skeleton -->
+           <div class="w-full aspect-[16/9] md:aspect-[2/1] rounded-2xl bg-gray-200 animate-pulse shadow-sm"></div>
+        } @else {
+           <app-banner 
+             [banners]="featuredBanners()" 
+             (bannerClick)="handleBannerClick($event)">
+           </app-banner>
+        }
+      </div>
+    }
+
+    <!-- Category Filter Chips -->
+    <div 
+      #categoryContainer
+      class="flex overflow-x-auto gap-2.5 pb-2 mb-4 scrollbar-hide -mx-5 px-5 snap-x select-none cursor-grab active:cursor-grabbing"
+      (mousedown)="startDrag($event)"
+      (mouseleave)="endDrag()"
+      (mouseup)="endDrag()"
+      (mousemove)="doDrag($event)">
+      @for (cat of categories(); track cat) {
+        <button 
+          (click)="setCategory(cat)"
+          class="px-3 py-[0.4rem] text-[0.8rem] font-semibold rounded-full whitespace-nowrap transition-colors duration-200 border"
+          [class.bg-[#083594]]="selectedCategory() === cat"
+          [class.text-white]="selectedCategory() === cat"
+          [class.border-transparent]="selectedCategory() === cat"
+          [class.bg-white]="selectedCategory() !== cat"
+          [class.text-[#4B5563]]="selectedCategory() !== cat"
+          [class.border-gray-200]="selectedCategory() !== cat"
+          [class.hover:bg-gray-50]="selectedCategory() !== cat"
+          [class.shadow-sm]="selectedCategory() !== cat">
+          {{ cat }}
+        </button>
+      }
+    </div>
+
+    <!-- News List -->
+    <div class="flex flex-col">
+      @if (isLoading()) {
+        <!-- Skeleton List -->
+        @for (item of [1,2,3,4,5]; track item) {
+           <div class="relative w-full bg-white p-3 rounded-[1.2rem] shadow-sm border border-gray-50 flex gap-3 mb-3">
+              <div class="w-[6rem] h-[6rem] shrink-0 rounded-[1rem] bg-gray-200 animate-pulse"></div>
+              <div class="flex-1 flex flex-col py-1 pr-6">
+                 <div class="w-16 h-3 bg-gray-200 rounded animate-pulse mb-2"></div>
+                 <div class="w-full h-4 bg-gray-200 rounded animate-pulse mb-1"></div>
+                 <div class="w-2/3 h-4 bg-gray-200 rounded animate-pulse mb-auto"></div>
+                 <div class="flex items-center gap-2 mt-2">
+                    <div class="w-4 h-4 rounded-full bg-gray-200 animate-pulse"></div>
+                    <div class="w-20 h-3 bg-gray-200 rounded animate-pulse"></div>
+                 </div>
+              </div>
+           </div>
+        }
+      } @else if (displayedNews().length > 0) {
+        @for (item of displayedNews(); track item.id) {
+          <app-news-card 
+            [newsItem]="item"
+            (click)="openArticle(item)"
+            class="mb-3">
+          </app-news-card>
+        }
+      } @else {
+        <!-- No Results State -->
+        <div class="flex items-center justify-center h-[36vh]">
+          <div class="text-center text-gray-400">
+            <ion-icon name="newspaper-outline" class="text-7xl mb-2 text-gray-300"></ion-icon>
+            <h1 class="text-xl font-bold mt-2">No News Found</h1>
+            @if (searchTerm()) {
+              <p class="text-sm">We couldn't find any news for "{{ searchTerm() }}".</p>
+            } @else {
+              <p class="text-sm">We couldn't find any news in '{{ selectedCategory() }}'.</p>
+            }
+          </div>
+        </div>
+      }
+    </div>
+
+    <!-- Infinite Scroll -->
+    <ion-infinite-scroll (ionInfinite)="onIonInfinite($event)" [disabled]="displayedNews().length >= filteredNews().length">
+       <ion-infinite-scroll-content loadingSpinner="bubbles" loadingText="Loading more news..."></ion-infinite-scroll-content>
+    </ion-infinite-scroll>
+
+  </div>
+</ion-content>

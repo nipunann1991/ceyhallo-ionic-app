@@ -1,0 +1,470 @@
+
+<ion-content [fullscreen]="true" class="[--background:#F2F4F7]" [forceOverscroll]="false">
+  
+  <!-- Custom Header Section (Static) -->
+  <div class="relative bg-[#083594] home-header pb-16 px-5 rounded-b-[2.5rem] shadow-sm z-0">
+    <!-- User Info Row -->
+    <div class="flex items-center justify-between mb-2">
+      <div (click)="goToProfile()" class="flex items-center gap-3 cursor-pointer active:opacity-80 transition-opacity">
+        <!-- Avatar with Online Dot -->
+        <div class="relative">
+          <div class="w-12 h-12 rounded-full border-2 border-white/20 bg-white/20 flex items-center justify-center text-white overflow-hidden">
+             <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7">
+                  <circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M5 21C5.61754 18.2372 7.9899 16 10.8 16H13.2C16.0101 16 18.3825 18.2372 19 21" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            <!-- <img [src]="user().avatar" [alt]="user().name" class="w-full h-full object-cover"> -->
+          </div>
+       
+          <div class="absolute top-0.5 right-0.5 w-3.5 h-3.5 bg-[#4ADE80] border-[2px] border-[#083594] rounded-full z-10"></div>
+        </div>
+        
+        <!-- Welcome Text -->
+        <div class="text-white flex flex-col justify-center">
+          <div class="flex items-center gap-2">
+             <h2 class="text-[1.1rem] font-bold tracking-tight">Hello {{ user().name }}</h2>
+             <span class="text-xl animate-wave">👋</span>
+          </div>
+          
+          @if (user().isLoggedIn) {
+             @if (user().isVerified) {
+                <p class="text-[0.75rem] text-blue-100/90 font-medium leading-tight tracking-wide">Proud to be a CeyHallo member.</p>
+             } @else {
+                <!-- Warning Message (Yellow) -->
+                <button (click)="resendVerification(); $event.stopPropagation()" class="flex items-center gap-1.5 opacity-100 group mt-1">
+                   <ion-icon name="alert-circle" class="text-[#FCD34D] text-[1rem]"></ion-icon>
+                   <p class="text-[0.75rem] text-[#FCD34D] leading-tight group-active:opacity-80">Email not verified. Resend link.</p>
+                </button>
+             }
+          }
+        </div>
+      </div>
+
+      <!-- Right Side Actions -->
+      <div class="flex items-center gap-3">
+         <!-- Country Flag Selector -->
+         <button 
+            (click)="openCountrySelector()"
+            class="w-9 h-9 rounded-full overflow-hidden shadow-sm shrink-0 active:scale-90 transition-transform bg-white/10 backdrop-blur-md"
+            style="border: 2px solid rgb(255 255 255 / 17%);">
+            @if (currentCountry(); as country) {
+              <img [src]="country.flagUrl || 'https://i.ibb.co/nNsGtRqn/placeholder-80x80.png'" (error)="handleImgError($event)" class="w-full h-full object-fill" [style.object-fit]="country.flagUrl ? 'fill' : 'none'" [class.bg-gray-200]="!country.flagUrl" [alt]="country.name">
+            } @else {
+              <!-- Skeleton loader for flag -->
+              <div class="w-full h-full bg-white/20 animate-pulse"></div>
+            }
+         </button>
+         
+         <!-- Notification Bell -->
+         <button routerLink="/notifications" class="relative w-10 h-10 flex items-center justify-center bg-white/10 rounded-full text-white active:scale-90 transition-transform">
+            <svg width="24" height="26" viewBox="0 0 29 31" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path fill-rule="evenodd" clip-rule="evenodd" d="M12.4513 24.6733C11.817 24.6733 11.3347 25.2646 11.6665 25.8051C12.2508 26.7571 13.3015 27.3921 14.5005 27.3921C15.6994 27.3921 16.75 26.7571 17.3345 25.8051C17.6663 25.2646 17.184 24.6733 16.5497 24.6733C16.146 24.6733 15.7993 24.9392 15.4958 25.2052C15.2301 25.4383 14.8817 25.5796 14.5005 25.5796C14.1191 25.5796 13.7709 25.4383 13.5051 25.2052C13.2016 24.9392 12.8549 24.6733 12.4513 24.6733Z" fill="white"/>
+                <mask id="mask0_283_630" style="mask-type:alpha" maskUnits="userSpaceOnUse" x="4" y="4" width="21" height="20">
+                <path fill-rule="evenodd" clip-rule="evenodd" d="M23.5628 15.1104C23.5628 11.4995 21.7705 8.12404 18.7792 6.10147L17.2076 5.03884C15.5721 3.93302 13.4285 3.93302 11.793 5.03884L10.2215 6.10146C7.23015 8.12404 5.43783 11.4995 5.43783 15.1104V17.423C4.69621 18.0868 4.22949 19.0514 4.22949 20.125C4.22949 22.1271 5.85247 23.75 7.85449 23.75H21.1462C23.1482 23.75 24.7712 22.1271 24.7712 20.125C24.7712 19.0514 24.3044 18.0868 23.5628 17.423V15.1104Z" fill="white"/>
+                </mask>
+                <g mask="url(#mask0_283_630)">
+                <path d="M18.7792 6.10147L17.7639 7.60295L18.7792 6.10147ZM23.5628 15.1104H25.3753H23.5628ZM17.2076 5.03883L18.2228 3.53735L17.2076 5.03883ZM11.793 5.03883L10.7778 3.53735L11.793 5.03883ZM10.2215 6.10145L11.2367 7.60295L10.2215 6.10145ZM5.43783 15.1104H7.25033H5.43783ZM5.43783 17.423L6.64661 18.7736L7.25033 18.2332V17.423H5.43783ZM23.5628 17.423H21.7503V18.2332L22.354 18.7736L23.5628 17.423ZM17.7639 7.60295C20.2567 9.28842 21.7503 12.1013 21.7503 15.1104H25.3753C25.3753 10.8977 23.2843 6.95964 19.7944 4.59997L17.7639 7.60295ZM16.1924 6.54032L17.7639 7.60295L19.7944 4.59997L18.2228 3.53735L16.1924 6.54032ZM12.8083 6.54032C13.8304 5.84919 15.1702 5.84919 16.1924 6.54032L18.2228 3.53735C15.974 2.01685 13.0266 2.01685 10.7778 3.53735L12.8083 6.54032ZM11.2367 7.60295L12.8083 6.54032L10.7778 3.53735L9.20623 4.59997L11.2367 7.60295ZM7.25033 15.1104C7.25033 12.1013 8.74392 9.28842 11.2367 7.60295L9.20623 4.59997C5.71636 6.95964 3.62533 10.8977 3.62533 15.1104H7.25033ZM7.25033 17.423V15.1104H3.62533V17.423H7.25033ZM6.04199 20.125C6.04199 19.5884 6.2729 19.108 6.64661 18.7736L4.22904 16.0725C3.11952 17.0655 2.41699 18.5144 2.41699 20.125H6.04199ZM7.85449 21.9375C6.85347 21.9375 6.04199 21.126 6.04199 20.125H2.41699C2.41699 23.128 4.85145 25.5625 7.85449 25.5625V21.9375ZM21.1462 21.9375H7.85449V25.5625H21.1462V21.9375ZM22.9587 20.125C22.9587 21.126 22.1471 21.9375 21.1462 21.9375V25.5625C24.1492 25.5625 26.5837 23.128 26.5837 20.125H22.9587ZM22.354 18.7736C22.7277 19.108 22.9587 19.5884 22.9587 20.125H26.5837C26.5837 18.5144 25.8811 17.0655 24.7716 16.0725L22.354 18.7736ZM21.7503 15.1104V17.423H25.3753V15.1104H21.7503Z" fill="white"/>
+                </g>
+                <g filter="url(#filter0_d_283_630)">
+                <circle cx="20.5" cy="6.5" r="4.5" fill="#FF5F57"/>
+                </g>
+                <defs>
+                <filter id="filter0_d_283_630" x="12" y="2" width="17" height="17" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+                <feFlood flood-opacity="0" result="BackgroundImageFix"/>
+                <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
+                <feOffset dy="4"/>
+                <feGaussianBlur stdDeviation="2"/>
+                <feComposite in2="hardAlpha" operator="out"/>
+                <feColorMatrix type="matrix" values="0 0 0 0 0.984314 0 0 0 0 0.368627 0 0 0 0 0.337255 0 0 0 0.21 0"/>
+                <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_283_630"/>
+                <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_283_630" result="shape"/>
+                </filter>
+                </defs>
+            </svg>
+         </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading Skeleton -->
+  @if (isLoading()) {
+    <div class="px-5 -mt-12 relative z-10 space-y-6">
+       <!-- Banner Skeleton -->
+       <div class="w-full aspect-[16/9] md:aspect-[2/1] rounded-2xl skeleton-shimmer shadow-sm"></div>
+       
+       <!-- Categories Skeleton -->
+       <div class="grid grid-cols-4 gap-4">
+          @for (i of [1,2,3,4,5,6,7,8]; track i) {
+             <div class="flex flex-col items-center gap-2">
+                <div class="w-16 h-16 rounded-2xl skeleton-shimmer"></div>
+                <div class="w-12 h-3 rounded skeleton-shimmer"></div>
+             </div>
+          }
+       </div>
+
+       <!-- Section Skeleton -->
+       <div class="space-y-4">
+          <div class="flex justify-between items-center">
+             <div class="w-32 h-5 rounded skeleton-shimmer"></div>
+             <div class="w-12 h-4 rounded skeleton-shimmer"></div>
+          </div>
+          <div class="flex gap-4 overflow-hidden">
+             <div class="w-64 h-40 rounded-2xl shrink-0 skeleton-shimmer"></div>
+             <div class="w-64 h-40 rounded-2xl shrink-0 skeleton-shimmer"></div>
+          </div>
+       </div>
+    </div>
+  }
+
+  <!-- Dynamic Sections -->
+  @for (item of sectionsWithData(); track item.section.id; let i = $index; let isLast = $last) {
+    @let section = item.section;
+    @let data = item.data;
+
+    @switch (section.template) {
+      
+      <!-- Banners Section -->
+      @case ('banners') {
+        <div class="relative z-10 px-5" [class.pb-4]="!isLast" [class.-mt-12]="i === 0" [class.mt-4]="i !== 0">
+          <app-banner [banners]="data" (bannerClick)="handleBannerClick($event)"></app-banner>
+        </div>
+      }
+
+      <!-- Categories Section -->
+      @case ('categories') {
+        <div class="relative z-10 px-5" [class.pb-4]="!isLast" [class.-mt-12]="i === 0" [class.mt-4]="i !== 0">
+          @if (section.title) {
+             <h2 class="text-[1.1rem] font-bold text-[#1A1C1E] tracking-tight mb-4 flex items-center" [class.text-white]="i === 0" [class.drop-shadow-md]="i === 0">
+               {{ section.title }}
+               @if (section.subTitle) {
+                 <span class="text-[0.8rem] font-medium text-gray-500 ml-1.5" [class.text-blue-100]="i === 0">{{ section.subTitle }}</span>
+               }
+             </h2>
+          }
+          @if (data.length === 0) {
+            <!-- Skeleton for Categories (if empty data but loaded) -->
+            <div class="grid grid-cols-4 gap-x-3 gap-y-4 mb-3">
+              @for (skel of [1,2,3,4,5,6,7,8]; track skel) {
+                <div class="flex flex-col items-center gap-2">
+                   <div class="w-full aspect-square rounded-[1.2rem] skeleton-shimmer"></div>
+                   <div class="w-12 h-3 rounded skeleton-shimmer"></div>
+                </div>
+              }
+            </div>
+          } @else {
+            <!-- Actual Grid -->
+            <div class="grid grid-cols-4 gap-x-3 gap-y-4 mb-3">
+               @for (category of data; track category.id) {
+                  <button 
+                    (click)="handleCategoryClick(category)"
+                    [disabled]="category.isActive === false"
+                    class="flex flex-col items-center gap-2 group focus:outline-none active:scale-95 transition-transform"
+                    [class.grayscale]="category.isActive === false"
+                    [class.opacity-50]="category.isActive === false">
+                     <!-- Icon Box -->
+                     <div class="relative w-[65px] h-[65px] bg-white rounded-2xl shadow-[0_4px_15px_rgba(0,0,0,0.03)] border border-[#F1F3F6] flex items-center justify-center group-hover:shadow-md transition-shadow">
+                        <!-- Category Icon Image -->
+                        <img [src]="category.icon || 'https://i.ibb.co/nNsGtRqn/placeholder-80x80.png'" (error)="handleImgError($event)" [alt]="category.label" class="w-10 h-10 object-contain drop-shadow-sm" [style.object-fit]="category.icon ? 'contain' : 'none'" [class.bg-gray-50]="!category.icon">
+                        
+                        <!-- Notification Dot -->
+                        @if (category.hasNotification) {
+                           <div class="absolute top-2.5 right-2.5 w-2.5 h-2.5 bg-[#EF4444] rounded-full border-2 border-white shadow-sm"></div>
+                        }
+                     </div>
+                     
+                     <!-- Label -->
+                     <span class="text-[0.75rem] font-medium text-[#4B5563] text-center tracking-normal leading-none" [class.text-white/90]="i === 0 && !section.title">{{ category.label }}</span>
+                  </button>
+               }
+            </div>
+          }
+        </div>
+      }
+
+      <!-- Latest Offers Section -->
+      @case ('latest_offers') {
+        <div class="relative z-10 pl-5" [class.pb-4]="!isLast" [class.-mt-12]="i === 0" [class.mt-4]="i !== 0">
+            <!-- Header -->
+            <div class="flex items-center justify-between pr-5 mb-4">
+              <a routerLink="/offers" [queryParams]="{category: section.filterValue === 'Food' ? 'food' : 'business', title: section.title, subtitle: section.subTitle}" class="text-[1.1rem] font-bold text-[#1A1C1E] tracking-tight hover:text-[#083594] transition-colors flex items-center" [class.text-white]="i === 0" [class.drop-shadow-md]="i === 0" [class.hover:text-blue-200]="i === 0">
+                {{ section.title }} 
+                @if (section.subTitle) {
+                  <span class="text-[0.8rem] font-medium text-gray-500 ml-1.5" [class.text-blue-100]="i === 0">{{ section.subTitle }}</span>
+                }
+              </a>
+              <button routerLink="/offers" [queryParams]="{category: section.filterValue === 'Food' ? 'food' : 'business', title: section.title, subtitle: section.subTitle}" class="text-sm font-bold text-gray-400 hover:text-[#083594] transition-colors" [class.text-blue-200]="i === 0" [class.hover:text-white]="i === 0">See all</button>
+            </div>
+
+            @if (data.length === 0) {
+              <!-- Skeleton for Offers -->
+              <div class="flex gap-3 overflow-hidden">
+                <div class="min-w-[300px] w-[300px] h-40 rounded-2xl skeleton-shimmer shadow-sm"></div>
+                <div class="min-w-[300px] w-[300px] h-40 rounded-2xl skeleton-shimmer shadow-sm"></div>
+              </div>
+            } @else {
+              <!-- Scroll Container -->
+              <div 
+                #offerContainer
+                class="flex overflow-x-auto gap-3 pb-4 pr-5 scrollbar-hide snap-x cursor-grab active:cursor-grabbing select-none"
+                (mousedown)="startOfferDrag($event)"
+                (mouseleave)="endOfferDrag()"
+                (mouseup)="endOfferDrag()"
+                (mousemove)="doOfferDrag($event)">
+                
+                @for (offer of data; track offer.id) {
+                    <app-offer-card 
+                      [offer]="offer"
+                      class="snap-center block min-w-[300px] w-[300px]"
+                      (click)="handleOfferClick(offer)">
+                    </app-offer-card>
+                }
+              </div>
+            }
+        </div>
+      }
+
+      <!-- Featured Businesses / Restaurants / Groceries Section -->
+      @case ('featured_businesses') {
+        <div class="relative z-10 pl-5" [class.pb-4]="!isLast" [class.-mt-12]="i === 0" [class.mt-4]="i !== 0">
+          <!-- Header -->
+          <div class="flex items-center justify-between pr-5 mb-4">
+            @let targetPath = section.dataSource === 'restaurants' ? '/restaurants' : (section.dataSource === 'groceries' ? '/groceries' : '/businesses');
+            <a [routerLink]="targetPath" class="text-[1.1rem] font-bold text-[#1A1C1E] tracking-tight hover:text-[#083594] transition-colors flex items-center" [class.text-white]="i === 0" [class.drop-shadow-md]="i === 0" [class.hover:text-blue-200]="i === 0">
+              {{ section.title }}
+              @if (section.subTitle) {
+                <span class="text-[0.8rem] font-medium text-gray-500 ml-1.5" [class.text-blue-100]="i === 0">{{ section.subTitle }}</span>
+              }
+            </a>
+            <button [routerLink]="targetPath" class="text-sm font-bold text-gray-400 hover:text-[#083594] transition-colors" [class.text-blue-200]="i === 0" [class.hover:text-white]="i === 0">See all</button>
+          </div>
+
+          @if (data.length === 0) {
+            <!-- Skeleton for Businesses -->
+            <div class="flex gap-3 overflow-hidden">
+              <div class="min-w-[230px] w-[230px] h-48 rounded-2xl skeleton-shimmer shadow-sm"></div>
+              <div class="min-w-[230px] w-[230px] h-48 rounded-2xl skeleton-shimmer shadow-sm"></div>
+            </div>
+          } @else {
+            @if (section.dataSource === 'restaurants') {
+              <!-- Scroll Container for Restaurants -->
+              <div 
+                #restaurantContainer
+                class="flex overflow-x-auto gap-3 pb-4 pr-5 scrollbar-hide snap-x cursor-grab active:cursor-grabbing select-none"
+                (mousedown)="startRestaurantDrag($event)"
+                (mouseleave)="endRestaurantDrag()"
+                (mouseup)="endRestaurantDrag()"
+                (mousemove)="doRestaurantDrag($event)">
+                
+                @for (biz of data; track biz.id) {
+                    <app-business-card 
+                      [business]="biz"
+                      class="min-w-[230px] w-[230px] snap-center block"
+                      (click)="handleBusinessClick(biz.id, 'restaurant')">
+                    </app-business-card>
+                }
+              </div>
+            } @else if (section.dataSource === 'groceries') {
+              <!-- Scroll Container for Groceries -->
+              <div 
+                #groceryContainer
+                class="flex overflow-x-auto gap-3 pb-4 pr-5 scrollbar-hide snap-x cursor-grab active:cursor-grabbing select-none"
+                (mousedown)="startGroceryDrag($event)"
+                (mouseleave)="endGroceryDrag()"
+                (mouseup)="endGroceryDrag()"
+                (mousemove)="doGroceryDrag($event)">
+                
+                @for (biz of data; track biz.id) {
+                    <app-business-card 
+                      [business]="biz"
+                      class="min-w-[230px] w-[230px] snap-center block"
+                      (click)="handleBusinessClick(biz.id, 'grocery')">
+                    </app-business-card>
+                }
+              </div>
+            } @else {
+              <!-- Scroll Container for Businesses -->
+              <div 
+                #businessContainer
+                class="flex overflow-x-auto gap-3 pb-4 pr-5 scrollbar-hide snap-x cursor-grab active:cursor-grabbing select-none"
+                (mousedown)="startBusinessDrag($event)"
+                (mouseleave)="endBusinessDrag()"
+                (mouseup)="endBusinessDrag()"
+                (mousemove)="doBusinessDrag($event)">
+                
+                @for (biz of data; track biz.id) {
+                    <app-business-card 
+                      [business]="biz"
+                      class="min-w-[230px] w-[230px] snap-center block"
+                      (click)="handleBusinessClick(biz.id, 'business')">
+                    </app-business-card>
+                }
+              </div>
+            }
+          }
+        </div>
+      }
+
+      <!-- News Feed Section -->
+      @case ('news_feed') {
+        <div class="relative z-10 pl-5" [class.pb-4]="!isLast" [class.-mt-12]="i === 0" [class.mt-4]="i !== 0">
+          <!-- Header -->
+          <div class="flex items-center justify-between pr-5 mb-4">
+            <a routerLink="/news" class="text-[1.1rem] font-bold text-[#1A1C1E] tracking-tight hover:text-[#083594] transition-colors flex items-center" [class.text-white]="i === 0" [class.drop-shadow-md]="i === 0" [class.hover:text-blue-200]="i === 0">
+              {{ section.title }}
+              @if (section.subTitle) {
+                <span class="text-[0.8rem] font-medium text-gray-500 ml-1.5" [class.text-blue-100]="i === 0">{{ section.subTitle }}</span>
+              }
+            </a>
+            <button routerLink="/news" class="text-sm font-bold text-gray-400 hover:text-[#083594] transition-colors" [class.text-blue-200]="i === 0" [class.hover:text-white]="i === 0">See all</button>
+          </div>
+
+          <!-- Horizontal Scroll Container with Drag Logic -->
+          <div 
+            #newsContainer
+            class="flex overflow-x-auto gap-4 pb-4 pr-5 scrollbar-hide snap-x cursor-grab active:cursor-grabbing select-none"
+            (mousedown)="startDrag($event)"
+            (mouseleave)="endDrag()"
+            (mouseup)="endDrag()"
+            (mousemove)="doDrag($event)">
+            
+            @if (data.length === 0) {
+              <!-- Skeleton Cards -->
+              @for (skel of [1,2,3]; track skel) {
+                 <div class="min-w-[85%] md:min-w-[400px] bg-white p-3 rounded-[1.25rem] shadow-sm border border-gray-100 h-28 skeleton-shimmer"></div>
+              }
+            } @else {
+              @for (item of data; track item.id) {
+                <!-- Card Component -->
+                <app-news-card 
+                  [newsItem]="item"
+                  (click)="handleNewsClick(item.id)"
+                  class="min-w-[85%] md:min-w-[400px] snap-center block">
+                </app-news-card>
+              }
+            }
+          </div>
+        </div>
+      }
+
+      <!-- Events Section -->
+      @case ('events') {
+        <div class="relative z-10 pl-5" [class.pb-4]="!isLast" [class.-mt-12]="i === 0" [class.mt-4]="i !== 0">
+          <!-- Header -->
+          <div class="flex items-center justify-between pr-5 mb-4">
+            <a routerLink="/events" class="text-[1.1rem] font-bold text-[#1A1C1E] tracking-tight hover:text-[#083594] transition-colors flex items-center" [class.text-white]="i === 0" [class.drop-shadow-md]="i === 0" [class.hover:text-blue-200]="i === 0">
+              {{ section.title }}
+              @if (section.subTitle) {
+                <span class="text-[0.8rem] font-medium text-gray-500 ml-1.5" [class.text-blue-100]="i === 0">{{ section.subTitle }}</span>
+              }
+            </a>
+            <button routerLink="/events" class="text-sm font-bold text-gray-400 hover:text-[#083594] transition-colors" [class.text-blue-200]="i === 0" [class.hover:text-white]="i === 0">See all</button>
+          </div>
+
+          <!-- Horizontal Scroll Container -->
+          <div 
+            #eventsContainer
+            class="flex overflow-x-auto gap-4 pb-4 pr-5 scrollbar-hide snap-x cursor-grab active:cursor-grabbing select-none"
+            (mousedown)="startEventsDrag($event)"
+            (mouseleave)="endEventsDrag()"
+            (mouseup)="endEventsDrag()"
+            (mousemove)="doEventsDrag($event)">
+            
+            @for (item of data; track item.id) {
+              <app-event-card 
+                [event]="item"
+                (click)="openEventDetail(item.id)"
+                class="min-w-[280px] w-[280px] snap-center block">
+              </app-event-card>
+            }
+          </div>
+        </div>
+      }
+
+      <!-- Jobs Section -->
+      @case ('jobs') {
+        <div class="relative z-10 pl-5" [class.pb-4]="!isLast" [class.-mt-12]="i === 0" [class.mt-4]="i !== 0">
+          <!-- Header -->
+          <div class="flex items-center justify-between pr-5 mb-4">
+            <a routerLink="/jobs" class="text-[1.1rem] font-bold text-[#1A1C1E] tracking-tight hover:text-[#083594] transition-colors flex items-center" [class.text-white]="i === 0" [class.drop-shadow-md]="i === 0" [class.hover:text-blue-200]="i === 0">
+              {{ section.title }}
+              @if (section.subTitle) {
+                <span class="text-[0.8rem] font-medium text-gray-500 ml-1.5" [class.text-blue-100]="i === 0">{{ section.subTitle }}</span>
+              }
+            </a>
+            <button routerLink="/jobs" class="text-sm font-bold text-gray-400 hover:text-[#083594] transition-colors" [class.text-blue-200]="i === 0" [class.hover:text-white]="i === 0">See all</button>
+          </div>
+
+          <!-- Horizontal Scroll Container -->
+          <div 
+            #jobsContainer
+            class="flex overflow-x-auto gap-4 pb-4 pr-5 scrollbar-hide snap-x cursor-grab active:cursor-grabbing select-none"
+            (mousedown)="startJobsDrag($event)"
+            (mouseleave)="endJobsDrag()"
+            (mouseup)="endJobsDrag()"
+            (mousemove)="doJobsDrag($event)">
+            
+            @for (item of data; track item.id) {
+              <app-job-card 
+                [job]="item"
+                (click)="openJobDetail(item.id)"
+                class="min-w-[280px] w-[280px] snap-center block">
+              </app-job-card>
+            }
+          </div>
+        </div>
+      }
+
+    }
+  }
+  
+  <!-- Spacer to clear Tab Bar comfortably -->
+  <div class="h-28 w-full"></div>
+
+</ion-content>
+
+<!-- Country Selection Modal (Bottom Sheet Style) -->
+<ion-modal 
+  [isOpen]="isCountryModalOpen()" 
+  (didDismiss)="closeCountrySelector()" 
+  [initialBreakpoint]="0.5" 
+  [breakpoints]="[0, 0.5, 0.75]"
+  class="--border-radius: 16px;">
+  <ng-template>
+    <ion-header class="ion-no-border">
+      <ion-toolbar class="bg-white">
+        <ion-title class="font-bold text-gray-900">Select Location</ion-title>
+        <ion-buttons slot="end">
+          <ion-button (click)="closeCountrySelector()" color="medium">
+            <ion-icon slot="icon-only" name="close"></ion-icon>
+          </ion-button>
+        </ion-buttons>
+      </ion-toolbar>
+    </ion-header>
+    <ion-content class="bg-white">
+      <ion-list lines="none" class="p-2">
+        @for (country of countries(); track country.id) {
+          <ion-item 
+            button 
+            (click)="selectCountry(country)"
+            class="rounded-xl mb-2"
+            [class.bg-blue-50]="country.id === selectedCountryId()"
+            detail="false">
+            
+            <div slot="start" class="w-10 h-10 rounded-full overflow-hidden border border-gray-100 shadow-sm mr-3">
+               <img [src]="country.flagUrl || 'https://i.ibb.co/nNsGtRqn/placeholder-80x80.png'" (error)="handleImgError($event)" class="w-full h-full object-fill" [style.object-fit]="country.flagUrl ? 'fill' : 'none'" [class.bg-gray-200]="!country.flagUrl" [alt]="country.name">
+            </div>
+            
+            <ion-label>
+              <h3 class="font-bold text-gray-800">{{ country.name }}</h3>
+              <p class="text-xs text-gray-500">{{ country.cities.length }} Cities Available</p>
+            </ion-label>
+            
+            @if (country.id === selectedCountryId()) {
+              <ion-icon slot="end" name="checkmark-circle" class="text-[#083594] text-xl"></ion-icon>
+            }
+          </ion-item>
+        }
+      </ion-list>
+    </ion-content>
+  </ng-template>
+</ion-modal>

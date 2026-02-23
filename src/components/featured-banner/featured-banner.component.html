@@ -1,0 +1,28 @@
+<div class="relative w-full rounded-[1.2rem] overflow-hidden shadow-lg mb-6 active:scale-[0.98] transition-transform cursor-pointer group bg-gray-200 aspect-[16/8] md:aspect-[2/1]">
+  
+  <!-- Image -->
+  <img [src]="imageUrl() || 'https://i.ibb.co/nNsGtRqn/placeholder-80x80.png'" 
+       (error)="handleImgError($event)" 
+       class="w-full h-full object-cover" 
+       [style.object-fit]="imageUrl() ? 'cover' : 'none'" 
+       [class.bg-gray-200]="!imageUrl()"
+       [class.opacity-40]="!imageUrl()">
+  
+  <!-- Gradient Overlay -->
+  <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent"></div>
+
+  <!-- Content Container -->
+  <div class="absolute bottom-5 left-5 right-5 flex flex-col items-start gap-2">
+      
+      <!-- Category Badge -->
+      <div class="bg-[#FFC107] text-[#083594] px-2 py-1 rounded-full flex items-center gap-1.5 shadow-sm">
+          <ion-icon name="star" class="text-xs"></ion-icon>
+          <span class="text-[0.65rem] font-black tracking-wider uppercase">{{ category() }}</span>
+      </div>
+
+      <!-- Title -->
+      <h2 class="text-white text-base font-bold leading-tight drop-shadow-lg max-w-[95%]">
+          {{ title() }}
+      </h2>
+  </div>
+</div>
