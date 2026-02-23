@@ -146,10 +146,11 @@ import { LoginComponent } from '../login/login.component';
 export class TabsComponent implements OnInit {
   activeTab = signal<string>('home');
 
-  constructor() {
-    this.modalCtrl = inject(ModalController);
-    this.authService = inject(AuthService);
-    this.router = inject(Router);
+  constructor( 
+    private modalCtrl: ModalController,
+    private authService: AuthService,
+    private router: Router
+  ) {
     this.router.events.pipe(
       filter(event => event instanceof NavigationEnd)
     ).subscribe((event: NavigationEnd) => {

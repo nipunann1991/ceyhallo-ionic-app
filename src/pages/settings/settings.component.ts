@@ -16,14 +16,14 @@ import { PushNotificationService } from '../../services/push-notifications.servi
       Settings
     </ion-title>
   </ion-toolbar>
-</ion-header>
+</ion-header> 
 
 <ion-content [fullscreen]="true" class="[--background:#F2F4F7]">
   <div class="px-5 py-6 space-y-6">
     
     <!-- Push Notification Debug Section -->
     <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
-        <h3 class="font-bold text-[#1A1C1E] mb-3">Push Notifications</h3>
+        <h3 class="font-bold text-[#1A1C1E] mb-3">Push Notifications</h3> 
         
         @if (pushService.fcmToken()) {
             <div class="bg-gray-50 rounded-xl p-3 mb-3 border border-gray-200">
@@ -84,10 +84,10 @@ import { PushNotificationService } from '../../services/push-notifications.servi
   imports: [CommonModule, IonicModule],
 })
 export class SettingsComponent {
-  constructor() {
-    this.pushService = inject(PushNotificationService);
-    this.toastCtrl = inject(ToastController);
-  }
+  constructor(
+    public pushService: PushNotificationService,
+    private toastCtrl: ToastController
+  ) {}
 
   async copyToken() {
     const token = this.pushService.fcmToken();

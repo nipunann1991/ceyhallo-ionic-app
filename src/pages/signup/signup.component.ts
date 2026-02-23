@@ -23,7 +23,7 @@ import { LegalPageComponent } from '../legal/legal.component';
     class="flex flex-col items-center justify-center min-h-full w-full bg-[#F2F4F7] px-6 font-sans text-[#1A1C1E]"
     style="padding-top: calc(4rem + var(--ion-safe-area-top, 0px)); padding-bottom: 2rem;">
 
-    <!-- Logo Section -->
+    <!-- Logo Section --> 
     <div class="flex flex-col items-center mb-6">
        <ion-img src="https://i.ibb.co/B5TnYXWN/logo.png" alt="CeyHallo Logo" class="h-[8rem] object-contain"></ion-img>
        <h2 class="text-xl font-bold text-[#1A1C1E] mt-2 tracking-tight">Join the community</h2>
