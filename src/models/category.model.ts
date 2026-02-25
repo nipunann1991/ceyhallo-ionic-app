@@ -7,4 +7,6 @@ export interface Category {
   order: number;
   path?: string;
   isActive?: boolean;
+  filterBy?: string;
+  excludeBy?: string;
 }

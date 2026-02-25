@@ -29,7 +29,7 @@ export class OffersComponent implements OnInit {
 
   allOffers: Signal<Offer[]>;
   searchTerm = signal('');
-  categoryType = signal<'food' | 'business'>('food');
+  filterByCategory = signal<string>('');
   
   // Custom Title Logic
   pageTitle = signal('Latest Offers');
@@ -44,13 +44,11 @@ export class OffersComponent implements OnInit {
     this.filteredOffers = computed(() => {
         let list = this.allOffers();
         const term = this.searchTerm().toLowerCase();
-        const type = this.categoryType();
+        const category = this.filterByCategory();
 
-        // Filter by category type
-        if (type === 'food') {
-            list = list.filter(o => o.linkType === 'restaurants' || o.linkType === 'restaurant');
-        } else {
-            list = list.filter(o => o.linkType === 'businesses' || o.linkType === 'business');
+        // Filter by category
+        if (category) {
+            list = list.filter(o => (o.category || '').toLowerCase() === category.toLowerCase());
         }
     
         if (!term) return list;
@@ -74,11 +72,11 @@ export class OffersComponent implements OnInit {
     
     // Check for category and display query params
     this.route.queryParams.subscribe(params => {
-        const cat = params['category'];
-        if (cat === 'business') {
-            this.categoryType.set('business');
+        const category = params['filterBy'] || params['category'];
+        if (category) {
+            this.filterByCategory.set(category.toLowerCase());
         } else {
-            this.categoryType.set('food');
+            this.filterByCategory.set('');
         }
 
         if (params['title']) {

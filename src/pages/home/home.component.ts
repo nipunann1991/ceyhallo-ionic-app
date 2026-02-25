@@ -167,18 +167,7 @@ export class HomeComponent implements OnInit {
         const settings = this.settings();
         let sections = settings?.homeSections || [];
         
-        // Fallback if no settings found or sections are empty
-        if (sections.length === 0) {
-            sections = [
-                { id: 'def_banners', template: 'banners', dataSource: 'banners', enabled: true, order: 1, title: '', linkTitle: '', linkUrl: '' },
-                { id: 'def_categories', template: 'categories', dataSource: 'categories', enabled: true, order: 2, title: 'Categories', linkTitle: 'See all', linkUrl: '/categories' },
-                { id: 'def_offers_food', template: 'latest_offers', dataSource: 'offers', filterValue: 'Food', title: 'Latest Offers', subTitle: '(Food)', enabled: true, order: 3, linkTitle: 'See all', linkUrl: '/offers' },
-                { id: 'def_restaurants', template: 'featured_businesses', dataSource: 'restaurants', title: 'Featured Restaurants', enabled: true, order: 4, linkTitle: 'See all', linkUrl: '/restaurants' },
-                { id: 'def_offers_biz', template: 'latest_offers', dataSource: 'offers', filterValue: 'Business', title: 'Special Offers', enabled: true, order: 5, linkTitle: 'See all', linkUrl: '/offers' },
-                { id: 'def_businesses', template: 'featured_businesses', dataSource: 'businesses', title: 'Featured Businesses', enabled: true, order: 6, linkTitle: 'See all', linkUrl: '/businesses' },
-                { id: 'def_news', template: 'news_feed', dataSource: 'news', title: 'Latest News', enabled: true, order: 7, linkTitle: 'See all', linkUrl: '/news' }
-            ] as HomeSection[];
-        }
+
         
         const enabled = sections.filter(s => s.enabled).sort((a, b) => (a.order ?? 999) - (b.order ?? 999));
 
@@ -371,17 +360,8 @@ export class HomeComponent implements OnInit {
         else if (label.includes('support')) path = '/support';
     }
 
-    // Known valid paths
-    const validPaths = [
-        '/news', '/restaurants', '/groceries', '/businesses', '/organizations', '/organization', 
-        '/events', '/jobs', '/offers', '/support', '/navigate'
-    ];
-    
-    // Check if resolved path is valid
-    const isValidPath = path && validPaths.some(p => path!.toLowerCase().startsWith(p));
-
-    if (isValidPath) {
-      this.router.navigateByUrl(path!);
+    if (path) {
+      this.router.navigateByUrl(path);
     } else {
       const toast = await this.toastCtrl.create({
         message: `${category.label} will be available soon.`,
