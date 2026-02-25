@@ -127,6 +127,10 @@ export const APP_ROUTES: Routes = [
     loadComponent: () => import('./pages/legal/legal.component').then(m => m.LegalPageComponent),
   },
   {
+    path: 'terms',
+    loadComponent: () => import('./pages/terms/terms.component').then(m => m.TermsComponent),
+  },
+  {
     path: 'support',
     loadComponent: () => import('./pages/support/support.component').then(m => m.SupportComponent),
   },

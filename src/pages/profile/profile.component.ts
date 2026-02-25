@@ -153,7 +153,7 @@ import { DataService } from '../../services/data.service';
              <ion-icon name="chevron-forward" class="text-gray-300 text-lg"></ion-icon>
           </button>
 
-          <button routerLink="/legal/terms" class="w-full flex items-center justify-between p-3 hover:bg-gray-50 rounded-xl transition-colors group">
+          <button routerLink="/terms" class="w-full flex items-center justify-between p-3 hover:bg-gray-50 rounded-xl transition-colors group">
              <div class="flex items-center gap-3.5">
                 <ion-icon name="document-text-outline" class="text-gray-400 text-[1.4rem] group-active:text-[#083594] transition-colors"></ion-icon>
                 <span class="font-semibold text-sm text-gray-700">Terms & Conditions</span>

@@ -9,6 +9,7 @@ import { getRelativeTime } from '../../utils/date.utils';
 @Component({
   selector: 'app-job-card',
   templateUrl: './job-card.component.html',
+  standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [CommonModule, IonicModule],
   host: {

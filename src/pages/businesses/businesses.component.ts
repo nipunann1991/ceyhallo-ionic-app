@@ -1,5 +1,7 @@
 
 import { Component, ChangeDetectionStrategy, OnInit, signal, computed, viewChild, ElementRef, Signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { ActivatedRoute } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { IonicModule, ModalController, NavController, InfiniteScrollCustomEvent } from '@ionic/angular';
 import { DataService } from '../../services/data.service';
@@ -29,6 +31,10 @@ import { Country } from '../../models/country.model';
 export class BusinessesComponent implements OnInit {
   public isModal = false;
   readonly isModalSignal = signal(false);
+
+  private queryParams: Signal<any>;
+  filterBy: Signal<string[]>;
+  excludeBy: Signal<string[]>;
 
   allBusinesses: Signal<Business[]>;
   offers: Signal<Offer[]>;
@@ -69,8 +75,27 @@ export class BusinessesComponent implements OnInit {
     private dataService: DataService,
     private authService: AuthService,
     private modalCtrl: ModalController,
-    private navCtrl: NavController
+    private navCtrl: NavController,
+    private route: ActivatedRoute
   ) {
+    this.queryParams = toSignal(this.route.queryParams, { initialValue: {} });
+
+    this.filterBy = computed(() => {
+        const params = this.queryParams();
+        if (params && params['filterBy']) {
+            return params['filterBy'].split(',').map((c: string) => c.toLowerCase());
+        }
+        return [];
+    });
+
+    this.excludeBy = computed(() => {
+        const params = this.queryParams();
+        if (params && params['excludeBy']) {
+            return params['excludeBy'].split(',').map((c: string) => c.toLowerCase());
+        }
+        return [];
+    });
+
     this.allBusinesses = this.dataService.getBusinesses();
     this.offers = this.dataService.getOffers();
     this.countries = this.dataService.getCountries();
@@ -117,6 +142,16 @@ export class BusinessesComponent implements OnInit {
         let list = [...this.countryBusinesses()];
         const cat = this.selectedCategory();
         const term = (this.searchTerm() || '').toLowerCase();
+        const filterCategories = this.filterBy();
+        const excludeCategories = this.excludeBy();
+
+        if (filterCategories.length > 0) {
+            list = list.filter(r => r.category && filterCategories.includes((r.category || '').toLowerCase()));
+        }
+
+        if (excludeCategories.length > 0) {
+            list = list.filter(r => !r.category || !excludeCategories.includes((r.category || '').toLowerCase()));
+        }
         
         if (cat !== 'All') {
           list = list.filter(r => (r.location || '').toLowerCase().includes(cat.toLowerCase()));
@@ -134,6 +169,8 @@ export class BusinessesComponent implements OnInit {
     
         return list;
     });
+
+
 
     this.displayedBusinesses = computed(() => {
         return this.filteredBusinesses().slice(0, this.limit());

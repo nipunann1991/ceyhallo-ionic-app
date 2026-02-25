@@ -26,6 +26,7 @@ import { LoginComponent } from '../login/login.component';
 import { Country } from '../../models/country.model';
 import { Category } from '../../models/category.model';
 import { AppConfig, HomeSection } from '../../models/settings.model';
+import { Observable } from 'rxjs';
 import { Business } from '../../models/business.model';
 import { Grocery } from '../../models/grocery.model';
 
@@ -46,9 +47,7 @@ export class HomeComponent implements OnInit {
   events: Signal<Event[]>;
   jobs: Signal<Job[]>;
   
-  private allBusinesses: Signal<Business[]>;
-  private allRestaurants: Signal<Business[]>;
-  private allGroceries: Signal<Grocery[]>;
+
 
   sectionsWithData: Signal<{ section: HomeSection, data: any[] }[]>;
   user: Signal<any>;
@@ -57,9 +56,7 @@ export class HomeComponent implements OnInit {
   foodOffers: Signal<Offer[]>;
   businessOffers: Signal<Offer[]>;
   
-  featuredRestaurants: Signal<Business[]>;
-  generalBusinesses: Signal<Business[]>;
-  featuredGroceries: Signal<Grocery[]>;
+
   currentCountry: Signal<Country | null>;
 
   selectedCountryId: Signal<string>;
@@ -132,9 +129,8 @@ export class HomeComponent implements OnInit {
     this.offers = this.dataService.getOffers();
     this.events = this.dataService.getEvents();
     this.jobs = this.dataService.getJobs();
-    this.allBusinesses = this.dataService.getBusinesses();
-    this.allRestaurants = this.dataService.getRestaurants();
-    this.allGroceries = this.dataService.getGroceries();
+
+
     this.selectedCountryId = this.dataService.selectedCountryId;
 
     this.user = computed(() => {
@@ -199,99 +195,7 @@ export class HomeComponent implements OnInit {
         return rawOffers.filter(offer => filterOffersByType(offer, 'business'));
     });
 
-    this.featuredRestaurants = computed(() => {
-        const list = this.allRestaurants().filter(r => r.isPromoted);
-        const cid = this.selectedCountryId();
-        const country = this.countries().find(c => c.id === cid);
-        
-        return list.filter(r => {
-            // 1. Match by countryCode
-            if (r.countryCode) {
-                return r.countryCode === cid;
-            }
 
-            // 2. Match by cityCode (check if it belongs to selected country)
-            if (r.cityCode && country && country.cities) {
-                return country.cities.some(city => city.code === r.cityCode);
-            }
-
-            // 3. Fallback to string matching location
-            if (r.location && country && country.cities) {
-                const loc = r.location.trim().toLowerCase();
-                return country.cities.some(c => {
-                    const cityName = c.name.trim().toLowerCase();
-                    return loc.includes(cityName) || cityName.includes(loc);
-                });
-            }
-
-            // Fallback: if no country data or codes, show it
-            if (!country || !country.cities || country.cities.length === 0) return true;
-
-            return false;
-        });
-    });
-
-    this.generalBusinesses = computed(() => {
-        const list = this.allBusinesses().filter(b => b.isPromoted);
-        const cid = this.selectedCountryId();
-        const country = this.countries().find(c => c.id === cid);
-        
-        return list.filter(b => {
-            // 1. Match by countryCode
-            if (b.countryCode) {
-                return b.countryCode === cid;
-            }
-
-            // 2. Match by cityCode
-            if (b.cityCode && country && country.cities) {
-                return country.cities.some(city => city.code === b.cityCode);
-            }
-
-            // 3. Fallback to string matching location
-            if (b.location && country && country.cities) {
-                const loc = b.location.trim().toLowerCase();
-                return country.cities.some(c => {
-                    const cityName = c.name.trim().toLowerCase();
-                    return loc.includes(cityName) || cityName.includes(loc);
-                });
-            }
-
-            if (!country || !country.cities || country.cities.length === 0) return true;
-
-            return false;
-        });
-    });
-
-    this.featuredGroceries = computed(() => {
-        const list = this.allGroceries().filter(g => g.isPromoted);
-        const cid = this.selectedCountryId();
-        const country = this.countries().find(c => c.id === cid);
-        
-        return list.filter(g => {
-            // 1. Match by countryCode
-            if (g.countryCode) {
-                return g.countryCode === cid;
-            }
-
-            // 2. Match by cityCode
-            if (g.cityCode && country && country.cities) {
-                return country.cities.some(city => city.code === g.cityCode);
-            }
-
-            // 3. Fallback to string matching location
-            if (g.location && country && country.cities) {
-                const loc = g.location.trim().toLowerCase();
-                return country.cities.some(c => {
-                    const cityName = c.name.trim().toLowerCase();
-                    return loc.includes(cityName) || cityName.includes(loc);
-                });
-            }
-
-            if (!country || !country.cities || country.cities.length === 0) return true;
-
-            return false;
-        });
-    });
 
     this.currentCountry = computed(() => {
         const list = this.countries();
@@ -308,63 +212,49 @@ export class HomeComponent implements OnInit {
         // Fallback if no settings found or sections are empty
         if (sections.length === 0) {
             sections = [
-                { id: 'def_banners', template: 'banners', dataSource: 'banners', enabled: true, order: 1 },
-                { id: 'def_categories', template: 'categories', dataSource: 'categories', enabled: true, order: 2 },
-                { id: 'def_offers_food', template: 'latest_offers', dataSource: 'offers', filterValue: 'Food', title: 'Latest Offers', subTitle: '(Food)', enabled: true, order: 3 },
-                { id: 'def_restaurants', template: 'featured_businesses', dataSource: 'restaurants', title: 'Featured Restaurants', enabled: true, order: 4 },
-                { id: 'def_offers_biz', template: 'latest_offers', dataSource: 'offers', filterValue: 'Business', title: 'Special Offers', enabled: true, order: 5 },
-                { id: 'def_businesses', template: 'featured_businesses', dataSource: 'businesses', title: 'Featured Businesses', enabled: true, order: 6 },
-                { id: 'def_news', template: 'news_feed', dataSource: 'news', title: 'Latest News', enabled: true, order: 7 }
+                { id: 'def_banners', template: 'banners', dataSource: 'banners', enabled: true, order: 1, title: '', linkTitle: '', linkUrl: '' },
+                { id: 'def_categories', template: 'categories', dataSource: 'categories', enabled: true, order: 2, title: 'Categories', linkTitle: 'See all', linkUrl: '/categories' },
+                { id: 'def_offers_food', template: 'latest_offers', dataSource: 'offers', filterValue: 'Food', title: 'Latest Offers', subTitle: '(Food)', enabled: true, order: 3, linkTitle: 'See all', linkUrl: '/offers' },
+                { id: 'def_restaurants', template: 'featured_businesses', dataSource: 'restaurants', title: 'Featured Restaurants', enabled: true, order: 4, linkTitle: 'See all', linkUrl: '/restaurants' },
+                { id: 'def_offers_biz', template: 'latest_offers', dataSource: 'offers', filterValue: 'Business', title: 'Special Offers', enabled: true, order: 5, linkTitle: 'See all', linkUrl: '/offers' },
+                { id: 'def_businesses', template: 'featured_businesses', dataSource: 'businesses', title: 'Featured Businesses', enabled: true, order: 6, linkTitle: 'See all', linkUrl: '/businesses' },
+                { id: 'def_news', template: 'news_feed', dataSource: 'news', title: 'Latest News', enabled: true, order: 7, linkTitle: 'See all', linkUrl: '/news' }
             ] as HomeSection[];
         }
         
         const enabled = sections.filter(s => s.enabled).sort((a, b) => (a.order ?? 999) - (b.order ?? 999));
 
         return enabled.map(section => {
-            let data: any[] = [];
-            switch(section.dataSource) {
-                case 'banners': 
-                    data = this.banners(); 
-                    break;
-                case 'categories': 
-                    data = this.categories(); 
-                    break;
-                case 'news': 
-                    data = this.news();
-                    break;
-                case 'events':
-                    data = this.events();
-                    break;
-                case 'jobs':
-                    data = this.jobs();
-                    break;
-                case 'offers':
-                    // Reuse existing logic for food vs business offers
-                    const fv = (section.filterValue || '').toLowerCase();
-                    if (fv === 'food') {
-                        data = this.foodOffers();
-                    } else {
-                        data = this.businessOffers();
-                    }
-                    break;
-                case 'restaurants': 
-                    data = this.featuredRestaurants(); 
-                    break;
-                case 'groceries':
-                    data = this.featuredGroceries();
-                    break;
-                case 'businesses': 
-                    data = this.generalBusinesses(); 
-                    break;
-            }
+          const dataSignal = this.getSectionData(section);
+          let data = dataSignal();
 
-            // Apply limit from settings if specified
-            const limit = Number(section.limit);
-            if (!isNaN(limit) && limit > 0) {
-                data = data.slice(0, limit);
-            }
+          // Apply additional filtering based on section properties
+          if (section.dataSource === 'offers' && section.filterValue) {
+            const type = section.filterValue.toLowerCase() === 'food' ? 'food' : 'business';
+            data = this.filterOffers(data as Offer[], type);
+          } else if (section.dataSource === 'restaurants' || section.dataSource === 'businesses' || section.dataSource === 'groceries') {
+            let filteredData = data;
 
-            return { section, data };
+            if (section.filterData && section.filterData.length > 0) {
+              filteredData = data.filter((item: any) => {
+                return section.filterData!.every(criterion => {
+                  const filterType = criterion.filterType === 'isFeatured' ? 'isPromoted' : criterion.filterType;
+                  
+                  // Handle case-insensitive category matching
+                  if (filterType === 'category') {
+                    const itemCategory = (item.category || '').toLowerCase();
+                    const filterValue = (criterion.filterValue || '').toLowerCase();
+                    return itemCategory === filterValue;
+                  }
+                  
+                  return item[filterType] == criterion.filterValue;
+                });
+              });
+            }
+            data = filteredData;
+          }
+
+          return { section, data };
         });
     });
 
@@ -374,6 +264,7 @@ export class HomeComponent implements OnInit {
         // we can reveal the UI. Inner components have their own empty states/skeletons if needed.
         if (this.settings()) {
             this.isLoading.set(false);
+
         }
 
         const countries = this.countries();
@@ -396,19 +287,44 @@ export class HomeComponent implements OnInit {
     this.pushService.initPush();
   }
 
-  handleImgError = handleImageError;
-
-  async downloadApp() {
-    const toast = await this.toastCtrl.create({
-      message: `App download will be available soon.`,
-      duration: 2500,
-      color: 'dark',
-      position: 'middle',
-      icon: 'information-circle',
-      cssClass: 'toast-custom-text'
-    });
-    await toast.present();
+  private getSectionData(section: HomeSection): Signal<any[]> {
+    switch (section.dataSource) {
+      case 'banners': return this.dataService.getBanners();
+      case 'categories': return this.dataService.getCategories();
+      case 'news': return this.dataService.getNews();
+      case 'offers': return this.dataService.getOffers();
+      case 'events': return this.dataService.getEvents();
+      case 'jobs': return this.dataService.getJobs();
+      case 'businesses': return this.dataService.getBusinesses();
+      case 'restaurants': return this.dataService.getRestaurants();
+      case 'groceries': return this.dataService.getGroceries();
+      default: return signal([]);
+    }
   }
+
+  private filterOffers(offers: Offer[], type: 'food' | 'business'): Offer[] {
+    const filterFn = (offer: Offer) => {
+        if (type === 'food') {
+            if (offer.linkType !== 'restaurants' && offer.linkType !== 'restaurant') return false;
+        } else {
+            if (offer.linkType !== 'businesses' && offer.linkType !== 'business') return false;
+        }
+
+        const cid = this.selectedCountryId();
+        if (offer.countryCode && offer.countryCode !== cid) {
+            return false;
+        }
+        return true;
+    };
+
+    let rawOffers = offers.filter(o => o.isHomeBanner);
+    if (rawOffers.length === 0) {
+        rawOffers = offers;
+    }
+    return rawOffers.filter(filterFn);
+  }
+
+  handleImgError = handleImageError;
 
   async goToProfile() {
     if (this.authService.isLoggedIn()) {
@@ -821,6 +737,10 @@ export class HomeComponent implements OnInit {
       },
     });
     await modal.present();
+  }
+
+  navigate(url: string) {
+    this.router.navigateByUrl(url);
   }
 
   async handleBannerClick(banner: Banner) {

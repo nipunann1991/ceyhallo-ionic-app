@@ -193,7 +193,9 @@
                   <span class="text-[0.8rem] font-medium text-gray-500 ml-1.5" [class.text-blue-100]="i === 0">{{ section.subTitle }}</span>
                 }
               </a>
-              <button routerLink="/offers" [queryParams]="{category: section.filterValue === 'Food' ? 'food' : 'business', title: section.title, subtitle: section.subTitle}" class="text-sm font-bold text-gray-400 hover:text-[#083594] transition-colors" [class.text-blue-200]="i === 0" [class.hover:text-white]="i === 0">See all</button>
+              @if (section.linkTitle && section.linkUrl) {
+                <button (click)="navigate(section.linkUrl)" class="text-sm font-bold text-gray-400 hover:text-[#083594] transition-colors" [class.text-blue-200]="i === 0" [class.hover:text-white]="i === 0">{{ section.linkTitle }}</button>
+              }
             </div>
 
             @if (data.length === 0) {
@@ -236,7 +238,9 @@
                 <span class="text-[0.8rem] font-medium text-gray-500 ml-1.5" [class.text-blue-100]="i === 0">{{ section.subTitle }}</span>
               }
             </a>
-            <button [routerLink]="targetPath" class="text-sm font-bold text-gray-400 hover:text-[#083594] transition-colors" [class.text-blue-200]="i === 0" [class.hover:text-white]="i === 0">See all</button>
+            @if (section.linkTitle && section.linkUrl) {
+              <button (click)="navigate(section.linkUrl)" class="text-sm font-bold text-gray-400 hover:text-[#083594] transition-colors" [class.text-blue-200]="i === 0" [class.hover:text-white]="i === 0">{{ section.linkTitle }}</button>
+            }
           </div>
 
           @if (data.length === 0) {
@@ -316,7 +320,9 @@
                 <span class="text-[0.8rem] font-medium text-gray-500 ml-1.5" [class.text-blue-100]="i === 0">{{ section.subTitle }}</span>
               }
             </a>
-            <button routerLink="/news" class="text-sm font-bold text-gray-400 hover:text-[#083594] transition-colors" [class.text-blue-200]="i === 0" [class.hover:text-white]="i === 0">See all</button>
+            @if (section.linkTitle && section.linkUrl) {
+              <button (click)="navigate(section.linkUrl)" class="text-sm font-bold text-gray-400 hover:text-[#083594] transition-colors" [class.text-blue-200]="i === 0" [class.hover:text-white]="i === 0">{{ section.linkTitle }}</button>
+            }
           </div>
 
           <!-- Horizontal Scroll Container with Drag Logic -->
@@ -358,7 +364,9 @@
                 <span class="text-[0.8rem] font-medium text-gray-500 ml-1.5" [class.text-blue-100]="i === 0">{{ section.subTitle }}</span>
               }
             </a>
-            <button routerLink="/events" class="text-sm font-bold text-gray-400 hover:text-[#083594] transition-colors" [class.text-blue-200]="i === 0" [class.hover:text-white]="i === 0">See all</button>
+            @if (section.linkTitle && section.linkUrl) {
+              <button (click)="navigate(section.linkUrl)" class="text-sm font-bold text-gray-400 hover:text-[#083594] transition-colors" [class.text-blue-200]="i === 0" [class.hover:text-white]="i === 0">{{ section.linkTitle }}</button>
+            }
           </div>
 
           <!-- Horizontal Scroll Container -->
@@ -392,7 +400,9 @@
                 <span class="text-[0.8rem] font-medium text-gray-500 ml-1.5" [class.text-blue-100]="i === 0">{{ section.subTitle }}</span>
               }
             </a>
-            <button routerLink="/jobs" class="text-sm font-bold text-gray-400 hover:text-[#083594] transition-colors" [class.text-blue-200]="i === 0" [class.hover:text-white]="i === 0">See all</button>
+            @if (section.linkTitle && section.linkUrl) {
+              <button (click)="navigate(section.linkUrl)" class="text-sm font-bold text-gray-400 hover:text-[#083594] transition-colors" [class.text-blue-200]="i === 0" [class.hover:text-white]="i === 0">{{ section.linkTitle }}</button>
+            }
           </div>
 
           <!-- Horizontal Scroll Container -->

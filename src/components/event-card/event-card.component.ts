@@ -7,6 +7,7 @@ import { handleImageError } from '../../utils/image.utils';
 @Component({
   selector: 'app-event-card',
   templateUrl: './event-card.component.html',
+  standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [CommonModule, IonicModule],
   host: {

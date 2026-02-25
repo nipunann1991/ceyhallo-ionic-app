@@ -7,6 +7,7 @@ import { handleImageError } from '../../utils/image.utils';
 @Component({
   selector: 'app-business-card',
   templateUrl: './business-card.component.html',
+  standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [CommonModule, IonicModule],
 })
