@@ -22,3 +22,9 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+.angular/
+android/
+capacitor.config.ts
+ios/
+ios1/
+www/
