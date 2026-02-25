@@ -65,53 +65,11 @@ export class HomeComponent implements OnInit {
   // Loading State
   isLoading = signal(true);
 
-  newsContainer = viewChild<ElementRef>('newsContainer');
+  private activeSlider: HTMLElement | null = null;
   private isDown = false;
   private startX = 0;
   private scrollLeft = 0;
   public isDragging = false;
-
-  offerContainer = viewChild<ElementRef>('offerContainer');
-  private isOfferDown = false;
-  private startOfferX = 0;
-  private scrollOfferLeft = 0;
-  public isOfferDragging = false;
-
-  businessOfferContainer = viewChild<ElementRef>('businessOfferContainer');
-  private isBizOfferDown = false;
-  private startBizOfferX = 0;
-  private scrollBizOfferLeft = 0;
-  public isBizOfferDragging = false;
-
-  restaurantContainer = viewChild<ElementRef>('restaurantContainer');
-  private isRestaurantDown = false;
-  private startRestaurantX = 0;
-  private scrollRestaurantLeft = 0;
-  public isRestaurantDragging = false;
-
-  businessContainer = viewChild<ElementRef>('businessContainer');
-  private isBusinessDown = false;
-  private startBusinessX = 0;
-  private scrollBusinessLeft = 0;
-  public isBusinessDragging = false;
-
-  groceryContainer = viewChild<ElementRef>('groceryContainer');
-  private isGroceryDown = false;
-  private startGroceryX = 0;
-  private scrollGroceryLeft = 0;
-  public isGroceryDragging = false;
-
-  eventsContainer = viewChild<ElementRef>('eventsContainer');
-  private isEventsDown = false;
-  private startEventsX = 0;
-  private scrollEventsLeft = 0;
-  public isEventsDragging = false;
-
-  jobsContainer = viewChild<ElementRef>('jobsContainer');
-  private isJobsDown = false;
-  private startJobsX = 0;
-  private scrollJobsLeft = 0;
-  public isJobsDragging = false;
 
   constructor(
     private dataService: DataService,
@@ -249,6 +207,14 @@ export class HomeComponent implements OnInit {
                   
                   return item[filterType] == criterion.filterValue;
                 });
+              });
+            }
+
+            if (section.excludedCategories && section.excludedCategories.length > 0) {
+              const excluded = section.excludedCategories.map(c => c.toLowerCase());
+              filteredData = filteredData.filter((item: any) => {
+                const itemCategory = (item.category || '').toLowerCase();
+                return !excluded.includes(itemCategory);
               });
             }
             data = filteredData;
@@ -429,292 +395,34 @@ export class HomeComponent implements OnInit {
     }
   }
 
-  startDrag(e: MouseEvent) {
+  startDrag(e: MouseEvent, slider: HTMLElement) {
     this.isDown = true;
     this.isDragging = false;
-    const slider = this.newsContainer()?.nativeElement;
-    if (slider) {
-      this.startX = e.pageX - slider.offsetLeft;
-      this.scrollLeft = slider.scrollLeft;
-      slider.style.scrollBehavior = 'auto';
-      slider.style.scrollSnapType = 'none';
-    }
+    this.activeSlider = slider;
+    this.startX = e.pageX - slider.offsetLeft;
+    this.scrollLeft = slider.scrollLeft;
+    slider.style.scrollBehavior = 'auto';
+    slider.style.scrollSnapType = 'none';
   }
 
   endDrag() {
     if (!this.isDown) return;
     this.isDown = false;
-    const slider = this.newsContainer()?.nativeElement;
-    if (slider) {
-      slider.style.scrollBehavior = 'smooth';
-      slider.style.scrollSnapType = 'x mandatory';
+    if (this.activeSlider) {
+      this.activeSlider.style.scrollBehavior = 'smooth';
+      this.activeSlider.style.scrollSnapType = 'x mandatory';
     }
+    this.activeSlider = null;
   }
 
   doDrag(e: MouseEvent) {
-    if (!this.isDown) return;
+    if (!this.isDown || !this.activeSlider) return;
     e.preventDefault();
-    const slider = this.newsContainer()?.nativeElement;
-    if (slider) {
-      const x = e.pageX - slider.offsetLeft;
-      const walk = (x - this.startX) * 2;
-      slider.scrollLeft = this.scrollLeft - walk;
-      
-      if (Math.abs(walk) > 5) {
-        this.isDragging = true;
-      }
-    }
-  }
-
-  startOfferDrag(e: MouseEvent) {
-    this.isOfferDown = true;
-    this.isOfferDragging = false;
-    const slider = this.offerContainer()?.nativeElement;
-    if (slider) {
-      this.startOfferX = e.pageX - slider.offsetLeft;
-      this.scrollOfferLeft = slider.scrollLeft;
-      slider.style.scrollBehavior = 'auto';
-      slider.style.scrollSnapType = 'none';
-    }
-  }
-
-  endOfferDrag() {
-    if (!this.isOfferDown) return;
-    this.isOfferDown = false;
-    const slider = this.offerContainer()?.nativeElement;
-    if (slider) {
-      slider.style.scrollBehavior = 'smooth';
-      slider.style.scrollSnapType = 'x mandatory';
-    }
-  }
-
-  doOfferDrag(e: MouseEvent) {
-    if (!this.isOfferDown) return;
-    e.preventDefault();
-    const slider = this.offerContainer()?.nativeElement;
-    if (slider) {
-      const x = e.pageX - slider.offsetLeft;
-      const walk = (x - this.startOfferX) * 2;
-      slider.scrollLeft = this.scrollOfferLeft - walk;
-      if (Math.abs(walk) > 5) {
-        this.isOfferDragging = true;
-      }
-    }
-  }
-
-  startBizOfferDrag(e: MouseEvent) {
-    this.isBizOfferDown = true;
-    this.isBizOfferDragging = false;
-    const slider = this.businessOfferContainer()?.nativeElement;
-    if (slider) {
-      this.startBizOfferX = e.pageX - slider.offsetLeft;
-      this.scrollBizOfferLeft = slider.scrollLeft;
-      slider.style.scrollBehavior = 'auto';
-      slider.style.scrollSnapType = 'none';
-    }
-  }
-
-  endBizOfferDrag() {
-    if (!this.isBizOfferDown) return;
-    this.isBizOfferDown = false;
-    const slider = this.businessOfferContainer()?.nativeElement;
-    if (slider) {
-      slider.style.scrollBehavior = 'smooth';
-      slider.style.scrollSnapType = 'x mandatory';
-    }
-  }
-
-  doBizOfferDrag(e: MouseEvent) {
-    if (!this.isBizOfferDown) return;
-    e.preventDefault();
-    const slider = this.businessOfferContainer()?.nativeElement;
-    if (slider) {
-      const x = e.pageX - slider.offsetLeft;
-      const walk = (x - this.startBizOfferX) * 2;
-      slider.scrollLeft = this.scrollBizOfferLeft - walk;
-      if (Math.abs(walk) > 5) {
-        this.isBizOfferDragging = true;
-      }
-    }
-  }
-
-  startRestaurantDrag(e: MouseEvent) {
-    this.isRestaurantDown = true;
-    this.isRestaurantDragging = false;
-    const slider = this.restaurantContainer()?.nativeElement;
-    if (slider) {
-      this.startRestaurantX = e.pageX - slider.offsetLeft;
-      this.scrollRestaurantLeft = slider.scrollLeft;
-      slider.style.scrollBehavior = 'auto';
-      slider.style.scrollSnapType = 'none';
-    }
-  }
-
-  endRestaurantDrag() {
-    if (!this.isRestaurantDown) return;
-    this.isRestaurantDown = false;
-    const slider = this.restaurantContainer()?.nativeElement;
-    if (slider) {
-      slider.style.scrollBehavior = 'smooth';
-      slider.style.scrollSnapType = 'x mandatory';
-    }
-  }
-
-  doRestaurantDrag(e: MouseEvent) {
-    if (!this.isRestaurantDown) return;
-    e.preventDefault();
-    const slider = this.restaurantContainer()?.nativeElement;
-    if (slider) {
-      const x = e.pageX - slider.offsetLeft;
-      const walk = (x - this.startRestaurantX) * 2;
-      slider.scrollLeft = this.scrollRestaurantLeft - walk;
-      if (Math.abs(walk) > 5) {
-        this.isRestaurantDragging = true;
-      }
-    }
-  }
-
-  startBusinessDrag(e: MouseEvent) {
-    this.isBusinessDown = true;
-    this.isBusinessDragging = false;
-    const slider = this.businessContainer()?.nativeElement;
-    if (slider) {
-      this.startBusinessX = e.pageX - slider.offsetLeft;
-      this.scrollBusinessLeft = slider.scrollLeft;
-      slider.style.scrollBehavior = 'auto';
-      slider.style.scrollSnapType = 'none';
-    }
-  }
-
-  endBusinessDrag() {
-    if (!this.isBusinessDown) return;
-    this.isBusinessDown = false;
-    const slider = this.businessContainer()?.nativeElement;
-    if (slider) {
-      slider.style.scrollBehavior = 'smooth';
-      slider.style.scrollSnapType = 'x mandatory';
-    }
-  }
-
-  doBusinessDrag(e: MouseEvent) {
-    if (!this.isBusinessDown) return;
-    e.preventDefault();
-    const slider = this.businessContainer()?.nativeElement;
-    if (slider) {
-      const x = e.pageX - slider.offsetLeft;
-      const walk = (x - this.startBusinessX) * 2;
-      slider.scrollLeft = this.scrollBusinessLeft - walk;
-      if (Math.abs(walk) > 5) {
-        this.isBusinessDragging = true;
-      }
-    }
-  }
-
-  startGroceryDrag(e: MouseEvent) {
-    this.isGroceryDown = true;
-    this.isGroceryDragging = false;
-    const slider = this.groceryContainer()?.nativeElement;
-    if (slider) {
-      this.startGroceryX = e.pageX - slider.offsetLeft;
-      this.scrollGroceryLeft = slider.scrollLeft;
-      slider.style.scrollBehavior = 'auto';
-      slider.style.scrollSnapType = 'none';
-    }
-  }
-
-  endGroceryDrag() {
-    if (!this.isGroceryDown) return;
-    this.isGroceryDown = false;
-    const slider = this.groceryContainer()?.nativeElement;
-    if (slider) {
-      slider.style.scrollBehavior = 'smooth';
-      slider.style.scrollSnapType = 'x mandatory';
-    }
-  }
-
-  doGroceryDrag(e: MouseEvent) {
-    if (!this.isGroceryDown) return;
-    e.preventDefault();
-    const slider = this.groceryContainer()?.nativeElement;
-    if (slider) {
-      const x = e.pageX - slider.offsetLeft;
-      const walk = (x - this.startGroceryX) * 2;
-      slider.scrollLeft = this.scrollGroceryLeft - walk;
-      if (Math.abs(walk) > 5) {
-        this.isGroceryDragging = true;
-      }
-    }
-  }
-
-  startEventsDrag(e: MouseEvent) {
-    this.isEventsDown = true;
-    this.isEventsDragging = false;
-    const slider = this.eventsContainer()?.nativeElement;
-    if (slider) {
-      this.startEventsX = e.pageX - slider.offsetLeft;
-      this.scrollEventsLeft = slider.scrollLeft;
-      slider.style.scrollBehavior = 'auto';
-      slider.style.scrollSnapType = 'none';
-    }
-  }
-
-  endEventsDrag() {
-    if (!this.isEventsDown) return;
-    this.isEventsDown = false;
-    const slider = this.eventsContainer()?.nativeElement;
-    if (slider) {
-      slider.style.scrollBehavior = 'smooth';
-      slider.style.scrollSnapType = 'x mandatory';
-    }
-  }
-
-  doEventsDrag(e: MouseEvent) {
-    if (!this.isEventsDown) return;
-    e.preventDefault();
-    const slider = this.eventsContainer()?.nativeElement;
-    if (slider) {
-      const x = e.pageX - slider.offsetLeft;
-      const walk = (x - this.startEventsX) * 2;
-      slider.scrollLeft = this.scrollEventsLeft - walk;
-      if (Math.abs(walk) > 5) {
-        this.isEventsDragging = true;
-      }
-    }
-  }
-
-  startJobsDrag(e: MouseEvent) {
-    this.isJobsDown = true;
-    this.isJobsDragging = false;
-    const slider = this.jobsContainer()?.nativeElement;
-    if (slider) {
-      this.startJobsX = e.pageX - slider.offsetLeft;
-      this.scrollJobsLeft = slider.scrollLeft;
-      slider.style.scrollBehavior = 'auto';
-      slider.style.scrollSnapType = 'none';
-    }
-  }
-
-  endJobsDrag() {
-    if (!this.isJobsDown) return;
-    this.isJobsDown = false;
-    const slider = this.jobsContainer()?.nativeElement;
-    if (slider) {
-      slider.style.scrollBehavior = 'smooth';
-      slider.style.scrollSnapType = 'x mandatory';
-    }
-  }
-
-  doJobsDrag(e: MouseEvent) {
-    if (!this.isJobsDown) return;
-    e.preventDefault();
-    const slider = this.jobsContainer()?.nativeElement;
-    if (slider) {
-      const x = e.pageX - slider.offsetLeft;
-      const walk = (x - this.startJobsX) * 2;
-      slider.scrollLeft = this.scrollJobsLeft - walk;
-      if (Math.abs(walk) > 5) {
-        this.isJobsDragging = true;
-      }
+    const x = e.pageX - this.activeSlider.offsetLeft;
+    const walk = (x - this.startX) * 2;
+    this.activeSlider.scrollLeft = this.scrollLeft - walk;
+    if (Math.abs(walk) > 5) {
+      this.isDragging = true;
     }
   }
 
@@ -804,15 +512,8 @@ export class HomeComponent implements OnInit {
   }
   
   async handleBusinessClick(businessId: string, context: 'restaurant' | 'business' | 'grocery' = 'business') {
-    let dragging = false;
-    if (context === 'restaurant') dragging = this.isRestaurantDragging;
-    else if (context === 'grocery') dragging = this.isGroceryDragging;
-    else dragging = this.isBusinessDragging;
-    
-    if (dragging) {
-      if (context === 'restaurant') this.isRestaurantDragging = false;
-      else if (context === 'grocery') this.isGroceryDragging = false;
-      else this.isBusinessDragging = false;
+    if (this.isDragging) {
+      this.isDragging = false;
       return;
     }
     
@@ -822,12 +523,9 @@ export class HomeComponent implements OnInit {
   }
 
   async handleOfferClick(offer: Offer, isBusinessSection = false) {
-    const isDragging = isBusinessSection ? this.isBizOfferDragging : this.isOfferDragging;
-
-    if (isDragging) {
-        if (isBusinessSection) this.isBizOfferDragging = false;
-        else this.isOfferDragging = false;
-        return;
+    if (this.isDragging) {
+      this.isDragging = false;
+      return;
     }
     
     if (!(await this.requireLogin())) return;

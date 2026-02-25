@@ -207,12 +207,12 @@
             } @else {
               <!-- Scroll Container -->
               <div 
-                #offerContainer
+                #slider
                 class="flex overflow-x-auto gap-3 pb-4 pr-5 scrollbar-hide snap-x cursor-grab active:cursor-grabbing select-none"
-                (mousedown)="startOfferDrag($event)"
-                (mouseleave)="endOfferDrag()"
-                (mouseup)="endOfferDrag()"
-                (mousemove)="doOfferDrag($event)">
+                (mousedown)="startDrag($event, slider)"
+                (mouseleave)="endDrag()"
+                (mouseup)="endDrag()"
+                (mousemove)="doDrag($event)">
                 
                 @for (offer of data; track offer.id) {
                     <app-offer-card 
@@ -253,12 +253,12 @@
             @if (section.dataSource === 'restaurants') {
               <!-- Scroll Container for Restaurants -->
               <div 
-                #restaurantContainer
+                #slider
                 class="flex overflow-x-auto gap-3 pb-4 pr-5 scrollbar-hide snap-x cursor-grab active:cursor-grabbing select-none"
-                (mousedown)="startRestaurantDrag($event)"
-                (mouseleave)="endRestaurantDrag()"
-                (mouseup)="endRestaurantDrag()"
-                (mousemove)="doRestaurantDrag($event)">
+                (mousedown)="startDrag($event, slider)"
+                (mouseleave)="endDrag()"
+                (mouseup)="endDrag()"
+                (mousemove)="doDrag($event)">
                 
                 @for (biz of data; track biz.id) {
                     <app-business-card 
@@ -271,12 +271,12 @@
             } @else if (section.dataSource === 'groceries') {
               <!-- Scroll Container for Groceries -->
               <div 
-                #groceryContainer
+                #slider
                 class="flex overflow-x-auto gap-3 pb-4 pr-5 scrollbar-hide snap-x cursor-grab active:cursor-grabbing select-none"
-                (mousedown)="startGroceryDrag($event)"
-                (mouseleave)="endGroceryDrag()"
-                (mouseup)="endGroceryDrag()"
-                (mousemove)="doGroceryDrag($event)">
+                (mousedown)="startDrag($event, slider)"
+                (mouseleave)="endDrag()"
+                (mouseup)="endDrag()"
+                (mousemove)="doDrag($event)">
                 
                 @for (biz of data; track biz.id) {
                     <app-business-card 
@@ -289,12 +289,12 @@
             } @else {
               <!-- Scroll Container for Businesses -->
               <div 
-                #businessContainer
+                #slider
                 class="flex overflow-x-auto gap-3 pb-4 pr-5 scrollbar-hide snap-x cursor-grab active:cursor-grabbing select-none"
-                (mousedown)="startBusinessDrag($event)"
-                (mouseleave)="endBusinessDrag()"
-                (mouseup)="endBusinessDrag()"
-                (mousemove)="doBusinessDrag($event)">
+                (mousedown)="startDrag($event, slider)"
+                (mouseleave)="endDrag()"
+                (mouseup)="endDrag()"
+                (mousemove)="doDrag($event)">
                 
                 @for (biz of data; track biz.id) {
                     <app-business-card 
@@ -327,9 +327,9 @@
 
           <!-- Horizontal Scroll Container with Drag Logic -->
           <div 
-            #newsContainer
+            #slider
             class="flex overflow-x-auto gap-4 pb-4 pr-5 scrollbar-hide snap-x cursor-grab active:cursor-grabbing select-none"
-            (mousedown)="startDrag($event)"
+            (mousedown)="startDrag($event, slider)"
             (mouseleave)="endDrag()"
             (mouseup)="endDrag()"
             (mousemove)="doDrag($event)">
@@ -371,12 +371,12 @@
 
           <!-- Horizontal Scroll Container -->
           <div 
-            #eventsContainer
+            #slider
             class="flex overflow-x-auto gap-4 pb-4 pr-5 scrollbar-hide snap-x cursor-grab active:cursor-grabbing select-none"
-            (mousedown)="startEventsDrag($event)"
-            (mouseleave)="endEventsDrag()"
-            (mouseup)="endEventsDrag()"
-            (mousemove)="doEventsDrag($event)">
+            (mousedown)="startDrag($event, slider)"
+            (mouseleave)="endDrag()"
+            (mouseup)="endDrag()"
+            (mousemove)="doDrag($event)">
             
             @for (item of data; track item.id) {
               <app-event-card 
@@ -407,12 +407,12 @@
 
           <!-- Horizontal Scroll Container -->
           <div 
-            #jobsContainer
+            #slider
             class="flex overflow-x-auto gap-4 pb-4 pr-5 scrollbar-hide snap-x cursor-grab active:cursor-grabbing select-none"
-            (mousedown)="startJobsDrag($event)"
-            (mouseleave)="endJobsDrag()"
-            (mouseup)="endJobsDrag()"
-            (mousemove)="doJobsDrag($event)">
+            (mousedown)="startDrag($event, slider)"
+            (mouseleave)="endDrag()"
+            (mouseup)="endDrag()"
+            (mousemove)="doDrag($event)">
             
             @for (item of data; track item.id) {
               <app-job-card 

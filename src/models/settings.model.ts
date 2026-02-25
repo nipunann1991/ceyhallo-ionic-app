@@ -16,6 +16,7 @@ export interface HomeSection {
   filterType?: string; // Legacy
   filterValue?: string; // Legacy
   filterData?: FilterCriterion[];
+  excludedCategories?: string[];
   limit?: number;
   type?: string;
   linkTitle?: string;
