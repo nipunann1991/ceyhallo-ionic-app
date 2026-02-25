@@ -306,7 +306,7 @@ export class AuthService {
         const fsError = error as { code: string; message: string };
         // If it's a permission error, we expect this in some environments. Log info instead of warn.
         if (fsError.code === 'permission-denied' || fsError.message?.includes('Missing or insufficient permissions')) {
-            console.log("Firestore profile delete skipped (permissions), proceeding with Auth delete.");
+
         } else {
             console.warn("Firestore profile delete failed, proceeding with Auth delete:", fsError.message || 'Unknown error');
         }

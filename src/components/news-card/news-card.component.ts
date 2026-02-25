@@ -8,6 +8,7 @@ import { handleImageError } from '../../utils/image.utils';
 @Component({
   selector: 'app-news-card',
   templateUrl: './news-card.component.html',
+  standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [CommonModule, IonicModule],
   host: {

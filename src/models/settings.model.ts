@@ -1,4 +1,9 @@
 
+export interface FilterCriterion {
+  filterType: string;
+  filterValue: any;
+}
+
 export interface HomeSection {
   id: string;
   template: string; // 'banners' | 'categories' | 'latest_offers' | 'featured_businesses' | 'news_feed'
@@ -8,10 +13,13 @@ export interface HomeSection {
   subTitle?: string;
   enabled: boolean;
   order?: number;
-  filterType?: string;
-  filterValue?: string;
+  filterType?: string; // Legacy
+  filterValue?: string; // Legacy
+  filterData?: FilterCriterion[];
   limit?: number;
   type?: string;
+  linkTitle?: string;
+  linkUrl?: string;
 }
 
 export interface AppConfig {

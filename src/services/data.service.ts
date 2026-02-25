@@ -39,8 +39,8 @@ export class DataService {
     this.listenToCategories();
     this.listenToCountries();
     this.listenToBusinesses();
-    this.listenToRestaurants();
-    this.listenToOrganizations();
+    // this.listenToRestaurants(); // Removed as per request
+    // this.listenToOrganizations(); // Removed as per request
     this.listenToEvents();
     this.listenToJobs();
     this.listenToLegal();
@@ -48,7 +48,7 @@ export class DataService {
     this.listenToNotifications();
     this.listenToOffers();
     this.listenToSettings();
-    this.listenToGroceries();
+    // this.listenToGroceries(); // Removed as per request
     
     // Hub Data Listener
     this.listenToHubSections();
@@ -62,8 +62,27 @@ export class DataService {
   getCategories() { return appState.categories.asReadonly(); }
   getCountries() { return appState.countries.asReadonly(); }
   getBusinesses() { return appState.businesses.asReadonly(); }
-  getRestaurants() { return appState.restaurants.asReadonly(); }
-  getOrganizations() { return appState.organizations.asReadonly(); }
+  
+  getRestaurants() { 
+    return computed(() => {
+      const businesses = appState.businesses();
+      return businesses.filter(b => {
+        const cat = (b.category || '').toLowerCase();
+        return cat === 'restaurant' || cat === 'restaurants';
+      });
+    });
+  }
+
+  getOrganizations() { 
+    return computed(() => {
+      const businesses = appState.businesses();
+      return businesses.filter(b => {
+        const cat = (b.category || '').toLowerCase();
+        return cat === 'association' || cat === 'associations' || cat === 'organization' || cat === 'organizations';
+      });
+    });
+  }
+
   getEvents() { return appState.events.asReadonly(); }
   getJobs() { return appState.jobs.asReadonly(); }
   getLegalDocs() { return appState.legalDocs.asReadonly(); }
@@ -71,7 +90,15 @@ export class DataService {
   getNotifications() { return appState.notifications.asReadonly(); }
   getOffers() { return appState.offers.asReadonly(); }
   getAppSettings() { return appState.appSettings.asReadonly(); }
-  getGroceries() { return appState.groceries.asReadonly(); }
+  getGroceries() { 
+    return computed(() => {
+      const businesses = appState.businesses();
+      return businesses.filter(b => {
+        const cat = (b.category || '').toLowerCase();
+        return cat === 'grocery' || cat === 'groceries' || cat === 'supermarket' || cat === 'supermarkets';
+      });
+    });
+  }
   
   // Return the computed signal directly
   getHubSections() { return this.hubSections; }
@@ -262,93 +289,6 @@ export class DataService {
     );
   }
 
-  private listenToRestaurants(): void {
-    this.firestoreService.listenToCollectionMapped<any, Business>(
-      'restaurants',
-      appState.restaurants,
-      (id, data) => {
-        if (data['isPublished'] === false) {
-          return null;
-        }
-
-        const { phones, emails } = this.extractContacts(data);
-        const contact = data['contact'] || {};
-        
-        const isPromoted = data['isFeatured'] || data['isPremium'] || data['isPromoted'] || false;
-
-        return {
-          id: id,
-          name: data['title'] || 'Restaurant Name',
-          category: data['cuisine'] || 'Restaurant',
-          location: data['location'] || 'Dubai',
-          rating: data['rating'] || 0,
-          reviewCount: data['reviews'] || 0,
-          imageUrl: data['imageUrl'] || '',
-          logo: data['logo'] || data['logoUrl'],
-          isPromoted: isPromoted,
-          isVerified: data['isVerified'] ?? false,
-          cityCode: data['cityCode'],
-          countryCode: data['countryCode'],
-          description: data['description'] || 'Authentic flavors and great ambiance.',
-          phone: phones.length > 0 ? phones[0] : '', // Backward compat
-          phones: phones,
-          email: emails.length > 0 ? emails[0] : '', // Backward compat
-          emails: emails,
-          website: data['website'] || contact['website'] || '',
-          priceRange: data['priceRange'] || '$$$',
-          openingHours: data['openingHours'] || [],
-          gallery: data['gallery'] || [],
-          menuUrl: data['menuUrl'],
-          actionType: data['actionType'],
-          actionTarget: data['actionTarget'],
-          actionLabel: data['actionLabel']
-        };
-      }
-    );
-  }
-
-  private listenToOrganizations(): void {
-    this.firestoreService.listenToCollectionMapped<any, Business>(
-      'organizations',
-      appState.organizations,
-      (id, data) => {
-        if (data['isPublished'] === false) {
-          return null;
-        }
-
-        const { phones, emails } = this.extractContacts(data);
-        const contact = data['contact'] || {};
-
-        return {
-          id: id,
-          name: data['name'] || data['title'] || 'Association Name',
-          category: data['category'] || 'Association',
-          location: data['location'] || 'Unknown Location',
-          rating: data['rating'] || 0,
-          reviewCount: data['reviewCount'] || data['reviews'] || 0,
-          imageUrl: data['imageUrl'] || '',
-          logo: data['logo'] || data['logoUrl'],
-          isPromoted: data['isPromoted'] ?? false,
-          isVerified: data['isVerified'] ?? false,
-          cityCode: data['cityCode'],
-          countryCode: data['countryCode'],
-          description: data['description'] || 'Serving the community.',
-          phone: phones.length > 0 ? phones[0] : '',
-          phones: phones,
-          email: emails.length > 0 ? emails[0] : '',
-          emails: emails,
-          website: data['website'] || contact['website'] || '',
-          openingHours: data['openingHours'] || [],
-          gallery: data['gallery'] || [],
-          menuUrl: data['menuUrl'],
-          actionType: data['actionType'],
-          actionTarget: data['actionTarget'],
-          actionLabel: data['actionLabel']
-        };
-      }
-    );
-  }
-
   private listenToEvents(): void {
     this.firestoreService.listenToCollectionMapped<any, Event>(
       'events',
@@ -357,7 +297,7 @@ export class DataService {
       (id, data) => {
         // Debugging for Iftar Event issues
         if (data['title'] && (data['title'].includes('IFTAR') || data['title'].includes('Iftar'))) {
-             console.log('Found Iftar Event in DB Stream:', id, data);
+
         }
 
         if (data['isPublished'] === false) {
@@ -587,6 +527,7 @@ export class DataService {
   private listenToSettings(): void {
     this.firestoreService.listenToDocument<AppConfig>('settings', 'app_config', (data) => {
        if (data) {
+
          appState.appSettings.set(data);
        }
     });
@@ -637,49 +578,6 @@ export class DataService {
             colorClass: item.colorClass,
             order: item.order || 99
           })).sort((a: any, b: any) => (a.order || 99) - (b.order || 99))
-        };
-      }
-    );
-  }
-
-  private listenToGroceries(): void {
-    this.firestoreService.listenToCollectionMapped<any, Grocery>(
-      'groceries',
-      appState.groceries,
-      (id, data) => {
-        if (data['isPublished'] === false) {
-          return null;
-        }
-
-        const { phones, emails } = this.extractContacts(data);
-        const contact = data['contact'] || {};
-        
-        const isPromoted = data['isPromoted'] || data['isFeatured'] || false;
-
-        return {
-          id: id,
-          name: data['name'] || data['title'] || 'Grocery Name',
-          category: data['category'] || 'Grocery',
-          location: data['location'] || 'Unknown Location',
-          rating: data['rating'] || 0,
-          reviewCount: data['reviewCount'] || data['reviews'] || 0,
-          imageUrl: data['imageUrl'] || '',
-          logo: data['logo'] || data['logoUrl'],
-          isPromoted: isPromoted,
-          isVerified: data['isVerified'] ?? false,
-          cityCode: data['cityCode'],
-          countryCode: data['countryCode'],
-          description: data['description'] || 'Providing fresh groceries to our valued customers.',
-          phone: phones.length > 0 ? phones[0] : '',
-          phones: phones,
-          email: emails.length > 0 ? emails[0] : '',
-          emails: emails,
-          website: data['website'] || contact['website'] || '',
-          openingHours: data['openingHours'] || [],
-          gallery: data['gallery'] || [],
-          actionType: data['actionType'],
-          actionTarget: data['actionTarget'],
-          actionLabel: data['actionLabel']
         };
       }
     );
