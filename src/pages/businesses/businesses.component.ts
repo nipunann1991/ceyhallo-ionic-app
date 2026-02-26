@@ -45,6 +45,9 @@ export class BusinessesComponent implements OnInit {
   searchTerm = signal('');
   limit = signal(10);
 
+  // Custom Title Logic
+  pageTitle = signal('Businesses');
+
   categories: Signal<string[]>;
   countryBusinesses: Signal<Business[]>;
   sectionOffers: Signal<Offer[]>;
@@ -179,6 +182,17 @@ export class BusinessesComponent implements OnInit {
 
   ngOnInit() {
     this.isModalSignal.set(this.isModal);
+
+    this.route.queryParams.subscribe(params => {
+      const filterByParam = params['filterBy'] || params['category'];
+      if (filterByParam) {
+          this.pageTitle.set(this.capitalizeFirstLetter(filterByParam));
+      } else if (params['title']) {
+          this.pageTitle.set(params['title']);
+      } else {
+          this.pageTitle.set('Businesses');
+      }
+    });
   }
 
   setCategory(cat: string) {
@@ -188,6 +202,11 @@ export class BusinessesComponent implements OnInit {
     }
     this.selectedCategory.set(cat);
     this.limit.set(10);
+  }
+
+  capitalizeFirstLetter(text: string): string {
+    if (!text) return '';
+    return text.charAt(0).toUpperCase() + text.slice(1);
   }
 
   handleSearch(value: string) {

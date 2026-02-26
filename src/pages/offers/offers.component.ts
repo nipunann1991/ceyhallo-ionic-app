@@ -79,7 +79,10 @@ export class OffersComponent implements OnInit {
             this.filterByCategory.set('');
         }
 
-        if (params['title']) {
+        const filterByParam = params['filterBy'] || params['category'];
+        if (filterByParam) {
+            this.pageTitle.set(this.capitalizeFirstLetter(filterByParam) + ' Offers');
+        } else if (params['title']) {
             this.pageTitle.set(params['title']);
         } else {
             this.pageTitle.set('Latest Offers');
@@ -91,6 +94,11 @@ export class OffersComponent implements OnInit {
             this.subtitleParam.set('');
         }
     });
+  }
+
+  capitalizeFirstLetter(text: string): string {
+    if (!text) return '';
+    return text.charAt(0).toUpperCase() + text.slice(1);
   }
 
   handleSearch(value: string) {
