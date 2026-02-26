@@ -18,7 +18,8 @@
           },
           "configurations": {
             "production": {
-              "outputHashing": "all"
+              "outputHashing": "all",
+            "baseHref": "./"
             },
             "development": {
               "optimization": false,

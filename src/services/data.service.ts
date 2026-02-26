@@ -386,15 +386,19 @@ export class DataService {
           return null;
         }
 
-        let date: Date | null = null;
-        if (data['postedDate'] && typeof data['postedDate'] === 'string') {
-          date = new Date(data['postedDate']);
-        } else if (data['postedDate'] && typeof data['postedDate'].toDate === 'function') {
-          date = data['postedDate'].toDate();
+        let date: Date = new Date(); // Default to current date
+        try {
+            if (data['postedDate']) {
+                if (typeof data['postedDate'].toDate === 'function') date = data['postedDate'].toDate();
+                else if (typeof data['postedDate'] === 'string') date = new Date(data['postedDate']);
+                else if (data['postedDate'] instanceof Date) date = data['postedDate'];
+            }
+        } catch (e) {
+            // Fallback to default date if parsing fails
         }
 
-        if (!date || isNaN(date.getTime())) {
-          return null;
+        if (isNaN(date.getTime())) {
+          return null; // If still invalid, filter out
         }
 
         return {
@@ -493,10 +497,15 @@ export class DataService {
           return null;
         }
 
-        let date = new Date();
-        if (data['expiryDate']) {
-            if (typeof data['expiryDate'] === 'string') date = new Date(data['expiryDate']);
-            else if (typeof data['expiryDate'].toDate === 'function') date = data['expiryDate'].toDate();
+        let date: Date = new Date(); // Default to current date
+        try {
+            if (data['expiryDate']) {
+                if (typeof data['expiryDate'].toDate === 'function') date = data['expiryDate'].toDate();
+                else if (typeof data['expiryDate'] === 'string') date = new Date(data['expiryDate']);
+                else if (data['expiryDate'] instanceof Date) date = data['expiryDate'];
+            }
+        } catch (e) {
+            // Fallback to default date if parsing fails
         }
 
         return {
@@ -516,7 +525,8 @@ export class DataService {
             linkType: data['linkType'],
             isHomeBanner: data['isHomeBanner'] ?? false,
             cityCode: data['cityCode'],
-            countryCode: data['countryCode']
+            countryCode: data['countryCode'],
+            category: data['category'] || ''
         };
       },
       // Sort by order (ascending)
