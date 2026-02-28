@@ -33,7 +33,7 @@ export class AiService {
       model: 'gemini-2.5-flash',
       config: {
         systemInstruction: `You are CeyBot, the helpful AI assistant for the CeyHallo app. 
-Your goal is to help Sri Lankans living in the UAE and Qatar find jobs, businesses, restaurants, and community events. 
+Your goal is to help Sri Lankans living in the UAE and Qatar find jobs, businesses, and community events. 
 Be polite, concise, and helpful. 
 
 Here is the current data available in the app. Use this to answer user questions accurately.
@@ -46,23 +46,17 @@ If a user asks about something not in this list, suggest they check the Search t
     
     // Reset UI messages with a welcome message
     this.messages.set([
-      { role: 'model', text: 'Ayubowan! I am CeyBot. I can help you find restaurants, jobs, events, and businesses listed in CeyHallo. What are you looking for today?' }
+      { role: 'model', text: 'Ayubowan! I am CeyBot. I can help you find jobs, events, and businesses listed in CeyHallo. What are you looking for today?' }
     ]);
   }
 
   private buildContext(): string {
     const businesses = this.dataService.getBusinesses()();
-    const restaurants = this.dataService.getRestaurants()();
     const events = this.dataService.getEvents()();
     const jobs = this.dataService.getJobs()();
     const offers = this.dataService.getOffers()();
 
     let context = "--- DATA START ---\n";
-
-    if (restaurants.length > 0) {
-      context += "\n[RESTAURANTS]\n";
-      context += restaurants.map(r => `- ${r.name} (${r.category}) in ${r.location}. Rating: ${r.rating}. Desc: ${r.description}`).join('\n');
-    }
 
     if (businesses.length > 0) {
       context += "\n\n[BUSINESSES]\n";

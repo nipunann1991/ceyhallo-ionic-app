@@ -15,7 +15,7 @@ import { handleImageError } from '../../utils/image.utils';
 import { AuthService } from '../../services/auth.service';
 import { LoginComponent } from '../login/login.component';
 
-type SearchResult = (NewsArticle & { type: 'news' }) | (Business & { type: 'business' | 'restaurant' }) | (Offer & { type: 'offer' });
+type SearchResult = (NewsArticle & { type: 'news' }) | (Business & { type: 'business' }) | (Offer & { type: 'offer' });
 
 @Component({
   selector: 'app-search',
@@ -47,9 +47,8 @@ export class SearchComponent implements OnInit {
   private allContent = computed(() => {
     const news: SearchResult[] = this.dataService.getNews()().map(item => ({ ...item, type: 'news' }));
     const businesses: SearchResult[] = this.dataService.getBusinesses()().map(item => ({ ...item, type: 'business' }));
-    const restaurants: SearchResult[] = this.dataService.getRestaurants()().map(item => ({ ...item, type: 'restaurant' }));
     const offers: SearchResult[] = this.dataService.getOffers()().map(item => ({ ...item, type: 'offer' }));
-    return [...offers, ...news, ...businesses, ...restaurants];
+    return [...offers, ...news, ...businesses];
   });
 
   searchResults = computed(() => {
@@ -79,15 +78,12 @@ export class SearchComponent implements OnInit {
     const groups: { [key: string]: SearchResult[] } = {
       'Offers': [],
       'News': [],
-      'Restaurants': [],
       'Businesses': []
     };
 
     for (const item of filtered) {
       if (item.type === 'news') {
         groups['News'].push(item);
-      } else if (item.type === 'restaurant') {
-        groups['Restaurants'].push(item);
       } else if (item.type === 'offer') {
         groups['Offers'].push(item);
       } else {
@@ -211,7 +207,6 @@ export class SearchComponent implements OnInit {
         actionIcon = 'open-outline';
         
         let type = (offer.linkType || 'business').toLowerCase();
-        if (type === 'restaurants') type = 'restaurant';
         if (type === 'businesses') type = 'business';
 
         switch (type) {
@@ -227,7 +222,6 @@ export class SearchComponent implements OnInit {
                 targetType = 'news';
                 targetUrl = `/news/${targetId}`;
                 break;
-            case 'restaurant':
             case 'business':
             default:
                 targetType = 'business';

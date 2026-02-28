@@ -14,7 +14,6 @@ import { Notification } from '../models/notification.model';
 import { Offer } from '../models/offer.model';
 import { AppConfig } from '../models/settings.model';
 import { HubSection } from '../models/hub.model';
-import { Grocery } from '../models/grocery.model';
 import { FirestoreService } from './firestore.service';
 
 @Injectable({
@@ -39,8 +38,6 @@ export class DataService {
     this.listenToCategories();
     this.listenToCountries();
     this.listenToBusinesses();
-    // this.listenToRestaurants(); // Removed as per request
-    // this.listenToOrganizations(); // Removed as per request
     this.listenToEvents();
     this.listenToJobs();
     this.listenToLegal();
@@ -48,7 +45,6 @@ export class DataService {
     this.listenToNotifications();
     this.listenToOffers();
     this.listenToSettings();
-    // this.listenToGroceries(); // Removed as per request
     
     // Hub Data Listener
     this.listenToHubSections();
@@ -63,26 +59,6 @@ export class DataService {
   getCountries() { return appState.countries.asReadonly(); }
   getBusinesses() { return appState.businesses.asReadonly(); }
   
-  getRestaurants() { 
-    return computed(() => {
-      const businesses = appState.businesses();
-      return businesses.filter(b => {
-        const cat = (b.category || '').toLowerCase();
-        return cat === 'restaurant' || cat === 'restaurants';
-      });
-    });
-  }
-
-  getOrganizations() { 
-    return computed(() => {
-      const businesses = appState.businesses();
-      return businesses.filter(b => {
-        const cat = (b.category || '').toLowerCase();
-        return cat === 'association' || cat === 'associations' || cat === 'organization' || cat === 'organizations';
-      });
-    });
-  }
-
   getEvents() { return appState.events.asReadonly(); }
   getJobs() { return appState.jobs.asReadonly(); }
   getLegalDocs() { return appState.legalDocs.asReadonly(); }
@@ -90,15 +66,6 @@ export class DataService {
   getNotifications() { return appState.notifications.asReadonly(); }
   getOffers() { return appState.offers.asReadonly(); }
   getAppSettings() { return appState.appSettings.asReadonly(); }
-  getGroceries() { 
-    return computed(() => {
-      const businesses = appState.businesses();
-      return businesses.filter(b => {
-        const cat = (b.category || '').toLowerCase();
-        return cat === 'grocery' || cat === 'groceries' || cat === 'supermarket' || cat === 'supermarkets';
-      });
-    });
-  }
   
   // Return the computed signal directly
   getHubSections() { return this.hubSections; }

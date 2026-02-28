@@ -54,12 +54,6 @@
              <ion-icon name="star" class="text-[#FFC107] text-base"></ion-icon>
              <span class="font-bold text-[#1A1C1E]">{{ biz.rating }}</span>
              <span class="text-gray-400 font-medium text-xs">({{ biz.reviewCount }} reviews)</span>
-             
-             <!-- Price Range only for Restaurants -->
-             @if (isRestaurant()) {
-               <span class="text-gray-300 text-xs mx-1">|</span>
-               <span class="font-bold text-[#1A1C1E]">{{ biz.priceRange || '$$$' }}</span>
-             }
           </div>
 
           <!-- Location Badge in Header -->
@@ -133,10 +127,10 @@
          </div>
        }
 
-       <!-- Menu/Catalog Section (Placed above Gallery) -->
+        <!-- Menu/Catalog Section (Placed above Gallery) -->
        @if (biz.menuUrl) {
          <div class="mb-8">
-            <h2 class="text-md font-bold text-[#1A1C1E] mb-3">{{ isRestaurant() ? 'Menu' : 'Catalog' }}</h2>
+            <h2 class="text-md font-bold text-[#1A1C1E] mb-3">Catalog</h2>
             <button (click)="openMenu()" class="w-full bg-gray-50 rounded-2xl p-3 flex items-center justify-between group active:scale-[0.98] transition-transform">
                <div class="flex items-center gap-4">
                   <div class="w-8 h-8 flex items-center justify-center shrink-0 text-[rgb(154,161,173)]">
@@ -147,7 +141,7 @@
                      </svg>
                   </div>
                   <div class="text-left">
-                     <span class="block text-sm font-bold text-[#1A1C1E]">{{ isRestaurant() ? 'View Full Menu' : 'View Full Catalog' }}</span>
+                     <span class="block text-sm font-bold text-[#1A1C1E]">View Full Catalog</span>
                   </div>
                </div>
                <div class="w-8 h-8 flex items-center justify-center text-gray-400">
@@ -319,7 +313,7 @@
     <ion-header class="ion-no-border shadow-sm">
       <div class="bg-[#083594] nav-overlay-safe pb-2">
         <ion-toolbar class="bg-transparent text-white" style="--background: transparent; --color: white;">
-          <ion-title class="font-bold text-white text-sm">{{ isRestaurant() ? 'Menu' : 'Catalog' }} - {{ business()?.name }}</ion-title>
+          <ion-title class="font-bold text-white text-sm">Catalog - {{ business()?.name }}</ion-title>
           <ion-buttons slot="end">
             <ion-button (click)="closeMenu()" class="text-white">
                <ion-icon name="close" class="text-2xl"></ion-icon>

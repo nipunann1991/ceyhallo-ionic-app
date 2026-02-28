@@ -28,7 +28,6 @@ import { Category } from '../../models/category.model';
 import { AppConfig, HomeSection } from '../../models/settings.model';
 import { Observable } from 'rxjs';
 import { Business } from '../../models/business.model';
-import { Grocery } from '../../models/grocery.model';
 
 @Component({
   selector: 'app-home',
@@ -117,7 +116,7 @@ export class HomeComponent implements OnInit {
     const filterOffersByType = (offer: Offer, type: 'food' | 'business') => {
         // Check type first
         if (type === 'food') {
-            if (offer.linkType !== 'restaurants' && offer.linkType !== 'restaurant') return false;
+            if (offer.category?.toLowerCase() !== 'food') return false;
         } else {
             if (offer.linkType !== 'businesses' && offer.linkType !== 'business') return false;
         }
@@ -179,7 +178,7 @@ export class HomeComponent implements OnInit {
           if (section.dataSource === 'offers' && section.filterValue) {
             const type = section.filterValue.toLowerCase() === 'food' ? 'food' : 'business';
             data = this.filterOffers(data as Offer[], type);
-          } else if (section.dataSource === 'restaurants' || section.dataSource === 'businesses' || section.dataSource === 'groceries') {
+          } else if (section.dataSource === 'businesses') {
             let filteredData = data;
 
             if (section.filterData && section.filterData.length > 0) {
@@ -251,8 +250,6 @@ export class HomeComponent implements OnInit {
       case 'events': return this.dataService.getEvents();
       case 'jobs': return this.dataService.getJobs();
       case 'businesses': return this.dataService.getBusinesses();
-      case 'restaurants': return this.dataService.getRestaurants();
-      case 'groceries': return this.dataService.getGroceries();
       default: return signal([]);
     }
   }
@@ -260,7 +257,7 @@ export class HomeComponent implements OnInit {
   private filterOffers(offers: Offer[], type: 'food' | 'business'): Offer[] {
     const filterFn = (offer: Offer) => {
         if (type === 'food') {
-            if (offer.linkType !== 'restaurants' && offer.linkType !== 'restaurant') return false;
+            if (offer.category?.toLowerCase() !== 'food') return false;
         } else {
             if (offer.linkType !== 'businesses' && offer.linkType !== 'business') return false;
         }
@@ -349,10 +346,7 @@ export class HomeComponent implements OnInit {
     // Fallback: Map known labels to paths if path is missing or invalid in DB
     if (!path) {
         const label = (category.label || '').toLowerCase();
-        if (label.includes('organization') || label.includes('association')) path = '/organizations';
-        else if (label.includes('business')) path = '/businesses';
-        else if (label.includes('restaurant')) path = '/restaurants';
-        else if (label.includes('grocery') || label.includes('supermarket')) path = '/groceries';
+        if (label.includes('business')) path = '/businesses';
         else if (label.includes('news')) path = '/news';
         else if (label.includes('job')) path = '/jobs';
         else if (label.includes('event')) path = '/events';
@@ -491,7 +485,7 @@ export class HomeComponent implements OnInit {
     await modal.present();
   }
   
-  async handleBusinessClick(businessId: string, context: 'restaurant' | 'business' | 'grocery' = 'business') {
+  async handleBusinessClick(businessId: string) {
     if (this.isDragging) {
       this.isDragging = false;
       return;
@@ -545,7 +539,6 @@ export class HomeComponent implements OnInit {
         actionIcon = 'open-outline';
         
         let type = (offer.linkType || 'business').toLowerCase();
-        if (type === 'restaurants') type = 'restaurant';
         if (type === 'businesses') type = 'business';
 
         switch (type) {
@@ -561,7 +554,6 @@ export class HomeComponent implements OnInit {
                 targetType = 'news';
                 targetUrl = `/news/${targetId}`;
                 break;
-            case 'restaurant':
             case 'business':
             default:
                 targetType = 'business';

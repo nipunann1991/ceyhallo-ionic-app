@@ -17,7 +17,7 @@
         <div class="text-center text-gray-400">
           <ion-icon name="search-circle-outline" class="text-7xl mb-2 text-gray-300"></ion-icon>
           <h1 class="text-xl font-bold mt-2">Find Anything</h1>
-          <p class="text-sm">Search for news, businesses, and restaurants.</p>
+          <p class="text-sm">Search for news and businesses.</p>
         </div>
       </div>
     } @else {
@@ -70,9 +70,6 @@
                         <app-news-card [newsItem]="result" (click)="openResult(result)"></app-news-card>
                       }
                       @case ('business') {
-                        <app-business-card [business]="result" layout="list" (click)="openResult(result)"></app-business-card>
-                      }
-                      @case ('restaurant') {
                         <app-business-card [business]="result" layout="list" (click)="openResult(result)"></app-business-card>
                       }
                     }

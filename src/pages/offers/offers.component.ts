@@ -158,7 +158,6 @@ export class OffersComponent implements OnInit {
         actionIcon = 'open-outline';
         
         let type = (offer.linkType || 'business').toLowerCase();
-        if (type === 'restaurants') type = 'restaurant';
         if (type === 'businesses') type = 'business';
 
         switch (type) {
