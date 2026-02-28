@@ -48,9 +48,6 @@ export class DataService {
     
     // Hub Data Listener
     this.listenToHubSections();
-
-    // Hub Data Listener
-    this.listenToHubSections();
   }
 
   getNews() { return appState.articles.asReadonly(); }

@@ -51,11 +51,6 @@ export class HomeComponent implements OnInit {
   sectionsWithData: Signal<{ section: HomeSection, data: any[] }[]>;
   user: Signal<any>;
   
-  // Specific Offer Signals (preserved for reusing logic)
-  foodOffers: Signal<Offer[]>;
-  businessOffers: Signal<Offer[]>;
-  
-
   currentCountry: Signal<Country | null>;
 
   selectedCountryId: Signal<string>;
@@ -112,48 +107,6 @@ export class HomeComponent implements OnInit {
         };
     });
 
-    // Helper to filter offers by type (relaxed city filtering to ensure data shows)
-    const filterOffersByType = (offer: Offer, type: 'food' | 'business') => {
-        // Check type first
-        if (type === 'food') {
-            if (offer.category?.toLowerCase() !== 'food') return false;
-        } else {
-            if (offer.linkType !== 'businesses' && offer.linkType !== 'business') return false;
-        }
-
-        const cid = this.selectedCountryId();
-        
-        // If offer has a country code, it must match
-        if (offer.countryCode && offer.countryCode !== cid) {
-            return false;
-        }
-
-        // Otherwise, allow it (don't be too strict with business location matching on home page)
-        return true;
-    };
-
-    this.foodOffers = computed(() => {
-        const allOffers = this.offers();
-        let rawOffers = allOffers.filter(o => o.isHomeBanner);
-        // Fallback: if no home banners, show all offers
-        if (rawOffers.length === 0) {
-            rawOffers = allOffers;
-        }
-        return rawOffers.filter(offer => filterOffersByType(offer, 'food'));
-    });
-
-    this.businessOffers = computed(() => {
-        const allOffers = this.offers();
-        let rawOffers = allOffers.filter(o => o.isHomeBanner);
-        // Fallback: if no home banners, show all offers
-        if (rawOffers.length === 0) {
-            rawOffers = allOffers;
-        }
-        return rawOffers.filter(offer => filterOffersByType(offer, 'business'));
-    });
-
-
-
     this.currentCountry = computed(() => {
         const list = this.countries();
         const selected = list.find(c => c.id === this.selectedCountryId());
@@ -175,9 +128,8 @@ export class HomeComponent implements OnInit {
           let data = dataSignal();
 
           // Apply additional filtering based on section properties
-          if (section.dataSource === 'offers' && section.filterValue) {
-            const type = section.filterValue.toLowerCase() === 'food' ? 'food' : 'business';
-            data = this.filterOffers(data as Offer[], type);
+          if (section.dataSource === 'offers') {
+            data = this.filterOffers(data as Offer[], section);
           } else if (section.dataSource === 'businesses') {
             let filteredData = data;
 
@@ -254,26 +206,68 @@ export class HomeComponent implements OnInit {
     }
   }
 
-  private filterOffers(offers: Offer[], type: 'food' | 'business'): Offer[] {
-    const filterFn = (offer: Offer) => {
-        if (type === 'food') {
-            if (offer.category?.toLowerCase() !== 'food') return false;
-        } else {
-            if (offer.linkType !== 'businesses' && offer.linkType !== 'business') return false;
-        }
+  private filterOffers(offers: Offer[], section: HomeSection): Offer[] {
+    const cid = this.selectedCountryId();
+    
+    // 1. Filter by Country first (optimization and correctness)
+    let relevantOffers = offers.filter(o => !o.countryCode || o.countryCode === cid);
 
-        const cid = this.selectedCountryId();
-        if (offer.countryCode && offer.countryCode !== cid) {
-            return false;
-        }
-        return true;
-    };
-
-    let rawOffers = offers.filter(o => o.isHomeBanner);
-    if (rawOffers.length === 0) {
-        rawOffers = offers;
+    // 2. Handle "Home Banner" priority logic
+    // If there are home banners for this country, prefer them.
+    const homeBanners = relevantOffers.filter(o => o.isHomeBanner);
+    if (homeBanners.length > 0) {
+        relevantOffers = homeBanners;
     }
-    return rawOffers.filter(filterFn);
+
+    // 3. Apply Section Filters
+    return relevantOffers.filter(offer => {
+        // New Filter Data Logic
+        if (section.filterData && section.filterData.length > 0) {
+            return section.filterData.every(criterion => {
+                const key = criterion.filterType;
+                const value = criterion.filterValue;
+
+                if (key === 'category') {
+                    return (offer.category || '').toLowerCase() === (value || '').toLowerCase();
+                }
+                // Generic check for other properties
+                return (offer as any)[key] == value;
+            });
+        }
+        
+        // Legacy Filter Value Logic
+        if (section.filterValue) {
+            const val = section.filterValue.toLowerCase();
+            if (val === 'food') {
+                return offer.category?.toLowerCase() === 'food';
+            } else {
+                // Legacy fallback: treat as 'business' filter
+                return offer.linkType === 'businesses' || offer.linkType === 'business';
+            }
+        }
+
+        return true;
+    });
+  }
+
+  getSectionCategory(section: HomeSection): string {
+    // 1. Check filterData for 'category'
+    if (section.filterData && section.filterData.length > 0) {
+        const catFilter = section.filterData.find(f => f.filterType === 'category');
+        if (catFilter) {
+            return catFilter.filterValue;
+        }
+    }
+    
+    // 2. Check legacy filterValue
+    if (section.filterValue) {
+        const val = section.filterValue.toLowerCase();
+        if (val === 'food') return 'food';
+        return 'business';
+    }
+    
+    // 3. Default
+    return 'business';
   }
 
   handleImgError = handleImageError;

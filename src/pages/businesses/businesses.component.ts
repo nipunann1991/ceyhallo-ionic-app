@@ -185,10 +185,10 @@ export class BusinessesComponent implements OnInit {
 
     this.route.queryParams.subscribe(params => {
       const filterByParam = params['filterBy'] || params['category'];
-      if (filterByParam) {
-          this.pageTitle.set(this.capitalizeFirstLetter(filterByParam));
-      } else if (params['title']) {
+      if (params['title']) {
           this.pageTitle.set(params['title']);
+      } else if (filterByParam) {
+          this.pageTitle.set(this.capitalizeFirstLetter(filterByParam));
       } else {
           this.pageTitle.set('Businesses');
       }

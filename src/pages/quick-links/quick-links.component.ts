@@ -2,7 +2,7 @@
 import { Component, ChangeDetectionStrategy, inject, Signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { IonicModule } from '@ionic/angular';
-import { RouterLink, Router } from '@angular/router';
+import { Router } from '@angular/router';
 import { DataService } from '../../services/data.service';
 import { HubSection, HubItem } from '../../models/hub.model';
 import { handleImageError } from '../../utils/image.utils';
@@ -25,7 +25,7 @@ import { handleImageError } from '../../utils/image.utils';
     }
   `],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, IonicModule, RouterLink],
+  imports: [CommonModule, IonicModule],
 })
 export class QuickLinksComponent {
   private dataService = inject(DataService);

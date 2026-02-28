@@ -1,6 +1,6 @@
 
 import { Component, ChangeDetectionStrategy, NgZone, OnInit, inject, computed } from '@angular/core';
-import { RouterOutlet, Router } from '@angular/router';
+import { Router } from '@angular/router';
 import { IonicModule, ModalController } from '@ionic/angular';
 import { CommonModule } from '@angular/common';
 import { App, URLOpenListenerEvent } from '@capacitor/app';
@@ -66,7 +66,7 @@ import { AiChatComponent } from './components/ai-chat/ai-chat.component';
 </ion-app>
 `,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [IonicModule, RouterOutlet, CommonModule]
+  imports: [IonicModule, CommonModule]
 })
 export class AppComponent implements OnInit {
   private dataService = inject(DataService);
@@ -81,8 +81,6 @@ export class AppComponent implements OnInit {
   });
 
   constructor(private router: Router, private zone: NgZone) {
-    // This will initialize the DataService and start listening to the data sources
-    inject(DataService);
     // Detect if the device is an iPhone and apply a specific class to the html element
     const isIphone = /iPhone/i.test(navigator.userAgent);
     if (isIphone) {

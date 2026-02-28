@@ -80,10 +80,10 @@ export class OffersComponent implements OnInit {
         }
 
         const filterByParam = params['filterBy'] || params['category'];
-        if (filterByParam) {
-            this.pageTitle.set(this.capitalizeFirstLetter(filterByParam) + ' Offers');
-        } else if (params['title']) {
+        if (params['title']) {
             this.pageTitle.set(params['title']);
+        } else if (filterByParam) {
+            this.pageTitle.set(this.capitalizeFirstLetter(filterByParam) + ' Offers');
         } else {
             this.pageTitle.set('Latest Offers');
         }
