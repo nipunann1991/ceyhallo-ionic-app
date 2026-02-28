@@ -46,7 +46,7 @@ export class BusinessesComponent implements OnInit {
   limit = signal(10);
 
   // Custom Title Logic
-  pageTitle = signal('Businesses');
+  pageTitle: string;
 
   categories: Signal<string[]>;
   countryBusinesses: Signal<Business[]>;
@@ -184,14 +184,12 @@ export class BusinessesComponent implements OnInit {
     this.isModalSignal.set(this.isModal);
 
     this.route.queryParams.subscribe(params => {
-      const filterByParam = params['filterBy'] || params['category'];
-      if (params['title']) {
-          this.pageTitle.set(params['title']);
-      } else if (filterByParam) {
-          this.pageTitle.set(this.capitalizeFirstLetter(filterByParam));
-      } else {
-          this.pageTitle.set('Businesses');
-      }
+      const filterByParam = params['filterBy'];
+      if (filterByParam) {
+          this.pageTitle = this.capitalizeFirstLetter(filterByParam);
+      } else { 
+          this.pageTitle = 'Businesses';
+      } 
     });
   }
 

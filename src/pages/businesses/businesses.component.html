@@ -2,7 +2,7 @@
 <ion-content [fullscreen]="true" class="[--background:#F2F4F7]">
   
   <app-page-header 
-    title="Businesses" 
+    [title]="pageTitle"
     searchPlaceholder="Search by name, category..."
     [searchValue]="searchTerm()"
     [isModal]="isModalSignal()"
