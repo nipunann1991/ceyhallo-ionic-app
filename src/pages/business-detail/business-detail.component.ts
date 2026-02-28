@@ -90,7 +90,8 @@ export class BusinessDetailComponent implements OnInit {
     this.businessEvents = computed(() => {
         const bizId = this.businessIdSignal();
         if (!bizId) return [];
-        return this.dataService.getEvents()().filter(e => e.organizerId === bizId);
+        const now = new Date();
+        return this.dataService.getEvents()().filter(e => e.organizerId === bizId && new Date(e.date) >= now);
     });
 
     this.isOpenNow = computed(() => {
