@@ -16,5 +16,6 @@ export interface Offer {
   isHomeBanner?: boolean;
   cityCode?: string;
   countryCode?: string;
-  category?: string;
+  generalCategory?: string;
+  categories?: string[];
 }

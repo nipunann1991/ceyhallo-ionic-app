@@ -17,4 +17,6 @@ export interface Event {
   actionLabel?: string;
   countryCode?: string;
   cityCode?: string;
+  isExpired?: boolean;
+  isArchived?: boolean;
 }

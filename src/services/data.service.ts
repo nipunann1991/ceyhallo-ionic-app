@@ -264,10 +264,6 @@ export class DataService {
 
         }
 
-        if (data['isPublished'] === false) {
-          return null;
-        }
-
         let date: Date | null = null;
         
         try {
@@ -323,7 +319,9 @@ export class DataService {
           actionTarget: data['actionTarget'],
           actionLabel: data['actionLabel'],
           countryCode: data['countryCode'],
-          cityCode: data['cityCode']
+          cityCode: data['cityCode'],
+          isExpired: data['isExpired'],
+          isArchived: data['isArchived']
         };
       },
       // Processor function
@@ -490,7 +488,8 @@ export class DataService {
             isHomeBanner: data['isHomeBanner'] ?? false,
             cityCode: data['cityCode'],
             countryCode: data['countryCode'],
-            category: data['category'] || ''
+            generalCategory: data['generalCategory'] || data['category'] || '',
+            categories: data['categories'] || []
         };
       },
       // Sort by order (ascending)

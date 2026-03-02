@@ -48,7 +48,7 @@ export class OffersComponent implements OnInit {
 
         // Filter by category
         if (category) {
-            list = list.filter(o => (o.category || '').toLowerCase() === category.toLowerCase());
+            list = list.filter(o => (o.generalCategory || '').toLowerCase() === category.toLowerCase());
         }
     
         if (!term) return list;

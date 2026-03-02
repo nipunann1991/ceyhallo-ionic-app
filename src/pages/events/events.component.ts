@@ -16,104 +16,7 @@ import { Country } from '../../models/country.model';
 
 @Component({
   selector: 'app-events',
-  template: `
-<ion-content [fullscreen]="true" class="[--background:#F2F4F7]">
-  
-  <app-page-header 
-    title="Events" 
-    searchPlaceholder="Search by name, location..."
-    [searchValue]="searchTerm()"
-    [isModal]="isModalSignal()"
-    (searchChange)="handleSearch($event)"
-    (back)="goBack()">
-  </app-page-header>
-
-  <div class="px-5 pb-8">
-
-    <!-- Featured Banners (Swipeable) -->
-    @if (selectedCategory() === 'All' && searchTerm() === '') {
-      <div class="mb-6">
-        <app-banner 
-           [banners]="featuredBanners()" 
-           (bannerClick)="handleBannerClick($event)">
-        </app-banner>
-      </div>
-    }
-
-    <!-- Category Filter Chips (Cities) -->
-    <div 
-      #categoryContainer
-      class="flex overflow-x-auto gap-2.5 pb-2 mb-4 scrollbar-hide -mx-5 px-5 snap-x select-none cursor-grab active:cursor-grabbing"
-      (mousedown)="startDrag($event)"
-      (mouseleave)="endDrag()"
-      (mouseup)="endDrag()"
-      (mousemove)="doDrag($event)">
-      @for (cat of categories(); track cat) {
-        <button 
-          (click)="setCategory(cat)"
-          class="px-4 py-[0.5rem] text-[0.8rem] font-bold rounded-full whitespace-nowrap transition-colors duration-200 border"
-          [class.bg-[#083594]]="selectedCategory() === cat.code"
-          [class.text-white]="selectedCategory() === cat.code"
-          [class.border-transparent]="selectedCategory() === cat.code"
-          [class.bg-white]="selectedCategory() !== cat.code"
-          [class.text-[#1A1C1E]]="selectedCategory() !== cat.code"
-          [class.border-gray-200]="selectedCategory() !== cat.code"
-          [class.hover:bg-gray-50]="selectedCategory() !== cat.code"
-          [class.shadow-sm]="selectedCategory() !== cat.code">
-          {{ cat.name }}
-        </button>
-      }
-    </div>
-
-    <!-- Events List -->
-    <div class="flex flex-col gap-3.5">
-      @if (upcomingEvents().length > 0) {
-        @for (item of upcomingEvents(); track item.id) {
-          <app-event-card 
-             [event]="item"
-             (click)="openEvent(item)">
-          </app-event-card>
-        }
-      }
-
-      @if (pastEvents().length > 0) {
-        <!-- Expired Separator -->
-        <div class="flex items-center gap-3 my-2">
-          <div class="flex-1 h-px bg-gray-200"></div>
-          <span class="text-xs font-bold text-gray-400 uppercase tracking-wider">Expired</span>
-          <div class="flex-1 h-px bg-gray-200"></div>
-        </div>
-
-        @for (item of pastEvents(); track item.id) {
-          <app-event-card 
-             [event]="item"
-             class="opacity-50 grayscale"
-             (click)="openEvent(item)">
-          </app-event-card>
-        }
-      }
-
-      @if (upcomingEvents().length === 0 && pastEvents().length === 0) {
-        <!-- No Results State -->
-        <div class="flex items-center justify-center h-[36vh]">
-          <div class="text-center text-gray-400">
-            <ion-icon name="calendar-outline" class="text-7xl mb-2 text-gray-300"></ion-icon>
-            <h1 class="text-xl font-bold mt-2">No Events Found</h1>
-            @if (searchTerm()) {
-              <p class="text-sm">We couldn't find any events for "{{ searchTerm() }}".</p>
-            } @else {
-              <p class="text-sm">There are no events in '{{ selectedCategory() }}' right now.</p>
-            }
-          </div>
-        </div>
-      }
-    </div>
-
-
-
-  </div>
-</ion-content>
-`,
+  templateUrl: './events.component.html',
   styles: [`
     .scrollbar-hide::-webkit-scrollbar { display: none; }
     .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
@@ -165,17 +68,12 @@ export class EventsComponent implements OnInit {
     this.countryEvents = computed(() => {
         const list = this.allEvents();
         const cid = this.selectedCountryId();
-        return list.filter(e => e.countryCode?.toUpperCase() === cid.toUpperCase());
+        return list.filter(e => e.countryCode?.toUpperCase() === cid.toUpperCase() && !e.isArchived);
     });
 
     this.featuredBanners = computed(() => {
         const upcomingEvents = this.countryEvents().filter(e => !this.isEventExpired(e));
-        let featured = upcomingEvents.filter(e => e.isFeatured);
-        
-        // Fallback if no featured items found
-        if (featured.length === 0 && upcomingEvents.length > 0) {
-           featured = upcomingEvents.slice(0, 3);
-        }
+        const featured = upcomingEvents.filter(e => e.isFeatured);
     
         return featured.map(e => ({
            id: e.id,
@@ -242,7 +140,7 @@ export class EventsComponent implements OnInit {
   }
 
   isEventExpired(event: Event): boolean {
-    return new Date(event.date) < new Date();
+    return event.isExpired === true;
   }
 
   setCategory(cat: { code: string; name: string; }) {

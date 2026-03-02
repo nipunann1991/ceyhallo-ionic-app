@@ -127,18 +127,40 @@ export class BusinessesComponent implements OnInit {
     });
 
     this.sectionOffers = computed(() => {
-        return this.offers().filter(o => o.isSectionBanner && o.linkType === 'businesses');
+        let offers = this.offers().filter(o => o.isSectionBanner && o.linkType === 'businesses');
+        const filterCategories = this.filterBy();
+        
+        if (filterCategories.length > 0) {
+            offers = offers.filter(o => {
+                if (!o.categories || o.categories.length === 0) return false;
+                const offerCats = o.categories.map(c => c.toLowerCase());
+                return filterCategories.some(fc => offerCats.includes(fc));
+            });
+        }
+        return offers;
     });
 
     this.otherOffers = computed(() => {
+        // Get IDs from the *filtered* section offers to avoid duplicates if they overlap
         const sectionIds = new Set(this.sectionOffers().map(o => o.id));
         const bizIds = new Set(this.allBusinesses().map(b => b.id));
         
-        return this.offers().filter(o => 
+        let offers = this.offers().filter(o => 
           o.businessId && 
           bizIds.has(o.businessId) &&
           !sectionIds.has(o.id)
         );
+
+        const filterCategories = this.filterBy();
+        if (filterCategories.length > 0) {
+            offers = offers.filter(o => {
+                if (!o.categories || o.categories.length === 0) return false;
+                const offerCats = o.categories.map(c => c.toLowerCase());
+                return filterCategories.some(fc => offerCats.includes(fc));
+            });
+        }
+        
+        return offers;
     });
 
     this.filteredBusinesses = computed(() => {

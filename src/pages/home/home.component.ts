@@ -228,7 +228,7 @@ export class HomeComponent implements OnInit {
                 const value = criterion.filterValue;
 
                 if (key === 'category') {
-                    return (offer.category || '').toLowerCase() === (value || '').toLowerCase();
+                    return (offer.generalCategory || '').toLowerCase() === (value || '').toLowerCase();
                 }
                 // Generic check for other properties
                 return (offer as any)[key] == value;
@@ -239,7 +239,7 @@ export class HomeComponent implements OnInit {
         if (section.filterValue) {
             const val = section.filterValue.toLowerCase();
             if (val === 'food') {
-                return offer.category?.toLowerCase() === 'food';
+                return offer.generalCategory?.toLowerCase() === 'food';
             } else {
                 // Legacy fallback: treat as 'business' filter
                 return offer.linkType === 'businesses' || offer.linkType === 'business';
