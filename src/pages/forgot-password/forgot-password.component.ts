@@ -43,13 +43,6 @@ import { FormsModule } from '@angular/forms';
             <!-- Input Form -->
             <div class="animate-slide-in">
                 
-                <!-- Error Message -->
-                @if (errorMessage()) {
-                  <div class="mb-4 p-3 bg-red-50 text-red-600 text-xs font-bold rounded-lg border border-red-100">
-                    {{ errorMessage() }}
-                  </div>
-                }
-
                 <div class="text-center mb-6 px-2">
                     <p class="text-sm text-gray-600">Enter your email address and we'll send you a link to reset your password.</p>
                 </div>
@@ -125,11 +118,11 @@ export class ForgotPasswordComponent {
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
         if (!emailVal) {
-            this.errorMessage.set('Please enter your email address.');
+            this.showErrorToast('Please enter your email address.');
             return;
         }
         if (!emailRegex.test(emailVal)) {
-            this.errorMessage.set('Please enter a valid email address.');
+            this.showErrorToast('Please enter a valid email address.');
             return;
         }
         
@@ -150,8 +143,21 @@ export class ForgotPasswordComponent {
             });
             await toast.present();
         } else {
-            this.errorMessage.set(result.error || 'Failed to send reset link.');
+            const error = result.error || 'Failed to send reset link.';
+            this.errorMessage.set(error);
+            this.showErrorToast(error);
         }
+    }
+
+    private async showErrorToast(message: string) {
+        const toast = await this.toastCtrl.create({
+            message,
+            duration: 3000,
+            color: 'danger',
+            position: 'top',
+            cssClass: 'toast-custom-text'
+        });
+        await toast.present();
     }
 
     goBack() {

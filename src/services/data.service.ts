@@ -71,6 +71,13 @@ export class DataService {
     this.selectedCountryId.set(id);
   }
 
+  refreshAllData() {
+    // In a real-time app, data is pushed automatically.
+    // We could force a re-fetch here if we were using one-time gets.
+    // For now, this is a placeholder to satisfy the UI refresh action.
+    console.log('Refreshing data...');
+  }
+
   async submitBusinessListing(data: any): Promise<string> {
     return this.firestoreService.addDocument('business_requests', {
         ...data,
@@ -385,41 +392,107 @@ export class DataService {
   }
 
   private listenToLegal(): void {
-    this.firestoreService.listenToCollectionMapped<any, LegalDocument>(
-      'legal',
-      appState.legalDocs,
-      (id, data) => {
-        let date: Date = new Date();
-        if (data['lastUpdated'] && typeof data['lastUpdated'] === 'string') {
-            date = new Date(data['lastUpdated']);
-        } else if (data['lastUpdated'] && typeof data['lastUpdated'].toDate === 'function') {
-            date = data['lastUpdated'].toDate();
+    const defaultLegalDocs: LegalDocument[] = [
+        { 
+            id: 'privacy', 
+            title: 'Privacy Policy', 
+            content: '<h2>Privacy Policy</h2><p>This is a placeholder for the privacy policy. Please update the content in the backend.</p>', 
+            lastUpdated: new Date() 
+        },
+        { 
+            id: 'terms', 
+            title: 'Terms & Conditions', 
+            content: '<h2>Terms & Conditions</h2><p>This is a placeholder for the terms and conditions. Please update the content in the backend.</p>', 
+            lastUpdated: new Date() 
+        },
+        { 
+            id: 'help', 
+            title: 'Help & Support', 
+            content: '<h2>Help & Support</h2><p>This is a placeholder for help and support. Please update the content in the backend.</p>', 
+            lastUpdated: new Date() 
         }
+    ];
 
-        return {
-          id: id,
-          title: data['title'] || 'Legal Document',
-          content: data['content'] || '',
-          lastUpdated: date
-        };
-      }
-    );
+    this.firestoreService.listenToPath<{ [key: string]: any }>('legal', (dataObject) => {
+        const docs = Object.keys(dataObject).map(id => {
+            const data = dataObject[id];
+            let date: Date = new Date();
+            
+            // Check for updatedAt (from user JSON) or lastUpdated
+            const dateField = data['updatedAt'] || data['lastUpdated'];
+            
+            if (dateField && typeof dateField === 'string') {
+                date = new Date(dateField);
+            } else if (dateField && typeof dateField.toDate === 'function') {
+                date = dateField.toDate();
+            }
+
+            // Map ID to friendly title if not provided
+            let title = data['title'];
+            if (!title) {
+                if (id === 'help') title = 'Help & Support';
+                else if (id === 'privacy') title = 'Privacy Policy';
+                else if (id === 'terms') title = 'Terms & Conditions';
+                else title = 'Legal Document';
+            }
+
+            return {
+              id: id,
+              title: title,
+              content: data['content'] || '',
+              lastUpdated: date
+            };
+        });
+
+        if (docs.length === 0) {
+             console.warn('No legal docs found. Using defaults.');
+             appState.legalDocs.set(defaultLegalDocs);
+        } else {
+             appState.legalDocs.set(docs);
+        }
+    }, (error) => {
+        console.warn('Error fetching legal docs. Using defaults.', error);
+        appState.legalDocs.set(defaultLegalDocs);
+    });
   }
 
   private listenToSupport(): void {
-    this.firestoreService.listenToPath<{ [key: string]: any }>('support', (data) => {
-        const info = data['info'];
-        if (info) {
-            appState.supportInfo.set({
-                id: 'info',
-                phone: info.phone || '',
-                email: info.email || '',
-                address: info.address || '',
-                workingHours: info.workingHours || '',
-                faqs: info.faqs || []
-            });
+    const defaultSupport = {
+        id: 'info',
+        phone: '+971 50 123 4567',
+        email: 'support@ceyhallo.com',
+        address: 'Dubai, UAE',
+        workingHours: 'Mon - Fri, 9am - 6pm',
+        faqs: [
+            { id: '1', question: 'How do I reset my password?', answer: 'Go to Profile > Change Password to update your credentials.' },
+            { id: '2', question: 'How can I verify my account?', answer: 'Check your email inbox for a verification link.' },
+            { id: '3', question: 'Is the app free?', answer: 'Yes, CeyHallo is completely free to download and use.' }
+        ]
+    };
+
+    this.firestoreService.listenToPath<{ [key: string]: any }>(
+        'support', 
+        (data) => {
+            const info = data['info'];
+            if (info) {
+                appState.supportInfo.set({
+                    id: 'info',
+                    phone: info.phone || '',
+                    email: info.email || '',
+                    address: info.address || '',
+                    workingHours: info.workingHours || '',
+                    faqs: info.faqs || []
+                });
+            } else {
+                console.warn('Support document not found. Using default configuration.');
+                appState.supportInfo.set(defaultSupport);
+            }
+        },
+        (error) => {
+            console.warn('Error fetching support info. Using default configuration.', error);
+            appState.supportInfo.set(defaultSupport);
         }
-    });
+    );
   }
 
   private listenToNotifications(): void {
@@ -500,8 +573,50 @@ export class DataService {
   private listenToSettings(): void {
     this.firestoreService.listenToDocument<AppConfig>('settings', 'app_config', (data) => {
        if (data) {
-
          appState.appSettings.set(data);
+       } else {
+         // Fallback default configuration if settings document is missing
+         console.warn('Settings document not found. Using default configuration.');
+         appState.appSettings.set({
+            showSocialLogin: true,
+            maintenanceMode: false,
+            showAiBot: true,
+            homeSections: [
+                {
+                    id: 'banners',
+                    template: 'banners',
+                    dataSource: 'banners',
+                    title: '',
+                    enabled: true,
+                    order: 0
+                },
+                {
+                    id: 'categories',
+                    template: 'categories',
+                    dataSource: 'categories',
+                    title: 'Categories',
+                    enabled: true,
+                    order: 1
+                },
+                {
+                    id: 'featured_businesses',
+                    template: 'featured_businesses',
+                    dataSource: 'businesses',
+                    title: 'Featured Businesses',
+                    enabled: true,
+                    order: 2,
+                    filterData: [{ filterType: 'isFeatured', filterValue: true }]
+                },
+                {
+                    id: 'latest_news',
+                    template: 'news_feed',
+                    dataSource: 'news',
+                    title: 'Latest News',
+                    enabled: true,
+                    order: 3
+                }
+            ]
+         });
        }
     });
   }

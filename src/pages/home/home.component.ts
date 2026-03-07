@@ -1,11 +1,10 @@
 
 import { Component, ChangeDetectionStrategy, signal, computed, viewChild, ElementRef, OnInit, Signal, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { IonicModule, ModalController, ToastController } from '@ionic/angular';
+import { IonicModule, ModalController, ToastController, RefresherCustomEvent } from '@ionic/angular';
 import { Router, RouterLink } from '@angular/router';
 import { DataService } from '../../services/data.service';
 import { AuthService } from '../../services/auth.service';
-import { PushNotificationService } from '../../services/push-notifications.service';
 import { BannerComponent } from '../../components/banner/banner.component';
 import { NewsDetailComponent } from '../news-detail/news-detail.component';
 import { BusinessDetailComponent } from '../business-detail/business-detail.component';
@@ -37,7 +36,7 @@ import { Business } from '../../models/business.model';
   imports: [CommonModule, IonicModule, RouterLink, BannerComponent, BusinessCardComponent, NewsCardComponent, OfferCardComponent, EventCardComponent, JobCardComponent],
 })
 export class HomeComponent implements OnInit {
-  settings: Signal<AppConfig | null>;
+  settings: Signal<AppConfig | null | undefined>;
   banners: Signal<Banner[]>;
   categories: Signal<Category[]>;
   countries: Signal<Country[]>;
@@ -45,6 +44,7 @@ export class HomeComponent implements OnInit {
   offers: Signal<Offer[]>;
   events: Signal<Event[]>;
   jobs: Signal<Job[]>;
+  businesses: Signal<Business[]>;
   
 
 
@@ -58,6 +58,8 @@ export class HomeComponent implements OnInit {
   
   // Loading State
   isLoading = signal(true);
+  private canDismissLoading = false;
+  private settingsLoaded = false;
 
   private activeSlider: HTMLElement | null = null;
   private isDown = false;
@@ -68,7 +70,6 @@ export class HomeComponent implements OnInit {
   constructor(
     private dataService: DataService,
     private authService: AuthService,
-    private pushService: PushNotificationService,
     private modalCtrl: ModalController,
     private toastCtrl: ToastController,
     private router: Router
@@ -81,6 +82,7 @@ export class HomeComponent implements OnInit {
     this.offers = this.dataService.getOffers();
     this.events = this.dataService.getEvents();
     this.jobs = this.dataService.getJobs();
+    this.businesses = this.dataService.getBusinesses();
 
 
     this.selectedCountryId = this.dataService.selectedCountryId;
@@ -117,6 +119,8 @@ export class HomeComponent implements OnInit {
     // Compute sections with data for dynamic rendering
     this.sectionsWithData = computed(() => {
         const settings = this.settings();
+        if (settings === undefined) return []; // Loading
+        
         let sections = settings?.homeSections || [];
         
 
@@ -131,10 +135,12 @@ export class HomeComponent implements OnInit {
           if (section.dataSource === 'offers') {
             data = this.filterOffers(data as Offer[], section);
           } else if (section.dataSource === 'businesses') {
-            let filteredData = data;
+            const cid = this.selectedCountryId();
+            // Filter by country first
+            let filteredData = (data as Business[]).filter(b => !b.countryCode || b.countryCode === cid);
 
             if (section.filterData && section.filterData.length > 0) {
-              filteredData = data.filter((item: any) => {
+              filteredData = filteredData.filter((item: any) => {
                 return section.filterData!.every(criterion => {
                   const filterType = criterion.filterType === 'isFeatured' ? 'isPromoted' : criterion.filterType;
                   
@@ -158,19 +164,23 @@ export class HomeComponent implements OnInit {
               });
             }
             data = filteredData;
+          } else if (section.dataSource === 'events') {
+            const cid = this.selectedCountryId();
+            data = (data as Event[]).filter(e => !e.countryCode || e.countryCode === cid);
           }
 
           return { section, data };
-        });
+        }).filter(item => item.data && item.data.length > 0);
     });
 
     // Effect to handle loading state change based on data availability
     effect(() => {
         // As soon as settings are loaded (indicating core data fetch initiated/completed), 
         // we can reveal the UI. Inner components have their own empty states/skeletons if needed.
-        if (this.settings()) {
-            this.isLoading.set(false);
-
+        const settings = this.settings();
+        if (settings !== undefined) {
+            this.settingsLoaded = true;
+            this.checkLoadingState();
         }
 
         const countries = this.countries();
@@ -190,7 +200,25 @@ export class HomeComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.pushService.initPush();
+    // Force skeleton for at least 2 seconds to simulate loading/splash transition
+    setTimeout(() => {
+        this.canDismissLoading = true;
+        this.checkLoadingState();
+    }, 2000);
+
+    // Safety timeout: If settings haven't loaded in 5 seconds, force UI to show
+    setTimeout(() => {
+        if (this.isLoading()) {
+            console.warn('Loading timed out. Forcing UI to display.');
+            this.isLoading.set(false);
+        }
+    }, 5000);
+  }
+
+  private checkLoadingState() {
+      if (this.canDismissLoading && this.settingsLoaded) {
+          this.isLoading.set(false);
+      }
   }
 
   private getSectionData(section: HomeSection): Signal<any[]> {
@@ -208,9 +236,37 @@ export class HomeComponent implements OnInit {
 
   private filterOffers(offers: Offer[], section: HomeSection): Offer[] {
     const cid = this.selectedCountryId();
+    const businesses = this.businesses();
+    const events = this.events();
     
     // 1. Filter by Country first (optimization and correctness)
-    let relevantOffers = offers.filter(o => !o.countryCode || o.countryCode === cid);
+    let relevantOffers = offers.filter(o => {
+        // Explicit country code on offer
+        if (o.countryCode) {
+            return o.countryCode === cid;
+        }
+
+        // Implicit country code via Target (Business or Event)
+        if (o.targetId) {
+            // Check Business (Default or explicit)
+            if (!o.linkType || o.linkType === 'business' || o.linkType === 'businesses') {
+                 const business = businesses.find(b => b.id === o.targetId);
+                 if (business && business.countryCode) {
+                     return business.countryCode === cid;
+                 }
+            }
+            // Check Event
+            else if (o.linkType === 'event') {
+                 const event = events.find(e => e.id === o.targetId);
+                 if (event && event.countryCode) {
+                     return event.countryCode === cid;
+                 }
+            }
+        }
+
+        // Default to global/show if no specific country restriction found
+        return true;
+    });
 
     // 2. Handle "Home Banner" priority logic
     // If there are home banners for this country, prefer them.
@@ -271,6 +327,18 @@ export class HomeComponent implements OnInit {
   }
 
   handleImgError = handleImageError;
+
+  async handleRefresh(event: any) {
+    const refresher = event as RefresherCustomEvent;
+    
+    // Refresh data
+    this.dataService.refreshAllData();
+    
+    // Simulate network request if needed, or wait for data
+    setTimeout(() => {
+      refresher.target.complete();
+    }, 1500);
+  }
 
   async goToProfile() {
     if (this.authService.isLoggedIn()) {
@@ -345,7 +413,7 @@ export class HomeComponent implements OnInit {
         else if (label.includes('job')) path = '/jobs';
         else if (label.includes('event')) path = '/events';
         else if (label.includes('offer')) path = '/offers';
-        else if (label.includes('support')) path = '/support';
+        else if (label.includes('support')) path = '/legal/help';
     }
 
     if (path) {

@@ -10,57 +10,48 @@ import { LegalDocument } from '../../models/legal.model';
 @Component({
   selector: 'app-legal',
   template: `
-@if (document(); as doc) {
-  <ion-content [fullscreen]="true" class="bg-white" [forceOverscroll]="false">
-    
-    <!-- Hero Section -->
-    <div class="relative w-full h-[14rem]">
-      <!-- Legal Image (Generic Office/Contract Image) -->
-      <img src="https://images.unsplash.com/photo-1450101499163-c8848c66ca85?q=80&w=2670&auto=format&fit=crop" 
-           (error)="handleImgError($event)" 
-           alt="Legal" 
-           class="w-full h-full object-cover">
+<ion-content [fullscreen]="true" class="[--background:#F2F4F7]" [forceOverscroll]="false">
+  
+  <!-- Custom Header (Matching Business Listing Style) -->
+  <div class="relative bg-[#083594] pb-20 rounded-b-[2.5rem] px-5 text-white shadow-sm pt-[calc(4rem+env(safe-area-inset-top))]">
+    <div class="flex items-center justify-between relative z-10">
+      <!-- Back Button -->
+      <button (click)="goBack()" class="p-2 -ml-2 active:opacity-70 transition-opacity text-white">
+         <ion-icon name="arrow-back" class="text-2xl"></ion-icon>
+      </button>
       
-      <!-- Gradient Overlay (Top) for navigation visibility -->
-      <div class="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-transparent h-32 pointer-events-none"></div>
+      <!-- Title -->
+      @if (document(); as doc) {
+        <h1 class="text-lg font-bold absolute left-1/2 -translate-x-1/2 tracking-tight whitespace-nowrap">{{ doc.title }}</h1>
+      }
+      
+      <div class="w-8"></div>
+    </div>
+    
+    <!-- Hero Text -->
+    <div class="text-center px-4 mt-2">
+        @if (document(); as doc) {
+          <p class="text-blue-100 text-sm font-medium">Legal Document</p>
+        }
+    </div>
+  </div>
 
-      <!-- Navigation Overlay -->
-      <div class="absolute top-0 left-0 right-0 nav-overlay-safe px-5 flex justify-between items-start z-10">
-        <!-- Back Button -->
-        <button (click)="goBack()" class="text-white hover:opacity-80 transition-opacity active:scale-90">
-           <ion-icon name="arrow-back" class="text-[1.75rem] drop-shadow-md"></ion-icon>
-        </button>
+  <div class="px-6 -mt-12 relative z-10 pb-[calc(2rem+env(safe-area-inset-bottom))]">
+    @if (document(); as doc) {
+      <!-- Content Card -->
+      <div class="bg-white rounded-3xl p-6 shadow-[0_8px_30px_rgba(0,0,0,0.04)] border border-[#E8EEF7] min-h-[60vh]">
+         <!-- Content -->
+         <div class="legal-content text-sm text-gray-600 leading-relaxed font-normal" [innerHTML]="doc.content"></div>
       </div>
-    </div>
+    } @else {
+      <div class="bg-white rounded-3xl p-10 shadow-[0_8px_30px_rgba(0,0,0,0.04)] border border-[#E8EEF7] flex flex-col items-center justify-center gap-4">
+        <ion-spinner name="crescent" color="primary"></ion-spinner>
+        <p class="text-gray-400 font-medium text-sm">Loading document...</p>
+      </div>
+    }
+  </div>
 
-    <!-- Content Card (Overlapping) -->
-    <div class="relative -mt-12 z-10 bg-white rounded-t-[2.5rem] px-6 pt-10 pb-20 min-h-[60vh] shadow-[0_-10px_40px_rgba(0,0,0,0.05)]">
-       
-       <!-- Date / Category style -->
-       <div class="flex justify-center mb-1">
-         <span class="text-[#083594] font-bold text-[0.75rem] tracking-[0.05em]">
-            Legal Document • {{ doc.lastUpdated | date:'mediumDate' }}
-         </span>
-       </div>
-
-       <!-- Title (Clicked Title) -->
-       <h1 class="text-xl font-extrabold text-[#1A1C1E] tracking-tight mb-8 text-center leading-tight">
-         {{ doc.title }}
-       </h1>
-
-       <!-- Content -->
-       <div class="legal-content text-sm text-gray-600 mb-6 leading-relaxed font-normal" [innerHTML]="doc.content"></div>
-    </div>
-
-  </ion-content>
-} @else {
-  <ion-content class="bg-white" [forceOverscroll]="false">
-    <div class="flex flex-col items-center justify-center h-full gap-4">
-      <ion-spinner name="crescent" color="primary"></ion-spinner>
-      <p class="text-gray-400 font-medium text-sm">Loading document...</p>
-    </div>
-  </ion-content>
-}
+</ion-content>
 `,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [CommonModule, IonicModule],
@@ -84,6 +75,7 @@ export class LegalPageComponent implements OnInit {
     this.document = computed(() => {
         const id = this.docId();
         if (!id) return null;
+
         const doc = this.allDocs().find(doc => doc.id === id);
         
         if (!doc) return null;
@@ -92,6 +84,7 @@ export class LegalPageComponent implements OnInit {
         let title = doc.title;
         if (id === 'privacy') title = 'Privacy Policy';
         if (id === 'terms') title = 'Terms & Conditions';
+        if (id === 'help') title = 'Help & Support';
     
         return { ...doc, title };
     });

@@ -1,7 +1,7 @@
 
 import { Component, ChangeDetectionStrategy, signal, inject, computed, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { IonicModule, ModalController, NavController } from '@ionic/angular';
+import { IonicModule, ModalController, NavController, ToastController } from '@ionic/angular';
 import { AuthService } from '../../services/auth.service';
 import { DataService } from '../../services/data.service';
 import { RouterLink, Router } from '@angular/router';
@@ -33,13 +33,6 @@ import { LegalPageComponent } from '../legal/legal.component';
     <!-- Main Form Container -->
     <div class="w-full max-w-[21.25rem] animate-slide-in">
         
-        <!-- Error Message -->
-        @if (errorMessage()) {
-          <div class="mb-4 p-3 bg-red-50 text-red-600 text-xs font-bold rounded-lg border border-red-100">
-            {{ errorMessage() }}
-          </div>
-        }
-
         <!-- Inputs -->
         <div class="space-y-3 mb-6">
             
@@ -235,19 +228,20 @@ export class SignUpComponent {
   private router: Router = inject(Router);
   private modalCtrl: ModalController = inject(ModalController);
   private navCtrl: NavController = inject(NavController);
+  private toastCtrl: ToastController = inject(ToastController);
 
   @Input() isModal: boolean = false;
 
   settings = this.dataService.getAppSettings();
   countries = this.dataService.getCountries();
 
-  // Pre-filled data
-  name = signal('Nipuna Nanayakkara');
-  email = signal('nipunann0710@gmail.com');
-  region = signal('AE'); // UAE
-  phoneNumber = signal('00000000');
-  password = signal('12345678');
-  confirmPassword = signal('12345678');
+  // Form data
+  name = signal('');
+  email = signal('');
+  region = signal('');
+  phoneNumber = signal('');
+  password = signal('');
+  confirmPassword = signal('');
   
   errorMessage = signal('');
   isLoading = signal(false);
@@ -277,17 +271,22 @@ export class SignUpComponent {
 
   async signUp() {
     if (!this.name() || !this.email() || !this.password() || !this.confirmPassword() || !this.region()) {
-      this.errorMessage.set('Please fill in all required fields (Region is required).');
+      this.showErrorToast('Please fill in all required fields (Region is required).');
       return;
     }
     
     if (this.password() !== this.confirmPassword()) {
-      this.errorMessage.set('Passwords do not match.');
+      this.showErrorToast('Passwords do not match.');
       return;
     }
     
-    if (this.password().length < 6) {
-        this.errorMessage.set('Password must be at least 6 characters.');
+    if (this.password().length < 8) {
+        this.showErrorToast('Password must be at least 8 characters.');
+        return;
+    }
+    
+    if (!/[A-Za-z]/.test(this.password()) || !/\d/.test(this.password())) {
+        this.showErrorToast('Password must contain at least one letter and one number.');
         return;
     }
 
@@ -311,8 +310,21 @@ export class SignUpComponent {
         this.router.navigate(['/tabs/home']);
       }
     } else {
-      this.errorMessage.set(result.error || 'Registration failed. Please try again.');
+      const error = result.error || 'Registration failed. Please try again.';
+      this.errorMessage.set(error);
+      this.showErrorToast(error);
     }
+  }
+
+  private async showErrorToast(message: string) {
+    const toast = await this.toastCtrl.create({
+      message,
+      duration: 3000,
+      color: 'danger',
+      position: 'top',
+      cssClass: 'toast-custom-text'
+    });
+    await toast.present();
   }
 
   async openLegalModal(type: string) {

@@ -1,7 +1,7 @@
 
 import { Component, ChangeDetectionStrategy, signal, effect, computed, Signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { IonicModule, NavController, ToastController } from '@ionic/angular';
+import { IonicModule, NavController, ToastController, AlertController } from '@ionic/angular';
 import { AuthService } from '../../services/auth.service';
 import { DataService } from '../../services/data.service';
 import { FormsModule } from '@angular/forms';
@@ -145,7 +145,7 @@ import { Country } from '../../models/country.model';
     </div>
 
     <!-- Save Button (Flows with content) -->
-    <div class="mt-8">
+    <div class="mt-8 space-y-4">
        <button 
          (click)="save()" 
          [disabled]="isLoading()"
@@ -153,9 +153,15 @@ import { Country } from '../../models/country.model';
          @if (isLoading()) {
             <ion-spinner name="crescent" color="light" class="w-6 h-6"></ion-spinner>
          } @else {
-            <ion-icon name="checkmark-circle-outline" class="text-xl"></ion-icon>
             Save Changes
          }
+       </button>
+
+       <button 
+         (click)="deleteAccount()" 
+         class="w-full h-[3.25rem] bg-transparent hover:bg-red-50 active:scale-[0.98] text-red-600 font-bold text-[0.95rem] rounded-full border border-red-200 flex items-center justify-center gap-2 transition-all">
+         <ion-icon name="trash-outline" class="text-xl"></ion-icon>
+         Delete Account
        </button>
     </div>
 
@@ -171,6 +177,7 @@ export class EditProfileComponent {
   private dataService = inject(DataService);
   private navCtrl = inject(NavController);
   private toastCtrl = inject(ToastController);
+  private alertCtrl = inject(AlertController);
 
   userProfile: Signal<UserProfile | null> = this.authService.userProfile;
   countries: Signal<Country[]> = this.dataService.getCountries();
@@ -257,5 +264,50 @@ export class EditProfileComponent {
       cssClass: 'toast-custom-text'
     });
     await toast.present();
+  }
+
+  async deleteAccount() {
+    const alert = await this.alertCtrl.create({
+      header: 'Confirm Deletion',
+      message: 'This action is permanent and cannot be undone. Please enter your password to confirm.',
+      inputs: [
+        {
+          name: 'password',
+          type: 'password',
+          placeholder: 'Enter your password',
+          attributes: {
+            autocapitalize: 'off',
+            autocomplete: 'current-password',
+            spellcheck: 'false',
+          },
+        },
+      ],
+      buttons: [
+        {
+          text: 'Cancel',
+          role: 'cancel',
+        },
+        {
+          text: 'Delete',
+          role: 'destructive',
+          handler: async (data) => {
+            if (!data.password) {
+              await this.showToast('Password is required to delete your account.', 'danger');
+              return;
+            }
+
+            const result = await this.authService.deleteAccount(data.password);
+            if (result.success) {
+              await this.showToast('Your account has been successfully deleted.', 'success');
+              // The auth service likely handles navigation on logout/delete, but just in case:
+              this.navCtrl.navigateRoot('/login'); 
+            } else {
+              await this.showToast(result.error || 'An error occurred. Please try again.', 'danger');
+            }
+          },
+        },
+      ],
+    });
+    await alert.present();
   }
 }

@@ -27,6 +27,8 @@ export interface AppConfig {
   showSocialLogin: boolean;
   maintenanceMode?: boolean;
   showAiBot?: boolean;
+  showBusinessListing?: boolean;
+  showRateApp?: boolean;
   homeSections: HomeSection[];
 }
 

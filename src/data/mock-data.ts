@@ -4,6 +4,8 @@ export const MOCK_DATA = {
     "app_config": {
       "showSocialLogin": false,
       "showAiBot": true,
+      "showBusinessListing": true,
+      "showRateApp": true,
       "homeSections": [
         {
           "id": "sec_1770482316511",

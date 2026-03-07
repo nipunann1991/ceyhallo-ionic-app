@@ -4,6 +4,7 @@ import { CommonModule } from '@angular/common';
 import { IonicModule, NavController } from '@ionic/angular';
 import { DataService } from '../../services/data.service';
 import { SupportInfo } from '../../models/support.model';
+import { LegalDocument } from '../../models/legal.model';
 
 @Component({
   selector: 'app-support',
@@ -80,7 +81,7 @@ import { SupportInfo } from '../../models/support.model';
     </div>
 
     <!-- FAQ Section -->
-    <div class="px-5 pb-10">
+    <div class="px-5 mb-8">
         <h3 class="text-lg font-bold text-[#1A1C1E] mb-4 ml-1">Frequently Asked Questions</h3>
         
         <div class="space-y-3">
@@ -111,11 +112,35 @@ import { SupportInfo } from '../../models/support.model';
             }
         </div>
     </div>
-  } @else {
+
+    <!-- Legal Section -->
+    <div class="px-5 pb-10">
+        <h3 class="text-lg font-bold text-[#1A1C1E] mb-4 ml-1">Legal</h3>
+        
+        <div class="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100">
+            @for (doc of legalDocs(); track doc.id) {
+                <button 
+                    (click)="openLegal(doc.id)" 
+                    class="w-full flex items-center justify-between p-4 text-left focus:outline-none border-b border-gray-50 last:border-0 active:bg-gray-50 transition-colors">
+                    <span class="font-medium text-sm text-[#1A1C1E]">{{ doc.title }}</span>
+                    <ion-icon name="chevron-forward" class="text-gray-400 text-lg"></ion-icon>
+                </button>
+            }
+        </div>
+    </div>
+
+  } @else if (supportInfo() === undefined) {
      <!-- Loading State -->
      <div class="flex flex-col items-center justify-center pt-20">
         <ion-spinner name="crescent" color="primary"></ion-spinner>
         <p class="text-gray-400 font-medium text-xs mt-4">Loading support info...</p>
+     </div>
+  } @else {
+     <!-- Empty State (null) -->
+     <div class="flex flex-col items-center justify-center pt-20 px-6 text-center">
+        <ion-icon name="information-circle-outline" class="text-4xl text-gray-300 mb-2"></ion-icon>
+        <p class="text-gray-500 font-medium text-sm">No support information available.</p>
+        <p class="text-gray-400 text-xs mt-1">Please check back later.</p>
      </div>
   }
 
@@ -126,6 +151,7 @@ import { SupportInfo } from '../../models/support.model';
 })
 export class SupportComponent {
   supportInfo: Signal<SupportInfo | null>;
+  legalDocs: Signal<LegalDocument[]>;
   
   // Accordion state
   openFaqId = signal<string | null>(null);
@@ -135,6 +161,7 @@ export class SupportComponent {
     private navCtrl: NavController 
   ) {
     this.supportInfo = this.dataService.getSupportInfo();
+    this.legalDocs = this.dataService.getLegalDocs();
   }
 
   toggleFaq(id: string) {
@@ -161,5 +188,9 @@ export class SupportComponent {
     if (info?.email) {
         window.open(`mailto:${info.email}`, '_system');
     }
+  }
+
+  openLegal(id: string) {
+    this.navCtrl.navigateForward(`/legal/${id}`);
   }
 }

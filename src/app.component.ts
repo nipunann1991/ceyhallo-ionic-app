@@ -5,6 +5,7 @@ import { IonicModule, ModalController } from '@ionic/angular';
 import { CommonModule } from '@angular/common';
 import { App, URLOpenListenerEvent } from '@capacitor/app';
 import { DataService } from './services/data.service';
+import { PushNotificationService } from './services/push-notifications.service';
 import { AiChatComponent } from './components/ai-chat/ai-chat.component';
 
 @Component({
@@ -70,6 +71,7 @@ import { AiChatComponent } from './components/ai-chat/ai-chat.component';
 })
 export class AppComponent implements OnInit {
   private dataService = inject(DataService);
+  private pushService = inject(PushNotificationService);
   private modalCtrl: ModalController = inject(ModalController);
 
   isMaintenanceMode = computed(() => {
@@ -90,6 +92,7 @@ export class AppComponent implements OnInit {
 
   ngOnInit() {
     this.initializeApp();
+    this.pushService.initPush();
   }
 
   initializeApp() {

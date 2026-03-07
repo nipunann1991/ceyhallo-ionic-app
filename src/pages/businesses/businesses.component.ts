@@ -86,7 +86,7 @@ export class BusinessesComponent implements OnInit {
     this.filterBy = computed(() => {
         const params = this.queryParams();
         if (params && params['filterBy']) {
-            return params['filterBy'].split(',').map((c: string) => c.toLowerCase());
+            return params['filterBy'].split(',').map((c: string) => c.trim().toLowerCase());
         }
         return [];
     });
@@ -94,7 +94,7 @@ export class BusinessesComponent implements OnInit {
     this.excludeBy = computed(() => {
         const params = this.queryParams();
         if (params && params['excludeBy']) {
-            return params['excludeBy'].split(',').map((c: string) => c.toLowerCase());
+            return params['excludeBy'].split(',').map((c: string) => c.trim().toLowerCase());
         }
         return [];
     });

@@ -1,6 +1,10 @@
 
 <ion-content [fullscreen]="true" class="[--background:#F2F4F7]" [forceOverscroll]="false">
   
+  <ion-refresher slot="fixed" (ionRefresh)="handleRefresh($event)">
+    <ion-refresher-content></ion-refresher-content>
+  </ion-refresher>
+
   <!-- Custom Header Section (Static) -->
   <div class="relative bg-[#083594] home-header pb-16 px-5 rounded-b-[2.5rem] shadow-sm z-0">
     <!-- User Info Row -->

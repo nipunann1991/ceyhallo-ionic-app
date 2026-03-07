@@ -27,7 +27,7 @@ export class PushNotificationService {
     }
 
     try {
-      this.addListeners();
+      await this.addListeners();
       await this.registerNotifications();
     } catch (e: any) {
       // FIX: Safe error logging
@@ -66,10 +66,10 @@ export class PushNotificationService {
     }
   }
 
-  private addListeners() {
-    FirebaseMessaging.removeAllListeners();
+  private async addListeners() {
+    await FirebaseMessaging.removeAllListeners();
 
-    FirebaseMessaging.addListener('notificationReceived', async (event) => {
+    await FirebaseMessaging.addListener('notificationReceived', async (event) => {
       // FIX: Do not log the event object directly to avoid circular structure errors
       const notification = event.notification;
       
@@ -86,9 +86,7 @@ export class PushNotificationService {
             handler: () => {
               const data = notification.data as any;
               if (data?.routeId) {
-                this.ngZone.run(() => {
-                  this.router.navigateByUrl(data.routeId);
-                });
+                this.navigate(data.routeId);
               }
             }
           }
@@ -97,15 +95,27 @@ export class PushNotificationService {
       await toast.present();
     });
 
-    FirebaseMessaging.addListener('notificationActionPerformed', (event) => {
+    await FirebaseMessaging.addListener('notificationActionPerformed', async (event) => {
       const notification = event.notification;
       const data = notification.data as any;
       
       if (data?.routeId) {
-        this.ngZone.run(() => {
-          this.router.navigateByUrl(data.routeId);
-        });
+        this.navigate(data.routeId);
       }
+    });
+  }
+
+  private navigate(routeId: string) {
+    this.ngZone.run(() => {
+      let route = routeId;
+      // Handle hash-style URLs if passed directly (common in copy-paste)
+      if (route.startsWith('/#')) {
+        route = route.substring(2);
+      } else if (route.startsWith('#')) {
+        route = route.substring(1);
+      }
+      
+      this.router.navigateByUrl(route);
     });
   }
 
