@@ -38,7 +38,18 @@ export class BannerComponent implements OnDestroy {
        // Restart auto-slide when banners change
        const _ = this.banners();
        this.startAutoSlide();
+       this.preloadFirstBanner();
     });
+  }
+
+  private preloadFirstBanner() {
+    const banners = this.banners();
+    if (banners.length > 0 && banners[0].image) {
+      const img = new Image();
+      img.src = banners[0].image;
+      img.onload = () => this.onImageLoad(banners[0].id);
+      img.onerror = () => this.onImageError(banners[0].id);
+    }
   }
 
   ngOnDestroy() {

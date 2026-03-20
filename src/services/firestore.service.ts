@@ -1,6 +1,5 @@
 
 import { Injectable, WritableSignal } from '@angular/core';
-import { MOCK_DATA } from '../data/mock-data';
 import { firestore } from './firebase.service';
 import { collection, onSnapshot, doc, getDoc, setDoc, deleteDoc, addDoc } from 'firebase/firestore';
 
@@ -30,9 +29,8 @@ export class FirestoreService {
     
     return onSnapshot(colRef, (snapshot: any) => {
       if (snapshot.empty) {
-        console.warn(`[Firestore] No documents found in '${path}'. Falling back to mock data.`);
-        // @ts-ignore
-        callback(MOCK_DATA[path] || {});
+        // Return empty object if no documents found
+        callback({} as T);
         return;
       }
       const dataObject = snapshot.docs.reduce((acc: any, doc: any) => {
@@ -49,7 +47,7 @@ export class FirestoreService {
   // Reusable function to listen to a collection, map the data, and update a signal
   listenToCollectionMapped<T, R>(
     path: string,
-    targetSignal: WritableSignal<R[]>,
+    targetSignal: WritableSignal<any>,
     mapper: (id: string, data: T) => R | null,
     processor?: (items: R[]) => R[]
   ) {
@@ -65,6 +63,8 @@ export class FirestoreService {
       targetSignal.set(itemsArray);
     }, (error) => {
       // Error handled in listenToPath
+      // Set to empty array on error to stop loading state
+      targetSignal.set([]);
     });
   }
 

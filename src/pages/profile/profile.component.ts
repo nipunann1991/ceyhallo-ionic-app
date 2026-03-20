@@ -111,18 +111,20 @@ import { DataService } from '../../services/data.service';
     </div>
 
     <!-- Business Section -->
-    <div>
-       <h3 class="text-md font-bold text-[#1A1C1E] mb-3 ml-1">Business</h3>
-       <div class="bg-white rounded-2xl p-2 shadow-[0_8px_30px_rgb(0,0,0,0.03)] border border-[#E8EEF7] space-y-1">
-          <button routerLink="/list-business" class="w-full flex items-center justify-between p-3 hover:bg-gray-50 rounded-xl transition-colors group">
-             <div class="flex items-center gap-3.5">
-                <ion-icon name="add-circle-outline" class="text-gray-400 text-[1.4rem] group-active:text-[#083594] transition-colors"></ion-icon>
-                <span class="font-semibold text-sm text-gray-700">Business Listing (Free)</span>
-             </div>
-             <ion-icon name="chevron-forward" class="text-gray-300 text-lg"></ion-icon>
-          </button>
-       </div>
-    </div>
+    @if (appSettings()?.showBusinessListing) {
+      <div>
+         <h3 class="text-md font-bold text-[#1A1C1E] mb-3 ml-1">Business</h3>
+         <div class="bg-white rounded-2xl p-2 shadow-[0_8px_30px_rgb(0,0,0,0.03)] border border-[#E8EEF7] space-y-1">
+            <button routerLink="/list-business" class="w-full flex items-center justify-between p-3 hover:bg-gray-50 rounded-xl transition-colors group">
+               <div class="flex items-center gap-3.5">
+                  <ion-icon name="add-circle-outline" class="text-gray-400 text-[1.4rem] group-active:text-[#083594] transition-colors"></ion-icon>
+                  <span class="font-semibold text-sm text-gray-700">Business Listing (Free)</span>
+               </div>
+               <ion-icon name="chevron-forward" class="text-gray-300 text-lg"></ion-icon>
+            </button>
+         </div>
+      </div>
+    }
 
     <!-- General -->
     <div>
@@ -137,7 +139,7 @@ import { DataService } from '../../services/data.service';
              <ion-icon name="chevron-forward" class="text-gray-300 text-lg"></ion-icon>
           </button>
 
-          <button routerLink="/support" class="w-full flex items-center justify-between p-3 hover:bg-gray-50 rounded-xl transition-colors group">
+          <button routerLink="/legal/help" class="w-full flex items-center justify-between p-3 hover:bg-gray-50 rounded-xl transition-colors group">
              <div class="flex items-center gap-3.5">
                 <ion-icon name="headset-outline" class="text-gray-400 text-[1.4rem] group-active:text-[#083594] transition-colors"></ion-icon>
                 <span class="font-semibold text-sm text-gray-700">Contact Support</span>
@@ -145,15 +147,17 @@ import { DataService } from '../../services/data.service';
              <ion-icon name="chevron-forward" class="text-gray-300 text-lg"></ion-icon>
           </button>
 
-          <button class="w-full flex items-center justify-between p-3 hover:bg-gray-50 rounded-xl transition-colors group">
-             <div class="flex items-center gap-3.5">
-                <ion-icon name="star-outline" class="text-gray-400 text-[1.4rem] group-active:text-[#083594] transition-colors"></ion-icon>
-                <span class="font-semibold text-sm text-gray-700">Rate in App Store</span>
-             </div>
-             <ion-icon name="chevron-forward" class="text-gray-300 text-lg"></ion-icon>
-          </button>
+          @if (appSettings()?.showRateApp) {
+            <button class="w-full flex items-center justify-between p-3 hover:bg-gray-50 rounded-xl transition-colors group">
+               <div class="flex items-center gap-3.5">
+                  <ion-icon name="star-outline" class="text-gray-400 text-[1.4rem] group-active:text-[#083594] transition-colors"></ion-icon>
+                  <span class="font-semibold text-sm text-gray-700">Rate in App Store</span>
+               </div>
+               <ion-icon name="chevron-forward" class="text-gray-300 text-lg"></ion-icon>
+            </button>
+          }
 
-          <button routerLink="/terms" class="w-full flex items-center justify-between p-3 hover:bg-gray-50 rounded-xl transition-colors group">
+          <button routerLink="/legal/terms" class="w-full flex items-center justify-between p-3 hover:bg-gray-50 rounded-xl transition-colors group">
              <div class="flex items-center gap-3.5">
                 <ion-icon name="document-text-outline" class="text-gray-400 text-[1.4rem] group-active:text-[#083594] transition-colors"></ion-icon>
                 <span class="font-semibold text-sm text-gray-700">Terms & Conditions</span>
@@ -175,14 +179,6 @@ import { DataService } from '../../services/data.service';
     </div>
   </div>
 
-  <!-- Delete Account Button -->
-  <div class="px-5 mt-8">
-    <button (click)="deleteAccount()" class="w-full h-12 bg-transparent border border-red-500 text-red-500 font-bold rounded-full active:bg-red-50 transition-colors flex items-center justify-center gap-2">
-        <ion-icon name="trash-outline" class="text-xl"></ion-icon>
-        <span>Delete Account</span>
-    </button>
-  </div>
-  
   <!-- Spacer to clear Tab Bar comfortably -->
   <div class="h-28 w-full"></div>
 
@@ -207,6 +203,7 @@ import { DataService } from '../../services/data.service';
 })
 export class ProfileComponent {
   user: Signal<{ name: string; city: string; isVerified: boolean; avatar: string; flagUrl: string }>;
+  appSettings = this.dataService.getAppSettings();
 
   constructor(
     private authService: AuthService,
@@ -256,72 +253,5 @@ export class ProfileComponent {
       cssClass: 'toast-custom-text'
     });
     await toast.present();
-  }
-
-  async deleteAccount() {
-    const alert = await this.alertCtrl.create({
-      header: 'Confirm Deletion',
-      message: 'This action is permanent and cannot be undone. Please enter your password to confirm.',
-      inputs: [
-        {
-          name: 'password',
-          type: 'password',
-          placeholder: 'Enter your password',
-          attributes: {
-            autocapitalize: 'off',
-            autocomplete: 'current-password',
-            spellcheck: 'false',
-          },
-        },
-      ],
-      buttons: [
-        {
-          text: 'Cancel',
-          role: 'cancel',
-        },
-        {
-          text: 'Delete',
-          role: 'destructive',
-          handler: async (data) => {
-            if (!data.password) {
-              const toast = await this.toastCtrl.create({
-                message: 'Password is required to delete your account.',
-                duration: 3000,
-                color: 'danger',
-                position: 'top',
-                icon: 'alert-circle',
-                cssClass: 'toast-custom-text'
-              });
-              await toast.present();
-              return;
-            }
-
-            const result = await this.authService.deleteAccount(data.password);
-            if (result.success) {
-              const toast = await this.toastCtrl.create({
-                message: 'Your account has been successfully deleted.',
-                duration: 3000,
-                color: 'success',
-                position: 'top',
-                icon: 'checkmark-circle',
-                cssClass: 'toast-custom-text'
-              });
-              await toast.present();
-            } else {
-              const errorToast = await this.toastCtrl.create({
-                message: result.error || 'An error occurred. Please try again.',
-                duration: 5000,
-                color: 'danger',
-                position: 'top',
-                icon: 'alert-circle',
-                cssClass: 'toast-custom-text'
-              });
-              await errorToast.present();
-            }
-          },
-        },
-      ],
-    });
-    await alert.present();
   }
 }

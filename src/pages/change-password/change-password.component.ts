@@ -97,7 +97,6 @@ import { FormsModule } from '@angular/forms';
          @if (isLoading()) {
             <ion-spinner name="crescent" color="light" class="w-6 h-6"></ion-spinner>
          } @else {
-            <ion-icon name="lock-closed" class="text-xl"></ion-icon>
             Update Password
          }
        </button>
@@ -131,8 +130,13 @@ export class ChangePasswordComponent {
       return;
     }
 
-    if (this.newPassword().length < 6) {
-      this.showToast('Password must be at least 6 characters long', 'danger');
+    if (this.newPassword().length < 8) {
+      this.showToast('Password must be at least 8 characters long', 'danger');
+      return;
+    }
+
+    if (!/[A-Za-z]/.test(this.newPassword()) || !/\d/.test(this.newPassword())) {
+      this.showToast('Password must contain at least one letter and one number', 'danger');
       return;
     }
 

@@ -1,7 +1,7 @@
 
 import { Component, ChangeDetectionStrategy, signal, computed, Input, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { IonicModule, ModalController } from '@ionic/angular';
+import { IonicModule, ModalController, ToastController } from '@ionic/angular';
 import { AuthService } from '../../services/auth.service';
 import { DataService } from '../../services/data.service';
 import { RouterLink, Router } from '@angular/router';
@@ -40,13 +40,6 @@ import { LegalPageComponent } from '../legal/legal.component';
           </div>
         }
 
-        <!-- Error Message -->
-        @if (errorMessage()) {
-          <div class="mb-4 p-3 bg-red-50 text-red-600 text-xs font-bold rounded-lg border border-red-100">
-            {{ errorMessage() }}
-          </div>
-        }
-
         <!-- Inputs -->
         <div class="space-y-3 mb-3">
             <!-- Email Input -->
@@ -59,7 +52,7 @@ import { LegalPageComponent } from '../legal/legal.component';
                   [value]="email()" 
                   (input)="onEmailInput($event)"
                   class="w-full h-[3rem] pl-[2.75rem] pr-4 bg-white border border-gray-200 rounded-xl text-base font-medium text-[#1A1C1E] placeholder:text-[#9CA3AF] placeholder:font-normal focus:outline-none focus:border-[#083594] focus:ring-4 focus:ring-[#083594]/10 transition-all duration-200 shadow-sm"
-                  placeholder="alex@ceyhallo.com">
+                  placeholder="Email Address">
             </div>
 
             <!-- Password Input -->
@@ -200,14 +193,15 @@ export class LoginComponent {
   private dataService = inject(DataService);
   private router = inject(Router);
   private modalCtrl = inject(ModalController);
+  private toastCtrl = inject(ToastController);
 
   @Input() isModal: boolean = false;
   @Input() message: string = '';
 
   settings = this.dataService.getAppSettings();
 
-  email = signal('alex@ceyhallo.com');
-  password = signal('12345678');
+  email = signal('');
+  password = signal('');
   errorMessage = signal('');
   isLoading = signal(false);
   
@@ -266,8 +260,21 @@ export class LoginComponent {
         this.router.navigate(['/tabs/home']);
       }
     } else {
-      this.errorMessage.set(result.error || 'Login failed. Please try again.');
+      const error = result.error || 'Login failed. Please try again.';
+      this.errorMessage.set(error);
+      this.showErrorToast(error);
     }
+  }
+
+  private async showErrorToast(message: string) {
+    const toast = await this.toastCtrl.create({
+      message,
+      duration: 3000,
+      color: 'danger',
+      position: 'top',
+      cssClass: 'toast-custom-text'
+    });
+    await toast.present();
   }
 
   async openLegalModal(type: string) {

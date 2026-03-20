@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">CeyHallo</string>
+    <string name="title_activity_main">CeyHallo</string>
+    <string name="package_name">com.ceyhallo.app</string>
+    <string name="custom_url_scheme">com.ceyhallo.app</string>
+</resources>

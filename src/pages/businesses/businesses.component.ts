@@ -29,10 +29,7 @@ import { Country } from '../../models/country.model';
   imports: [CommonModule, IonicModule, BusinessCardComponent, OfferCardComponent, PageHeaderComponent],
 })
 export class BusinessesComponent implements OnInit {
-  public isModal = false;
-  readonly isModalSignal = signal(false);
-
-  private queryParams: Signal<any>;
+  private queryParams: Signal<Record<string, string>>;
   filterBy: Signal<string[]>;
   excludeBy: Signal<string[]>;
 
@@ -86,7 +83,7 @@ export class BusinessesComponent implements OnInit {
     this.filterBy = computed(() => {
         const params = this.queryParams();
         if (params && params['filterBy']) {
-            return params['filterBy'].split(',').map((c: string) => c.toLowerCase());
+            return params['filterBy'].split(',').map((c: string) => c.trim().toLowerCase());
         }
         return [];
     });
@@ -94,7 +91,7 @@ export class BusinessesComponent implements OnInit {
     this.excludeBy = computed(() => {
         const params = this.queryParams();
         if (params && params['excludeBy']) {
-            return params['excludeBy'].split(',').map((c: string) => c.toLowerCase());
+            return params['excludeBy'].split(',').map((c: string) => c.trim().toLowerCase());
         }
         return [];
     });
@@ -203,8 +200,6 @@ export class BusinessesComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.isModalSignal.set(this.isModal);
-
     this.route.queryParams.subscribe(params => {
       const filterByParam = params['filterBy'];
       if (filterByParam) {
@@ -237,11 +232,7 @@ export class BusinessesComponent implements OnInit {
   handleImgError = handleImageError;
 
   goBack() {
-    if (this.isModalSignal()) {
-      this.modalCtrl.dismiss();
-    } else {
-      this.navCtrl.back();
-    }
+    this.modalCtrl.dismiss();
   }
 
   async openBusiness(business: Business) {

@@ -50,12 +50,6 @@ import { FormsModule } from '@angular/forms';
         <!-- Reset Form -->
         @if (!isVerifyingCode() && isCodeValid()) {
             
-            @if (errorMessage()) {
-                <div class="mb-4 p-3 bg-red-50 text-red-600 text-xs font-bold rounded-lg border border-red-100">
-                    {{ errorMessage() }}
-                </div>
-            }
-
             @if (email()) {
                 <p class="text-center text-xs font-bold text-gray-400 mb-4 uppercase tracking-wide">Account: {{ email() }}</p>
             }
@@ -178,14 +172,19 @@ export class ResetPasswordComponent implements OnInit {
     this.showPassword.update(v => !v);
   }
 
-  async confirmReset() {
+    async confirmReset() {
     if (!this.newPassword() || !this.confirmPassword()) {
       this.showToast('Please fill in all fields', 'danger');
       return;
     }
 
-    if (this.newPassword().length < 6) {
-      this.showToast('Password must be at least 6 characters', 'danger');
+    if (this.newPassword().length < 8) {
+      this.showToast('Password must be at least 8 characters', 'danger');
+      return;
+    }
+
+    if (!/[A-Za-z]/.test(this.newPassword()) || !/\d/.test(this.newPassword())) {
+      this.showToast('Password must contain at least one letter and one number', 'danger');
       return;
     }
 
@@ -205,7 +204,9 @@ export class ResetPasswordComponent implements OnInit {
       await this.showToast('Password reset successfully!', 'success');
       this.navCtrl.navigateRoot('/login');
     } else {
-      this.errorMessage.set(result.error || 'Failed to reset password.');
+      const error = result.error || 'Failed to reset password.';
+      this.errorMessage.set(error);
+      this.showToast(error, 'danger');
     }
   }
 
