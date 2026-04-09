@@ -179,8 +179,9 @@ export class HomeComponent implements OnInit {
     // Loading effect
     effect(() => {
         const settings = this.settings();
-        const banners = this.banners();
-        if (settings && banners.length > 0) {
+        const currentCountry = this.currentCountry();
+
+        if (settings !== null && currentCountry !== null) {
             this.dataReady = true;
             this.hideLoadingIfReady();
         }

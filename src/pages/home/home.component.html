@@ -4,158 +4,206 @@
     <ion-refresher-content></ion-refresher-content>
   </ion-refresher>
 
-  <div class="relative bg-[#083594] home-header pb-16 px-5 rounded-b-[2.5rem] shadow-sm z-0">
-    <div class="flex items-center justify-between mb-2">
-      <div (click)="goToProfile()" class="flex items-center gap-3 cursor-pointer active:opacity-80 transition-opacity">
-        <div class="relative">
-          <div class="w-12 h-12 rounded-full border-2 border-white/20 bg-white/20 flex items-center justify-center text-white overflow-hidden">
-             <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7">
-                  <circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-                  <path d="M5 21C5.61754 18.2372 7.9899 16 10.8 16H13.2C16.0101 16 18.3825 18.2372 19 21" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
+  @if (isLoading()) {
+    <div class="relative bg-[#083594] home-header px-5 rounded-b-[2.5rem] shadow-sm z-0 pb-[3.5rem]">
+      <div class="flex items-center justify-between mb-2 min-h-[3rem]">
+        <div class="flex items-center gap-3 min-h-12">
+          <div class="w-12 h-12 rounded-full bg-white/10 border border-white/10"></div>
+          <div class="flex h-12 flex-col justify-center gap-2">
+            <div class="h-4 w-28 rounded-full bg-white/12"></div>
+            <div class="h-3 w-36 rounded-full bg-white/10 opacity-80"></div>
           </div>
-          <div class="absolute top-0.5 right-0.5 w-3.5 h-3.5 bg-[#4ADE80] border-[2px] border-[#083594] rounded-full z-10"></div>
         </div>
-        
-        <div class="text-white flex flex-col justify-center">
-          <div class="flex items-center gap-2">
-             <h2 class="text-[1.1rem] font-bold tracking-tight">Hello {{ user().name }}</h2>
-             <span class="text-xl animate-wave">👋</span>
-          </div>
-          
-          @if (user().isLoggedIn) {
-             @if (user().isVerified) {
-                <p class="text-[0.75rem] text-blue-100/90 font-medium leading-tight tracking-wide">Proud to be a CeyHallo member.</p>
-             } @else {
-                <button (click)="resendVerification(); $event.stopPropagation()" class="flex items-center gap-1.5 opacity-100 group mt-1">
-                   <ion-icon name="alert-circle" class="text-[#FCD34D] text-[1rem]"></ion-icon>
-                   <p class="text-[0.75rem] text-[#FCD34D] leading-tight group-active:opacity-80">Email not verified. Resend link.</p>
-                </button>
-             }
-          }
+
+        <div class="flex items-center gap-3">
+          <div class="w-9 h-9 rounded-full bg-white/10"></div>
+          <div class="w-10 h-10 rounded-full bg-white/10"></div>
         </div>
       </div>
-
-      <div class="flex items-center gap-3">
-         <button (click)="openCountrySelector()" class="w-9 h-9 rounded-full overflow-hidden shadow-sm shrink-0 active:scale-90 transition-transform bg-white/10 backdrop-blur-md" style="border: 2px solid rgb(255 255 255 / 17%);">
-            @if (currentCountry(); as country) {
-              <img [src]="country.flagUrl || 'https://i.ibb.co/nNsGtRqn/placeholder-80x80.png'" (error)="handleImgError($event)" class="w-full h-full object-fill" [style.object-fit]="country.flagUrl ? 'fill' : 'none'" [class.bg-gray-200]="!country.flagUrl" [alt]="country.name">
-            } @else {
-              <div class="w-full h-full bg-white/20 animate-pulse"></div>
-            }
-         </button>
-
-         <button routerLink="/notifications" class="relative w-10 h-10 flex items-center justify-center bg-white/10 rounded-full text-white active:scale-90 transition-transform">
-<ion-icon name="notifications-outline" class="text-2xl leading-none"></ion-icon>
-          </button>
-       </div>
     </div>
-  </div>
 
-  @for (item of sectionsWithData(); track item.section.id; let i = $index; let isLast = $last) {
-    @let section = item.section;
-    @let data = item.data;
+    <div class="relative z-10 px-5 -mt-10">
+      <div class="w-full aspect-[16/9] rounded-[1rem] skeleton-shimmer mb-6"></div>
+    </div>
 
-    @switch (section.template) {
-      
-      @case ('banners') {
-        <div class="relative z-10 px-5 order-first flex-shrink-0" [class.pb-4]="!isLast" [class.-mt-8]="i === 0" [class.mt-4]="i !== 0">
-          <app-banner [banners]="data" (bannerClick)="handleBannerClick($event)"></app-banner>
-        </div>
-      }
+    <div class="px-5 pb-6">
+      <div class="grid grid-cols-4 gap-x-3 gap-y-4 mb-6">
+        @for (_ of [1, 2, 3, 4, 5, 6, 7, 8]; track $index) {
+          <div class="flex flex-col items-center gap-2">
+            <div class="w-[65px] h-[65px] rounded-2xl skeleton-shimmer"></div>
+            <div class="h-3 w-12 rounded-full skeleton-shimmer"></div>
+          </div>
+        }
+      </div>
 
-      @case ('categories') {
-        <div class="relative z-10 px-5" [class.pb-4]="!isLast" [class.-mt-12]="i === 0" [class.mt-4]="i !== 0">
-          @if (section.title) {
-             <h2 class="text-[1.1rem] font-bold text-[#1A1C1E] tracking-tight mb-4 flex items-center" [class.text-white]="i === 0" [class.drop-shadow-md]="i === 0">
-               {{ section.title }}
-               @if (section.subTitle) {
-                 <span class="text-[0.8rem] font-medium text-gray-500 ml-1.5" [class.text-blue-100]="i === 0">{{ section.subTitle }}</span>
-               }
-             </h2>
-          }
+      <div class="h-5 w-32 rounded-full skeleton-shimmer mb-4"></div>
+      <div class="flex gap-3 overflow-hidden mb-6">
+        @for (_ of [1, 2]; track $index) {
+          <div class="min-w-[300px] w-[300px] h-[10.5rem] rounded-[1.5rem] skeleton-shimmer"></div>
+        }
+      </div>
+
+      <div class="h-5 w-40 rounded-full skeleton-shimmer mb-4"></div>
+      <div class="flex gap-3 overflow-hidden">
+        @for (_ of [1, 2]; track $index) {
+          <div class="min-w-[230px] w-[230px] h-[12.5rem] rounded-[1.5rem] skeleton-shimmer"></div>
+        }
+      </div>
+    </div>
+  } @else {
+    <div class="relative bg-[#083594] home-header px-5 rounded-b-[2.5rem] shadow-sm z-0 pb-[3.5rem]">
+      <div class="flex items-center justify-between mb-2">
+        <div (click)="goToProfile()" class="flex items-center gap-3 cursor-pointer active:opacity-80 transition-opacity">
+          <div class="relative">
+            <div class="w-12 h-12 rounded-full border-2 border-white/20 bg-white/20 flex items-center justify-center text-white overflow-hidden">
+               <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7">
+                    <circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M5 21C5.61754 18.2372 7.9899 16 10.8 16H13.2C16.0101 16 18.3825 18.2372 19 21" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </div>
+            <div class="absolute top-0.5 right-0.5 w-3.5 h-3.5 bg-[#4ADE80] border-[2px] border-[#083594] rounded-full z-10"></div>
+          </div>
           
-          <div class="grid grid-cols-4 gap-x-3 gap-y-4 mb-3">
-             @for (category of data; track category.id) {
-                <button (click)="handleCategoryClick(category)" [disabled]="category.isActive === false" class="flex flex-col items-center gap-2 group active:scale-95 transition-transform" [class.grayscale]="category.isActive === false" [class.opacity-50]="category.isActive === false">
-                   <div class="relative w-[65px] h-[65px] bg-white rounded-2xl shadow-[0_4px_15px_rgba(0,0,0,0.03)] border border-[#F1F3F6] flex items-center justify-center">
-                      <img [src]="category.icon || 'https://i.ibb.co/nNsGtRqn/placeholder-80x80.png'" [alt]="category.label" class="w-10 h-10 object-contain">
-                      @if (category.hasNotification) {
-                         <div class="absolute top-2.5 right-2.5 w-2.5 h-2.5 bg-[#EF4444] rounded-full border-2 border-white shadow-sm"></div>
-                      }
-                   </div>
-                   <span class="text-[0.75rem] font-medium text-[#4B5563] text-center" [class.text-white/90]="i === 0 && !section.title">{{ category.label }}</span>
-                </button>
-             }
+          <div class="text-white flex flex-col justify-center">
+            <div class="flex items-center gap-2">
+               <h2 class="text-[1.1rem] font-bold tracking-tight">Hello {{ user().name }}</h2>
+               <span class="text-xl animate-wave">👋</span>
+            </div>
+            
+            @if (user().isLoggedIn) {
+               @if (user().isVerified) {
+                  <p class="text-[0.75rem] text-blue-100/90 font-medium leading-tight tracking-wide">Proud to be a CeyHallo member.</p>
+               } @else {
+                  <button (click)="resendVerification(); $event.stopPropagation()" class="flex items-center gap-1.5 opacity-100 group mt-1">
+                     <ion-icon name="alert-circle" class="text-[#FCD34D] text-[1rem]"></ion-icon>
+                     <p class="text-[0.75rem] text-[#FCD34D] leading-tight group-active:opacity-80">Email not verified. Resend link.</p>
+                  </button>
+               }
+            }
           </div>
         </div>
-      }
 
-      @case ('latest_offers') {
-        <div class="relative z-10 pl-5" [class.pb-4]="!isLast" [class.-mt-12]="i === 0" [class.mt-4]="i !== 0">
+        <div class="flex items-center gap-3">
+           <button (click)="openCountrySelector()" class="w-9 h-9 rounded-full overflow-hidden shadow-sm shrink-0 active:scale-90 transition-transform bg-white/10 backdrop-blur-md" style="border: 2px solid rgb(255 255 255 / 17%);">
+              @if (currentCountry(); as country) {
+                <img [src]="country.flagUrl || 'https://i.ibb.co/nNsGtRqn/placeholder-80x80.png'" (error)="handleImgError($event)" class="w-full h-full object-fill" [style.object-fit]="country.flagUrl ? 'fill' : 'none'" [class.bg-gray-200]="!country.flagUrl" [alt]="country.name">
+              } @else {
+                <div class="w-full h-full bg-white/20 animate-pulse"></div>
+              }
+           </button>
+
+           <button routerLink="/notifications" class="relative w-10 h-10 flex items-center justify-center bg-white/10 rounded-full text-white active:scale-90 transition-transform">
+  <ion-icon name="notifications-outline" class="text-2xl leading-none"></ion-icon>
+            </button>
+         </div>
+      </div>
+    </div>
+
+    @for (item of sectionsWithData(); track item.section.id; let i = $index; let isLast = $last) {
+      @let section = item.section;
+      @let data = item.data;
+
+      @switch (section.template) {
+        
+        @case ('banners') {
+          <div class="relative z-10 px-5 order-first flex-shrink-0" [class.pb-4]="!isLast" [class.-mt-10]="i === 0" [class.mt-4]="i !== 0">
+            <app-banner [banners]="data" (bannerClick)="handleBannerClick($event)"></app-banner>
+          </div>
+        }
+
+        @case ('categories') {
+          <div class="relative z-10 px-5" [class.pb-4]="!isLast" [class.-mt-12]="i === 0" [class.mt-4]="i !== 0">
+            @if (section.title) {
+               <h2 class="text-[1.1rem] font-bold text-[#1A1C1E] tracking-tight mb-4 flex items-center" [class.text-white]="i === 0" [class.drop-shadow-md]="i === 0">
+                 {{ section.title }}
+                 @if (section.subTitle) {
+                   <span class="text-[0.8rem] font-medium text-gray-500 ml-1.5" [class.text-blue-100]="i === 0">{{ section.subTitle }}</span>
+                 }
+               </h2>
+            }
+            
+            <div class="grid grid-cols-4 gap-x-3 gap-y-4 mb-3">
+               @for (category of data; track category.id) {
+                  <button (click)="handleCategoryClick(category)" [disabled]="category.isActive === false" class="flex flex-col items-center gap-2 group active:scale-95 transition-transform" [class.grayscale]="category.isActive === false" [class.opacity-50]="category.isActive === false">
+                     <div class="relative w-[65px] h-[65px] bg-white rounded-2xl shadow-[0_4px_15px_rgba(0,0,0,0.03)] border border-[#F1F3F6] flex items-center justify-center">
+                        <img [src]="category.icon || 'https://i.ibb.co/nNsGtRqn/placeholder-80x80.png'" [alt]="category.label" class="w-10 h-10 object-contain">
+                        @if (category.hasNotification) {
+                           <div class="absolute top-2.5 right-2.5 w-2.5 h-2.5 bg-[#EF4444] rounded-full border-2 border-white shadow-sm"></div>
+                        }
+                     </div>
+                     <span class="text-[0.75rem] font-medium text-[#4B5563] text-center" [class.text-white/90]="i === 0 && !section.title">{{ category.label }}</span>
+                  </button>
+               }
+            </div>
+          </div>
+        }
+
+        @case ('latest_offers') {
+          <div class="relative z-10 pl-5" [class.pb-4]="!isLast" [class.-mt-12]="i === 0" [class.mt-4]="i !== 0">
+              <div class="flex items-center justify-between pr-5 mb-4">
+                <a routerLink="/offers" [queryParams]="{category: getSectionCategory(section), title: section.title}" class="text-[1.1rem] font-bold text-[#1A1C1E] tracking-tight" [class.text-white]="i === 0">
+                  {{ section.title }}
+                </a>
+              </div>
+              <div #slider class="flex overflow-x-auto gap-3 pb-4 pr-5 scrollbar-hide snap-x">
+                @for (offer of data; track offer.id) {
+                    <app-offer-card [offer]="offer" class="snap-center block min-w-[300px] w-[300px]" (click)="handleOfferClick(offer)"></app-offer-card>
+                }
+              </div>
+          </div>
+        }
+
+        @case ('featured_businesses') {
+          <div class="relative z-10 pl-5" [class.pb-4]="!isLast" [class.-mt-12]="i === 0" [class.mt-4]="i !== 0">
             <div class="flex items-center justify-between pr-5 mb-4">
-              <a routerLink="/offers" [queryParams]="{category: getSectionCategory(section), title: section.title}" class="text-[1.1rem] font-bold text-[#1A1C1E] tracking-tight" [class.text-white]="i === 0">
-                {{ section.title }}
-              </a>
+              <a routerLink="/businesses" class="text-[1.1rem] font-bold text-[#1A1C1E]" [class.text-white]="i === 0">{{ section.title }}</a>
             </div>
             <div #slider class="flex overflow-x-auto gap-3 pb-4 pr-5 scrollbar-hide snap-x">
-              @for (offer of data; track offer.id) {
-                  <app-offer-card [offer]="offer" class="snap-center block min-w-[300px] w-[300px]" (click)="handleOfferClick(offer)"></app-offer-card>
+              @for (biz of data; track biz.id) {
+                  <app-business-card [business]="biz" class="min-w-[230px] w-[230px] snap-center block" (click)="handleBusinessClick(biz.id)"></app-business-card>
               }
             </div>
-        </div>
-      }
+          </div>
+        }
 
-      @case ('featured_businesses') {
-        <div class="relative z-10 pl-5" [class.pb-4]="!isLast" [class.-mt-12]="i === 0" [class.mt-4]="i !== 0">
-          <div class="flex items-center justify-between pr-5 mb-4">
-            <a routerLink="/businesses" class="text-[1.1rem] font-bold text-[#1A1C1E]" [class.text-white]="i === 0">{{ section.title }}</a>
+        @case ('news_feed') {
+          <div class="relative z-10 pl-5" [class.pb-4]="!isLast" [class.-mt-12]="i === 0" [class.mt-4]="i !== 0">
+            <div class="flex items-center justify-between pr-5 mb-4">
+              <a routerLink="/news" class="text-[1.1rem] font-bold text-[#1A1C1E]" [class.text-white]="i === 0">{{ section.title }}</a>
+            </div>
+            <div #slider class="flex overflow-x-auto gap-4 pb-4 pr-5 scrollbar-hide snap-x">
+              @for (item of data; track item.id) {
+                <app-news-card [newsItem]="item" (click)="handleNewsClick(item.id)" class="min-w-[85%] md:min-w-[400px] snap-center block"></app-news-card>
+              }
+            </div>
           </div>
-          <div #slider class="flex overflow-x-auto gap-3 pb-4 pr-5 scrollbar-hide snap-x">
-            @for (biz of data; track biz.id) {
-                <app-business-card [business]="biz" class="min-w-[230px] w-[230px] snap-center block" (click)="handleBusinessClick(biz.id)"></app-business-card>
-            }
-          </div>
-        </div>
-      }
+        }
 
-      @case ('news_feed') {
-        <div class="relative z-10 pl-5" [class.pb-4]="!isLast" [class.-mt-12]="i === 0" [class.mt-4]="i !== 0">
-          <div class="flex items-center justify-between pr-5 mb-4">
-            <a routerLink="/news" class="text-[1.1rem] font-bold text-[#1A1C1E]" [class.text-white]="i === 0">{{ section.title }}</a>
+        @case ('events') {
+          <div class="relative z-10 pl-5" [class.pb-4]="!isLast" [class.-mt-12]="i === 0" [class.mt-4]="i !== 0">
+            <div class="flex items-center justify-between pr-5 mb-4">
+              <a routerLink="/events" class="text-[1.1rem] font-bold text-[#1A1C1E]" [class.text-white]="i === 0">{{ section.title }}</a>
+            </div>
+            <div #slider class="flex overflow-x-auto gap-4 pb-4 pr-5 scrollbar-hide snap-x">
+              @for (item of data; track item.id) {
+                <app-event-card [event]="item" (click)="openEventDetail(item.id)" class="min-w-[280px] w-[280px] snap-center block"></app-event-card>
+              }
+            </div>
           </div>
-          <div #slider class="flex overflow-x-auto gap-4 pb-4 pr-5 scrollbar-hide snap-x">
-            @for (item of data; track item.id) {
-              <app-news-card [newsItem]="item" (click)="handleNewsClick(item.id)" class="min-w-[85%] md:min-w-[400px] snap-center block"></app-news-card>
-            }
-          </div>
-        </div>
-      }
+        }
 
-      @case ('events') {
-        <div class="relative z-10 pl-5" [class.pb-4]="!isLast" [class.-mt-12]="i === 0" [class.mt-4]="i !== 0">
-          <div class="flex items-center justify-between pr-5 mb-4">
-            <a routerLink="/events" class="text-[1.1rem] font-bold text-[#1A1C1E]" [class.text-white]="i === 0">{{ section.title }}</a>
+        @case ('jobs') {
+          <div class="relative z-10 pl-5" [class.pb-4]="!isLast" [class.-mt-12]="i === 0" [class.mt-4]="i !== 0">
+            <div class="flex items-center justify-between pr-5 mb-4">
+              <a routerLink="/jobs" class="text-[1.1rem] font-bold text-[#1A1C1E]" [class.text-white]="i === 0">{{ section.title }}</a>
+            </div>
+            <div #slider class="flex overflow-x-auto gap-4 pb-4 pr-5 scrollbar-hide snap-x">
+              @for (item of data; track item.id) {
+                <app-job-card [job]="item" (click)="openJobDetail(item.id)" class="min-w-[280px] w-[280px] snap-center block"></app-job-card>
+              }
+            </div>
           </div>
-          <div #slider class="flex overflow-x-auto gap-4 pb-4 pr-5 scrollbar-hide snap-x">
-            @for (item of data; track item.id) {
-              <app-event-card [event]="item" (click)="openEventDetail(item.id)" class="min-w-[280px] w-[280px] snap-center block"></app-event-card>
-            }
-          </div>
-        </div>
-      }
-
-      @case ('jobs') {
-        <div class="relative z-10 pl-5" [class.pb-4]="!isLast" [class.-mt-12]="i === 0" [class.mt-4]="i !== 0">
-          <div class="flex items-center justify-between pr-5 mb-4">
-            <a routerLink="/jobs" class="text-[1.1rem] font-bold text-[#1A1C1E]" [class.text-white]="i === 0">{{ section.title }}</a>
-          </div>
-          <div #slider class="flex overflow-x-auto gap-4 pb-4 pr-5 scrollbar-hide snap-x">
-            @for (item of data; track item.id) {
-              <app-job-card [job]="item" (click)="openJobDetail(item.id)" class="min-w-[280px] w-[280px] snap-center block"></app-job-card>
-            }
-          </div>
-        </div>
+        }
       }
     }
   }
@@ -165,5 +213,48 @@
 
 <ion-modal [isOpen]="isCountryModalOpen()" (didDismiss)="closeCountrySelector()" [initialBreakpoint]="0.5" [breakpoints]="[0, 0.5, 0.75]">
   <ng-template>
-    </ng-template>
+    <ion-content class="[--background:#F8FAFC]">
+      <div class="px-5 pt-4 pb-6">
+        <div class="w-12 h-1.5 rounded-full bg-gray-300 mx-auto mb-5"></div>
+
+        <div class="mb-4">
+          <h2 class="text-lg font-bold text-[#1A1C1E] tracking-tight">Choose Country</h2>
+          <p class="text-sm text-gray-500 mt-1">Select your location to personalize content.</p>
+        </div>
+
+        <div class="space-y-3">
+          @for (country of countries(); track country.id) {
+            <button
+              (click)="selectCountry(country)"
+              class="w-full flex items-center justify-between rounded-2xl bg-white px-4 py-3 border border-gray-100 shadow-sm active:scale-[0.98] transition-transform">
+              <div class="flex items-center gap-3 min-w-0">
+                <div class="w-11 h-11 rounded-full overflow-hidden bg-gray-100 shrink-0 border border-gray-200">
+                  <img
+                    [src]="country.flagUrl || 'https://i.ibb.co/nNsGtRqn/placeholder-80x80.png'"
+                    (error)="handleImgError($event)"
+                    [alt]="country.name"
+                    class="w-full h-full object-fill"
+                    [style.object-fit]="country.flagUrl ? 'fill' : 'none'"
+                    [class.bg-gray-200]="!country.flagUrl">
+                </div>
+
+                <div class="text-left min-w-0">
+                  <p class="text-sm font-bold text-[#1A1C1E] truncate">{{ country.name }}</p>
+                  <p class="text-xs text-gray-500 uppercase tracking-wide">{{ country.id }}</p>
+                </div>
+              </div>
+
+              @if (selectedCountryId() === country.id) {
+                <div class="w-7 h-7 rounded-full bg-[#083594] text-white flex items-center justify-center shrink-0">
+                  <ion-icon name="checkmark" class="text-base"></ion-icon>
+                </div>
+              } @else {
+                <ion-icon name="chevron-forward" class="text-lg text-gray-300 shrink-0"></ion-icon>
+              }
+            </button>
+          }
+        </div>
+      </div>
+    </ion-content>
+  </ng-template>
 </ion-modal>

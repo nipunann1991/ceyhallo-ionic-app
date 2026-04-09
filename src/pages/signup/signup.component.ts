@@ -13,7 +13,7 @@ import { LegalPageComponent } from '../legal/legal.component';
 <ion-content [fullscreen]="true">
   
   <!-- Close Button (Always visible to allow exit from Auth flow) -->
-  <div class="absolute top-4 right-4 z-50">
+  <div class="absolute top-0 left-0 right-0 nav-overlay-safe px-5 z-50 flex justify-end">
     <button (click)="close()" class="w-10 h-10 bg-white rounded-full shadow-sm flex items-center justify-center text-gray-500 hover:bg-gray-50 active:scale-95 transition-all">
       <ion-icon name="close" class="text-xl"></ion-icon>
     </button>

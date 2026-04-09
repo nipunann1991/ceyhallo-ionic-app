@@ -1,12 +1,18 @@
 
 import { Component, ChangeDetectionStrategy, NgZone, OnInit, inject, computed } from '@angular/core';
 import { Router } from '@angular/router';
-import { IonicModule, ModalController } from '@ionic/angular';
+import { IonicModule, ModalController, Platform } from '@ionic/angular';
 import { CommonModule } from '@angular/common';
 import { App, URLOpenListenerEvent } from '@capacitor/app';
+import { Capacitor } from '@capacitor/core';
+import { SocialLogin } from '@capgo/capacitor-social-login';
 import { DataService } from './services/data.service';
 import { PushNotificationService } from './services/push-notifications.service';
 import { AiChatComponent } from './components/ai-chat/ai-chat.component';
+
+const FACEBOOK_APP_ID = 'MY_VALUE_FACEBOOK_APP_ID';
+const FACEBOOK_CLIENT_TOKEN = 'MY_VALUE_FACEBOOK_CLIENT_TOKEN';
+const APPLE_CLIENT_ID = 'MY_VALUE_APPLE_CLIENT_ID';
 
 @Component({
   selector: 'app-root',
@@ -72,6 +78,7 @@ import { AiChatComponent } from './components/ai-chat/ai-chat.component';
 export class AppComponent implements OnInit {
   private dataService = inject(DataService);
   private pushService = inject(PushNotificationService);
+  private platform = inject(Platform);
   private modalCtrl: ModalController = inject(ModalController);
 
   isMaintenanceMode = computed(() => {
@@ -91,11 +98,13 @@ export class AppComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.initializeApp();
-    this.pushService.initPush();
+    void this.initializeApp();
   }
 
-  initializeApp() {
+  async initializeApp(): Promise<void> {
+    await this.platform.ready();
+    await this.initializeSocialLogin();
+
     // Listen for deep links (e.g., from Firebase Reset Email)
     App.addListener('appUrlOpen', (event: URLOpenListenerEvent) => {
       this.zone.run(() => {
@@ -115,6 +124,46 @@ export class AppComponent implements OnInit {
         }
       });
     });
+
+    void this.pushService.initPush();
+  }
+
+  private async initializeSocialLogin(): Promise<void> {
+    if (Capacitor.getPlatform() !== 'ios') {
+      return;
+    }
+
+    try {
+      const facebookConfigured =
+        !FACEBOOK_APP_ID.startsWith('MY_VALUE_') &&
+        !FACEBOOK_CLIENT_TOKEN.startsWith('MY_VALUE_');
+      const appleConfigured = !APPLE_CLIENT_ID.startsWith('MY_VALUE_');
+
+      await SocialLogin.initialize({
+        ...(appleConfigured
+          ? {
+              apple: {
+                clientId: APPLE_CLIENT_ID,
+              },
+            }
+          : {}),
+        ...(facebookConfigured
+          ? {
+              facebook: {
+                appId: FACEBOOK_APP_ID,
+                clientToken: FACEBOOK_CLIENT_TOKEN,
+              },
+            }
+          : {}),
+        google: {
+          iOSClientId: '253346274750-m3pvrbnti009lkdqnc05tfo835vs8g2g.apps.googleusercontent.com', // MY_VALUE_IOS_CLIENT_ID
+          iOSServerClientId: '253346274750-2s39r743nn8qe887vbl55den44ej02v4.apps.googleusercontent.com', // MY_VALUE_IOS_SERVER_CLIENT_ID
+          mode: 'online',
+        },
+      });
+    } catch (error) {
+      console.error('SocialLogin initialization failed:', error);
+    }
   }
 
   async openAiChat() {

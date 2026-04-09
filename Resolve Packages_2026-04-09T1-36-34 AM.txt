@@ -1,0 +1,125 @@
+
+Showing All Messages
+
+CapApp-SPM
+
+
+app
+
+
+capacitor-social-login
+
+
+capacitor-swift-pm
+
+Updating from https://github.com/ionic-team/capacitor-swift-pm.git
+
+messaging
+
+
+GoogleSignIn-iOS
+
+Updating from https://github.com/google/GoogleSignIn-iOS.git
+
+facebook-ios-sdk
+
+Updating from https://github.com/facebook/facebook-ios-sdk.git
+
+Alamofire
+
+Updating from https://github.com/Alamofire/Alamofire.git
+
+AppAuth-iOS
+
+Updating from https://github.com/openid/AppAuth-iOS.git
+
+gtm-session-fetcher
+
+Updating from https://github.com/google/gtm-session-fetcher.git
+
+app-check
+
+Updating from https://github.com/google/app-check.git
+
+GTMAppAuth
+
+Updating from https://github.com/google/GTMAppAuth.git
+
+promises
+
+Updating from https://github.com/google/promises.git
+
+GoogleUtilities
+
+Updating from https://github.com/google/GoogleUtilities.git
+
+firebase-ios-sdk
+
+Fetching from https://github.com/firebase/firebase-ios-sdk.git (cached)
+skipping cache due to an error: https://github.com/firebase/firebase-ios-sdk.git: The source control operation was canceled.
+skipping cache due to an error: https://github.com/firebase/firebase-ios-sdk.git: The source control operation was canceled.
+
+Fetching from https://github.com/firebase/firebase-ios-sdk.git (cached)
+Updating from https://github.com/firebase/firebase-ios-sdk.git
+Creating working copy
+The source control operation was cancelled
+
+
+GoogleDataTransport
+
+Fetching from https://github.com/google/GoogleDataTransport.git (cached)
+Creating working copy
+The source control operation was cancelled
+
+
+leveldb
+
+Fetching from https://github.com/firebase/leveldb.git (cached)
+Creating working copy
+The source control operation was cancelled
+
+
+nanopb
+
+Fetching from https://github.com/firebase/nanopb.git (cached)
+Creating working copy
+The source control operation was cancelled
+
+
+grpc-binary
+
+Fetching from https://github.com/google/grpc-binary.git (cached)
+Creating working copy
+The source control operation was cancelled
+
+
+abseil-cpp-binary
+
+Fetching from https://github.com/google/abseil-cpp-binary.git (cached)
+Creating working copy
+The source control operation was cancelled
+
+
+interop-ios-for-google-sdks
+
+Fetching from https://github.com/google/interop-ios-for-google-sdks.git (cached)
+Creating working copy
+The source control operation was cancelled
+
+
+GoogleAppMeasurement
+
+Fetching from https://github.com/google/GoogleAppMeasurement.git (cached)
+Creating working copy
+The source control operation was cancelled
+
+
+google-ads-on-device-conversion-ios-sdk
+
+Fetching from https://github.com/googleads/google-ads-on-device-conversion-ios-sdk (cached)
+Creating working copy
+The source control operation was cancelled
+
+
+
+Resolving Package Graph Failed    2026-04-09, 1:36 AM    15.3 seconds

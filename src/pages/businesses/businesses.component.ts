@@ -1,5 +1,5 @@
 
-import { Component, ChangeDetectionStrategy, OnInit, signal, computed, viewChild, ElementRef, Signal } from '@angular/core';
+import { Component, ChangeDetectionStrategy, OnInit, signal, computed, viewChild, ElementRef, Signal, Input } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';
 import { CommonModule } from '@angular/common';
@@ -29,9 +29,11 @@ import { Country } from '../../models/country.model';
   imports: [CommonModule, IonicModule, BusinessCardComponent, OfferCardComponent, PageHeaderComponent],
 })
 export class BusinessesComponent implements OnInit {
+  @Input() isModal = false;
   private queryParams: Signal<Record<string, string>>;
   filterBy: Signal<string[]>;
   excludeBy: Signal<string[]>;
+  readonly isModalSignal = signal(false);
 
   allBusinesses: Signal<Business[]>;
   offers: Signal<Offer[]>;
@@ -200,6 +202,7 @@ export class BusinessesComponent implements OnInit {
   }
 
   ngOnInit() {
+    this.isModalSignal.set(this.isModal);
     this.route.queryParams.subscribe(params => {
       const filterByParam = params['filterBy'];
       if (filterByParam) {
@@ -232,7 +235,11 @@ export class BusinessesComponent implements OnInit {
   handleImgError = handleImageError;
 
   goBack() {
-    this.modalCtrl.dismiss();
+    if (this.isModalSignal()) {
+      this.modalCtrl.dismiss();
+    } else {
+      this.navCtrl.back();
+    }
   }
 
   async openBusiness(business: Business) {

@@ -5,7 +5,7 @@
     [title]="pageTitle"
     searchPlaceholder="Search by name, category..."
     [searchValue]="searchTerm()"
-[isModal]="true"
+    [isModal]="isModalSignal()"
     (searchChange)="handleSearch($event)"
     (back)="goBack()">
   </app-page-header>

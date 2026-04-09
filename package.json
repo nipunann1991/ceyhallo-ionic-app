@@ -24,6 +24,7 @@
     "@capacitor/app": "^8.0.0",
     "@capacitor/core": "^8.0.1",
     "@capacitor/ios": "^8.1.0",
+    "@capgo/capacitor-social-login": "^8.3.9",
     "@google/genai": "^1.41.0",
     "@ionic/angular": "^8.7.17",
     "firebase": "^12.9.0",

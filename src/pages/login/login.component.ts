@@ -13,7 +13,7 @@ import { LegalPageComponent } from '../legal/legal.component';
 <ion-content [fullscreen]="true">
   <!-- Close Button for Modal Mode -->
   @if (isModal) {
-    <div class="absolute top-4 right-4 z-50">
+    <div class="absolute top-0 left-0 right-0 nav-overlay-safe px-5 z-50 flex justify-end">
       <button (click)="closeModal()" class="w-10 h-10 bg-white rounded-full shadow-sm flex items-center justify-center text-gray-500 hover:bg-gray-50 active:scale-95 transition-all">
         <ion-icon name="close" class="text-xl"></ion-icon>
       </button>
@@ -125,13 +125,19 @@ import { LegalPageComponent } from '../legal/legal.component';
           <!-- Social Buttons (Reduced height & text size) -->
           <div class="space-y-3 mb-8">
                <!-- Facebook -->
-               <button class="w-full py-2 px-6 rounded-full font-bold transition-all duration-200 flex items-center justify-center gap-3 active:scale-[0.98] disabled:opacity-70 disabled:active:scale-100 shadow-sm text-sm tracking-tight h-[2.625rem] bg-[#1877F2] text-white hover:bg-[#166fe5]">
+               <button 
+                 (click)="loginWithFacebook()"
+                 [disabled]="isLoading()"
+                 class="w-full py-2 px-6 rounded-full font-bold transition-all duration-200 flex items-center justify-center gap-3 active:scale-[0.98] disabled:opacity-70 disabled:active:scale-100 shadow-sm text-sm tracking-tight h-[2.625rem] bg-[#1877F2] text-white hover:bg-[#166fe5]">
                   <ion-icon name="logo-facebook" class="text-base absolute left-6"></ion-icon>
                   <span>Login with Facebook</span>
                </button>
 
                <!-- Google -->
-               <button class="w-full py-2 px-6 rounded-full font-bold transition-all duration-200 flex items-center justify-center gap-3 active:scale-[0.98] disabled:opacity-70 disabled:active:scale-100 shadow-sm text-sm tracking-tight h-[2.625rem] bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 hover:shadow-sm">
+               <button 
+                 (click)="loginWithGoogle()"
+                 [disabled]="isLoading()"
+                 class="w-full py-2 px-6 rounded-full font-bold transition-all duration-200 flex items-center justify-center gap-3 active:scale-[0.98] disabled:opacity-70 disabled:active:scale-100 shadow-sm text-sm tracking-tight h-[2.625rem] bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 hover:shadow-sm">
                   <svg class="w-4 h-4 absolute left-6" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                     <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
                     <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
@@ -142,7 +148,10 @@ import { LegalPageComponent } from '../legal/legal.component';
                </button>
 
                <!-- Apple -->
-               <button class="w-full py-2 px-6 rounded-full font-bold transition-all duration-200 flex items-center justify-center gap-3 active:scale-[0.98] disabled:opacity-70 disabled:active:scale-100 shadow-sm text-sm tracking-tight h-[2.625rem] bg-black text-white hover:bg-gray-900">
+               <button
+                 (click)="loginWithApple()"
+                 [disabled]="isLoading()"
+                 class="w-full py-2 px-6 rounded-full font-bold transition-all duration-200 flex items-center justify-center gap-3 active:scale-[0.98] disabled:opacity-70 disabled:active:scale-100 shadow-sm text-sm tracking-tight h-[2.625rem] bg-black text-white hover:bg-gray-900">
                   <ion-icon name="logo-apple" class="text-lg absolute left-6"></ion-icon>
                   <span>Login with Apple</span>
                </button>
@@ -264,6 +273,66 @@ export class LoginComponent {
       this.errorMessage.set(error);
       this.showErrorToast(error);
     }
+  }
+
+  async loginWithGoogle() {
+    this.errorMessage.set('');
+    this.isLoading.set(true);
+    const result = await this.authService.signInWithGoogle();
+    this.isLoading.set(false);
+
+    if (result.success) {
+      if (this.isModal) {
+        this.modalCtrl.dismiss({ loggedIn: true });
+      } else {
+        this.router.navigate(['/tabs/home']);
+      }
+      return;
+    }
+
+    const error = result.error || 'Google Sign-In failed. Please try again.';
+    this.errorMessage.set(error);
+    await this.showErrorToast(error);
+  }
+
+  async loginWithFacebook() {
+    this.errorMessage.set('');
+    this.isLoading.set(true);
+    const result = await this.authService.signInWithFacebook();
+    this.isLoading.set(false);
+
+    if (result.success) {
+      if (this.isModal) {
+        this.modalCtrl.dismiss({ loggedIn: true });
+      } else {
+        this.router.navigate(['/tabs/home']);
+      }
+      return;
+    }
+
+    const error = result.error || 'Facebook Login failed. Please try again.';
+    this.errorMessage.set(error);
+    await this.showErrorToast(error);
+  }
+
+  async loginWithApple() {
+    this.errorMessage.set('');
+    this.isLoading.set(true);
+    const result = await this.authService.signInWithApple();
+    this.isLoading.set(false);
+
+    if (result.success) {
+      if (this.isModal) {
+        this.modalCtrl.dismiss({ loggedIn: true });
+      } else {
+        this.router.navigate(['/tabs/home']);
+      }
+      return;
+    }
+
+    const error = result.error || 'Apple Login failed. Please try again.';
+    this.errorMessage.set(error);
+    await this.showErrorToast(error);
   }
 
   private async showErrorToast(message: string) {

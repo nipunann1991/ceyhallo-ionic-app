@@ -3,9 +3,11 @@ import { Injectable, signal, NgZone } from '@angular/core';
 import { Capacitor } from '@capacitor/core';
 import { FirebaseMessaging } from '@capacitor-firebase/messaging';
 import { Router } from '@angular/router';
+import { onAuthStateChanged } from 'firebase/auth';
 import { AuthService } from './auth.service';
 import { FirestoreService } from './firestore.service';
 import { ToastController } from '@ionic/angular';
+import { auth } from './firebase.service';
 
 @Injectable({
   providedIn: 'root'
@@ -19,7 +21,14 @@ export class PushNotificationService {
     private toastCtrl: ToastController,
     private router: Router,
     private ngZone: NgZone
-  ) {}
+  ) {
+    onAuthStateChanged(auth, (user) => {
+      const token = this.fcmToken();
+      if (user && token) {
+        void this.saveTokenToFirestore(token);
+      }
+    });
+  }
 
   async initPush() {
     if (!Capacitor.isNativePlatform()) {
@@ -30,7 +39,6 @@ export class PushNotificationService {
       await this.addListeners();
       await this.registerNotifications();
     } catch (e: any) {
-      // FIX: Safe error logging
       console.error('Error initializing push notifications:', e.message || 'Unknown error');
     }
   }
@@ -54,25 +62,35 @@ export class PushNotificationService {
         await this.saveTokenToFirestore(result.token);
       }
     } catch (error: any) {
-      // FIX: Safe error logging
       console.error('Error getting FCM token:', error.message || 'Unknown error');
     }
 
     try {
-        await FirebaseMessaging.subscribeToTopic({ topic: 'general' });
+      await FirebaseMessaging.subscribeToTopic({ topic: 'general' });
     } catch (e: any) {
-        // FIX: Safe error logging
-        console.error('Topic subscription failed:', e.message || 'Unknown error');
+      console.error('Topic subscription failed:', e.message || 'Unknown error');
     }
   }
 
   private async addListeners() {
     await FirebaseMessaging.removeAllListeners();
 
+    await FirebaseMessaging.addListener('apnsTokenReceived', async () => {
+      await this.refreshFcmToken();
+    });
+
+    await FirebaseMessaging.addListener('tokenReceived', async (event) => {
+      if (!event.token) {
+        return;
+      }
+
+      this.fcmToken.set(event.token);
+      await this.saveTokenToFirestore(event.token);
+    });
+
     await FirebaseMessaging.addListener('notificationReceived', async (event) => {
-      // FIX: Do not log the event object directly to avoid circular structure errors
       const notification = event.notification;
-      
+
       const toast = await this.toastCtrl.create({
         header: notification.title,
         message: notification.body,
@@ -98,11 +116,25 @@ export class PushNotificationService {
     await FirebaseMessaging.addListener('notificationActionPerformed', async (event) => {
       const notification = event.notification;
       const data = notification.data as any;
-      
+
       if (data?.routeId) {
         this.navigate(data.routeId);
       }
     });
+  }
+
+  private async refreshFcmToken() {
+    try {
+      const result = await FirebaseMessaging.getToken();
+      if (!result.token) {
+        return;
+      }
+
+      this.fcmToken.set(result.token);
+      await this.saveTokenToFirestore(result.token);
+    } catch (error: any) {
+      console.error('Error refreshing FCM token:', error.message || 'Unknown error');
+    }
   }
 
   private navigate(routeId: string) {
