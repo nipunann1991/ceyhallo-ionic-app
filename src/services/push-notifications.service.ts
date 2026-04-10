@@ -8,6 +8,7 @@ import { AuthService } from './auth.service';
 import { FirestoreService } from './firestore.service';
 import { ToastController } from '@ionic/angular';
 import { auth } from './firebase.service';
+import { extractNotificationLink } from '../utils/notification.utils';
 
 @Injectable({
   providedIn: 'root'
@@ -103,8 +104,9 @@ export class PushNotificationService {
             role: 'info',
             handler: () => {
               const data = notification.data as any;
-              if (data?.routeId) {
-                this.navigate(data.routeId);
+              const link = extractNotificationLink(data || {});
+              if (link) {
+                this.navigate(link);
               }
             }
           }
@@ -116,9 +118,10 @@ export class PushNotificationService {
     await FirebaseMessaging.addListener('notificationActionPerformed', async (event) => {
       const notification = event.notification;
       const data = notification.data as any;
+      const link = extractNotificationLink(data || {});
 
-      if (data?.routeId) {
-        this.navigate(data.routeId);
+      if (link) {
+        this.navigate(link);
       }
     });
   }

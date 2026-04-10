@@ -1,10 +1,11 @@
-
-import { Component, ChangeDetectionStrategy, signal, Signal } from '@angular/core';
+import { Component, ChangeDetectionStrategy, Signal, computed, effect, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { IonicModule, NavController } from '@ionic/angular';
+import { IonicModule, InfiniteScrollCustomEvent, NavController } from '@ionic/angular';
 import { DataService } from '../../services/data.service';
 import { Router } from '@angular/router';
 import { Notification } from '../../models/notification.model';
+import { LocalNotificationStateService } from '../../services/local-notification-state.service';
+import { normalizeNotificationLink } from '../../utils/notification.utils';
 
 @Component({
   selector: 'app-notifications',
@@ -29,22 +30,17 @@ import { Notification } from '../../models/notification.model';
   <!-- Notification List -->
   <div class="px-5 -mt-8 relative z-10 pb-[calc(2rem+env(safe-area-inset-bottom))]">
     
-    @if (notifications().length > 0) {
+    @if (displayedNotifications().length > 0) {
       <div class="flex flex-col gap-3">
-        @for (item of notifications(); track item.id) {
+        @for (item of displayedNotifications(); track item.id) {
           <div 
             (click)="handleNotificationClick(item)"
             class="bg-white rounded-2xl p-4 shadow-[0_4px_20px_rgba(0,0,0,0.03)] border border-[#E8EEF7] active:scale-[0.98] transition-all relative overflow-hidden group">
-             
-             <!-- Unread Indicator -->
-             @if (!isRead(item)) {
-                <div class="absolute top-4 right-4 w-2.5 h-2.5 bg-red-500 rounded-full shadow-sm animate-pulse"></div>
-             }
 
              <div class="flex gap-4">
                 <!-- Icon -->
-                <div class="w-10 h-10 rounded-full flex items-center justify-center shrink-0" [class]="getColorForType(item.type)">
-                   <ion-icon [name]="getIconForType(item.type)" class="text-xl"></ion-icon>
+                <div class="w-10 h-10 rounded-full flex items-center justify-center shrink-0 bg-[#EAF2FF] text-[#083594]">
+                   <ion-icon name="notifications-outline" class="text-xl"></ion-icon>
                 </div>
                 
                 <!-- Content -->
@@ -68,6 +64,10 @@ import { Notification } from '../../models/notification.model';
       </div>
     }
 
+    <ion-infinite-scroll (ionInfinite)="onIonInfinite($event)" [disabled]="displayedNotifications().length >= notifications().length">
+      <ion-infinite-scroll-content loadingSpinner="bubbles" loadingText="Loading more notifications..."></ion-infinite-scroll-content>
+    </ion-infinite-scroll>
+
   </div>
 
 </ion-content>
@@ -77,16 +77,22 @@ import { Notification } from '../../models/notification.model';
 })
 export class NotificationsComponent {
   notifications: Signal<Notification[]>;
-  
-  // Local state for read status for UI feedback
-  readState = signal<Set<string>>(new Set());
+  displayedNotifications: Signal<Notification[]>;
+  limit = signal(10);
 
   constructor(
     private dataService: DataService,
     private navCtrl: NavController,
-    private router: Router
+    private router: Router,
+    private localNotificationState: LocalNotificationStateService
   ) {
     this.notifications = this.dataService.getNotifications();
+    this.displayedNotifications = computed(() => this.notifications().slice(0, this.limit()));
+
+    effect(() => {
+      this.notifications();
+      this.limit.set(10);
+    });
   }
 
   goBack() {
@@ -94,40 +100,32 @@ export class NotificationsComponent {
   }
 
   markAsRead(id: string) {
-    this.readState.update(state => {
-        const newState = new Set(state);
-        newState.add(id);
-        return newState;
-    });
+    this.localNotificationState.markAsRead(id);
   }
 
   isRead(notification: Notification) {
-      return notification.read || this.readState().has(notification.id);
+    return this.localNotificationState.isRead(notification);
   }
 
   handleNotificationClick(notification: Notification) {
-      this.markAsRead(notification.id);
-      
-      if (notification.link) {
-          this.router.navigateByUrl(notification.link);
+    this.markAsRead(notification.id);
+
+    const link = normalizeNotificationLink(notification.link);
+    if (link) {
+      if (/^(https?:|mailto:|tel:)/i.test(link)) {
+        window.open(link, '_system');
+        return;
       }
+
+      void this.router.navigateByUrl(link);
+    }
   }
 
-  getIconForType(type: string): string {
-      switch (type) {
-          case 'success': return 'checkmark-circle';
-          case 'warning': return 'warning';
-          case 'alert': return 'alert-circle';
-          default: return 'information-circle';
-      }
-  }
-
-  getColorForType(type: string): string {
-      switch (type) {
-          case 'success': return 'text-green-500 bg-green-50';
-          case 'warning': return 'text-amber-500 bg-amber-50';
-          case 'alert': return 'text-red-500 bg-red-50';
-          default: return 'text-blue-500 bg-blue-50';
-      }
+  onIonInfinite(ev: Event) {
+    const infiniteScroll = ev as InfiniteScrollCustomEvent;
+    setTimeout(() => {
+      this.limit.update((currentLimit) => currentLimit + 10);
+      infiniteScroll.target.complete();
+    }, 500);
   }
 }

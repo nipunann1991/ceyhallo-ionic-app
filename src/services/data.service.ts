@@ -15,11 +15,14 @@ import { Offer } from '../models/offer.model';
 import { AppConfig } from '../models/settings.model';
 import { HubSection } from '../models/hub.model';
 import { FirestoreService } from './firestore.service';
+import { mapNotificationDocument } from '../utils/notification.utils';
 
 @Injectable({
   providedIn: 'root',
 })
 export class DataService {
+  private notificationFeedItems: Notification[] = [];
+  private pushQueueItems: Notification[] = [];
 
 
   // Derived Hub State
@@ -43,6 +46,7 @@ export class DataService {
     this.listenToLegal();
     this.listenToSupport();
     this.listenToNotifications();
+    this.listenToPushQueue();
     this.listenToOffers();
     this.listenToSettings();
     
@@ -496,29 +500,35 @@ export class DataService {
   }
 
   private listenToNotifications(): void {
-    this.firestoreService.listenToCollectionMapped<any, Notification>(
-      'notifications',
-      appState.notifications,
-      (id, data) => {
-        let date: Date = new Date();
-        if (data['date'] && typeof data['date'] === 'string') {
-            date = new Date(data['date']);
-        } else if (data['date'] && typeof data['date'].toDate === 'function') {
-            date = data['date'].toDate();
-        }
+    this.firestoreService.listenToPath<{ [key: string]: any }>('notifications', (dataObject) => {
+      this.notificationFeedItems = Object.keys(dataObject)
+        .map((id) => mapNotificationDocument(id, dataObject[id], 'feed'))
+        .sort((a, b) => b.date.getTime() - a.date.getTime());
 
-        return {
-            id,
-            title: data['title'] || 'Notification',
-            message: data['message'] || '',
-            date: date,
-            read: data['read'] ?? false,
-            type: data['type'] || 'info',
-            link: data['link']
-        };
-      },
-      // Sort by newest first
-      (list) => list.sort((a, b) => b.date.getTime() - a.date.getTime())
+      this.syncNotifications();
+    }, () => {
+      this.notificationFeedItems = [];
+      this.syncNotifications();
+    });
+  }
+
+  private listenToPushQueue(): void {
+    this.firestoreService.listenToPath<{ [key: string]: any }>('push_queue', (dataObject) => {
+      this.pushQueueItems = Object.keys(dataObject)
+        .map((id) => mapNotificationDocument(id, dataObject[id], 'queue'))
+        .sort((a, b) => b.date.getTime() - a.date.getTime());
+
+      this.syncNotifications();
+    }, () => {
+      this.pushQueueItems = [];
+      this.syncNotifications();
+    });
+  }
+
+  private syncNotifications(): void {
+    appState.notifications.set(
+      [...this.notificationFeedItems, ...this.pushQueueItems]
+        .sort((a, b) => b.date.getTime() - a.date.getTime())
     );
   }
 

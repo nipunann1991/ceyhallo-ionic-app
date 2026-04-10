@@ -1,5 +1,5 @@
 
-import { Component, ChangeDetectionStrategy, signal, computed, viewChild, ElementRef, OnInit, Signal, effect } from '@angular/core';
+import { Component, ChangeDetectionStrategy, signal, computed, viewChild, ElementRef, OnInit, OnDestroy, Signal, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { IonicModule, ModalController, ToastController, RefresherCustomEvent } from '@ionic/angular';
 import { Router, RouterLink } from '@angular/router';
@@ -25,7 +25,6 @@ import { LoginComponent } from '../login/login.component';
 import { Country } from '../../models/country.model';
 import { Category } from '../../models/category.model';
 import { AppConfig, HomeSection } from '../../models/settings.model';
-import { OnDestroy } from '@angular/core';
 import { Observable } from 'rxjs';
 import { Business } from '../../models/business.model';
 
@@ -36,7 +35,7 @@ import { Business } from '../../models/business.model';
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [CommonModule, IonicModule, RouterLink, BannerComponent, BusinessCardComponent, NewsCardComponent, OfferCardComponent, EventCardComponent, JobCardComponent],
 })
-export class HomeComponent implements OnInit {
+export class HomeComponent implements OnInit, OnDestroy {
   settings: Signal<AppConfig | null | undefined>;
   banners: Signal<Banner[]>;
   categories: Signal<Category[]>;
