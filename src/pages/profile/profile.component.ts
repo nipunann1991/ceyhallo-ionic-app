@@ -1,7 +1,8 @@
 
-import { Component, ChangeDetectionStrategy, computed, Signal } from '@angular/core';
+import { Component, ChangeDetectionStrategy, computed, Signal, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { IonicModule, AlertController, ToastController } from '@ionic/angular';
+import { IonicModule, ToastController } from '@ionic/angular';
+import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../services/auth.service';
 import { RouterLink } from '@angular/router';
 import { handleImageError } from '../../utils/image.utils';
@@ -48,6 +49,12 @@ import { DataService } from '../../services/data.service';
             <img [src]="user().flagUrl" (error)="handleImgError($event)" class="w-7 h-4 rounded-sm object-cover border border-gray-200" [alt]="user().name">
         }
      </div>
+     @if (user().showCompleteProfilePrompt) {
+        <a routerLink="/edit-profile" class="mb-1 inline-flex items-center gap-1.5 rounded-full bg-[#FFF4CC] px-3 py-1.5 text-[0.75rem] font-bold text-[#9A6700] transition-colors hover:bg-[#FFE9A8] active:scale-[0.98]">
+            <ion-icon name="create-outline" class="text-sm"></ion-icon>
+            <span>Complete your profile</span>
+        </a>
+     }
      @if (user().city) {
         <div class="flex items-center gap-1.5 text-gray-500">
             <ion-icon name="location-sharp" class="text-sm"></ion-icon>
@@ -63,9 +70,9 @@ import { DataService } from '../../services/data.service';
             <ion-icon name="warning" class="text-[#D97706] text-xl mt-0.5 shrink-0"></ion-icon>
             <div>
                <h3 class="font-bold text-[#92400E] text-sm mb-1">Verify Your Email Address</h3>
-               <p class="text-xs text-[#92400E]/80 font-medium mb-2">Your account is not verified. Please check your inbox for a verification link.</p>
+               <p class="text-xs text-[#92400E]/80 font-medium mb-2">Your account is not verified. Request a code and enter it to verify your email.</p>
                <button (click)="resendVerification()" class="text-xs font-bold text-[#78350F] hover:underline flex items-center gap-1 group">
-                 Resend verification link
+                 Verify with code
                </button>
             </div>
          </div>
@@ -183,6 +190,96 @@ import { DataService } from '../../services/data.service';
   <div class="h-28 w-full"></div>
 
 </ion-content>
+
+<ion-modal
+  [isOpen]="verificationDialogState() !== 'closed'"
+  (didDismiss)="closeVerificationDialog()"
+  [backdropDismiss]="!verificationDialogBusy()"
+  [animated]="false"
+  style="--background: transparent; --box-shadow: none;">
+  <ng-template>
+    <ion-content class="[--background:transparent]">
+      <div (click)="onVerificationBackdropClick()" class="min-h-full flex items-center justify-center bg-black/45 backdrop-blur-[2px] p-6">
+        <div (click)="$event.stopPropagation()" class="bg-white rounded-3xl p-8 w-full max-w-xs text-center shadow-2xl relative overflow-hidden">
+          <div class="flex flex-col items-center mb-6">
+            <ion-img src="https://i.ibb.co/B5TnYXWN/logo.png" alt="CeyHallo Logo" class="h-24 object-contain"></ion-img>
+          </div>
+
+          @if (verificationDialogState() === 'confirm') {
+            <h2 class="text-xl font-bold text-[#1A1C1E] mb-3 tracking-tight">Verify Email</h2>
+            <p class="text-gray-600 text-[0.9rem] font-medium leading-[1.15rem] mb-6">
+              We will send a verification code to your email address so you can confirm your account.
+            </p>
+            <div class="flex gap-3">
+              <button
+                (click)="closeVerificationDialog()"
+                [disabled]="verificationDialogBusy()"
+                class="flex-1 h-[3rem] rounded-full bg-[#EEF2F7] text-[#4B5563] font-bold text-sm transition-all active:scale-[0.98] disabled:opacity-70">
+                Cancel
+              </button>
+              <button
+                (click)="sendVerificationCode()"
+                [disabled]="verificationDialogBusy()"
+                class="flex-1 h-[3rem] rounded-full bg-[#083594] text-white font-bold text-sm transition-all active:scale-[0.98] disabled:opacity-70 flex items-center justify-center gap-2">
+                @if (verificationDialogBusy()) {
+                  <ion-spinner name="crescent" color="light" class="w-4 h-4"></ion-spinner>
+                } @else {
+                  <span>Send Code</span>
+                }
+              </button>
+            </div>
+          }
+
+          @if (verificationDialogState() === 'code') {
+            <h2 class="text-xl font-bold text-[#1A1C1E] mb-3 tracking-tight">Enter Verification Code</h2>
+            <p class="text-gray-600 text-[0.9rem] font-medium leading-[1.15rem] mb-5">
+              Check {{ verificationDialogEmail() || 'your email' }} and enter the 6-digit code to verify your account.
+            </p>
+            <input
+              type="text"
+              inputmode="numeric"
+              maxlength="6"
+              autocomplete="one-time-code"
+              [ngModel]="verificationCode()"
+              (ngModelChange)="verificationCode.set($event)"
+              class="w-full h-12 bg-[#F8F9FA] rounded-xl px-4 mb-6 text-center tracking-[0.3em] text-[#1A1C1E] font-bold border border-[#E8EEF7] focus:bg-white focus:border-[#083594] focus:ring-4 focus:ring-[#083594]/10 transition-all outline-none"
+              placeholder="000000">
+            <div class="flex gap-3">
+              <button
+                (click)="closeVerificationDialog()"
+                [disabled]="verificationDialogBusy()"
+                class="flex-1 h-[3rem] rounded-full bg-[#EEF2F7] text-[#4B5563] font-bold text-sm transition-all active:scale-[0.98] disabled:opacity-70">
+                Cancel
+              </button>
+              <button
+                (click)="confirmVerificationCode()"
+                [disabled]="verificationDialogBusy()"
+                class="flex-1 h-[3rem] rounded-full bg-[#083594] text-white font-bold text-sm transition-all active:scale-[0.98] disabled:opacity-70 flex items-center justify-center gap-2">
+                @if (verificationDialogBusy()) {
+                  <ion-spinner name="crescent" color="light" class="w-4 h-4"></ion-spinner>
+                } @else {
+                  <span>Verify</span>
+                }
+              </button>
+            </div>
+          }
+
+          @if (verificationDialogState() === 'success') {
+            <h2 class="text-xl font-bold text-[#1A1C1E] mb-3 tracking-tight">Email Verified</h2>
+            <p class="text-gray-600 text-[0.9rem] font-medium leading-[1.15rem] mb-6">
+              Your email has been verified successfully.
+            </p>
+            <button
+              (click)="finishVerificationFlow()"
+              class="w-full h-[3rem] rounded-full bg-[#083594] text-white font-bold text-sm transition-all active:scale-[0.98]">
+              OK
+            </button>
+          }
+        </div>
+      </div>
+    </ion-content>
+  </ng-template>
+</ion-modal>
 `,
   styles: [`
     .profile-header {
@@ -199,16 +296,19 @@ import { DataService } from '../../services/data.service';
     }
   `],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, IonicModule, RouterLink],
+  imports: [CommonModule, IonicModule, RouterLink, FormsModule],
 })
 export class ProfileComponent {
-  user: Signal<{ name: string; city: string; isVerified: boolean; avatar: string; flagUrl: string }>;
+  user: Signal<{ name: string; city: string; isVerified: boolean; avatar: string; flagUrl: string; showCompleteProfilePrompt: boolean }>;
   appSettings = this.dataService.getAppSettings();
+  verificationDialogState = signal<'closed' | 'confirm' | 'code' | 'success'>('closed');
+  verificationDialogBusy = signal(false);
+  verificationDialogEmail = signal('');
+  verificationCode = signal('');
 
   constructor(
     private authService: AuthService,
     private dataService: DataService,
-    private alertCtrl: AlertController,
     private toastCtrl: ToastController
   ) {
     this.user = computed(() => {
@@ -223,7 +323,8 @@ export class ProfileComponent {
           city: profile?.city || '',
           isVerified: profile?.isVerified ?? firebaseUser?.emailVerified,
           avatar: profile?.photoURL || firebaseUser?.photoURL || `https://i.pravatar.cc/300?u=${profile?.email || 'user'}`,
-          flagUrl: country?.flagUrl || ''
+          flagUrl: country?.flagUrl || '',
+          showCompleteProfilePrompt: !profile?.phoneNumber || !profile?.region || !profile?.city || !profile?.dateOfBirth
         };
     });
   }
@@ -235,21 +336,83 @@ export class ProfileComponent {
   }
 
   async resendVerification() {
-    const result = await this.authService.resendVerificationEmail();
-    let toastMessage = 'Verification email sent. Please check your inbox.';
-    let toastColor: 'success' | 'danger' = 'success';
-    
-    if (!result.success) {
-      toastMessage = result.error || 'Failed to send verification email.';
-      toastColor = 'danger';
+    this.verificationCode.set('');
+    this.verificationDialogEmail.set(this.authService.currentUser()?.email || '');
+    this.verificationDialogState.set('confirm');
+  }
+
+  closeVerificationDialog() {
+    if (this.verificationDialogBusy()) {
+      return;
     }
-    
+
+    this.verificationDialogState.set('closed');
+    this.verificationCode.set('');
+  }
+
+  async sendVerificationCode() {
+    this.verificationDialogBusy.set(true);
+    const result = await this.authService.resendVerificationEmail();
+    this.verificationDialogBusy.set(false);
+
+    if (!result.success) {
+      await this.showToast(result.error || 'Failed to send verification code.', 'danger');
+      return;
+    }
+
+    this.verificationDialogEmail.set(result.email || this.authService.currentUser()?.email || '');
+    this.verificationCode.set('');
+    this.verificationDialogState.set('code');
+    await this.showToast(
+      `Verification code sent to ${result.email || 'your email address'}.`,
+      'success'
+    );
+  }
+
+  async confirmVerificationCode() {
+    const code = this.verificationCode().trim();
+    if (!code) {
+      await this.showToast('Verification code is required.', 'danger');
+      return;
+    }
+
+    this.verificationDialogBusy.set(true);
+    const result = await this.authService.verifyEmailWithCode(code);
+    this.verificationDialogBusy.set(false);
+
+    if (!result.success) {
+      await this.showToast(result.error || 'Failed to verify email.', 'danger');
+      return;
+    }
+
+    this.verificationDialogState.set('success');
+  }
+
+  finishVerificationFlow() {
+    this.verificationDialogState.set('closed');
+    this.verificationCode.set('');
+  }
+
+  onVerificationBackdropClick() {
+    if (this.verificationDialogBusy()) {
+      return;
+    }
+
+    if (this.verificationDialogState() === 'success') {
+      this.finishVerificationFlow();
+      return;
+    }
+
+    this.closeVerificationDialog();
+  }
+
+  private async showToast(message: string, color: 'success' | 'danger') {
     const toast = await this.toastCtrl.create({
-      message: toastMessage,
+      message,
       duration: 3000,
-      color: toastColor,
+      color,
       position: 'top',
-      icon: toastColor === 'success' ? 'checkmark-circle' : 'alert-circle',
+      icon: color === 'success' ? 'checkmark-circle' : 'alert-circle',
       cssClass: 'toast-custom-text'
     });
     await toast.present();

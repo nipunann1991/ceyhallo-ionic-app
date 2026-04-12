@@ -76,7 +76,7 @@
                } @else {
                   <button (click)="resendVerification(); $event.stopPropagation()" class="flex items-center gap-1.5 opacity-100 group mt-1">
                      <ion-icon name="alert-circle" class="text-[#FCD34D] text-[1rem]"></ion-icon>
-                     <p class="text-[0.75rem] text-[#FCD34D] leading-tight group-active:opacity-80">Email not verified. Resend link.</p>
+                     <p class="text-[0.75rem] text-[#FCD34D] leading-tight group-active:opacity-80">Email not verified. Verify now.</p>
                   </button>
                }
             }
@@ -93,7 +93,10 @@
            </button>
 
            <button routerLink="/notifications" class="relative w-10 h-10 flex items-center justify-center bg-white/10 rounded-full text-white active:scale-90 transition-transform">
-  <ion-icon name="notifications-outline" class="text-2xl leading-none"></ion-icon>
+              <ion-icon name="notifications-outline" class="text-2xl leading-none"></ion-icon>
+              @if (hasUnreadNotifications()) {
+                <span class="absolute top-1.5 right-1.5 w-2.5 h-2.5 rounded-full bg-[#FF4D4F] border border-[#083594]"></span>
+              }
             </button>
          </div>
       </div>
@@ -209,7 +212,222 @@
   }
   
   <div class="h-28 w-full"></div>
+
 </ion-content>
+
+<ion-modal
+  [isOpen]="profileCompletionModalOpen()"
+  (didDismiss)="closeProfileCompletionModal()"
+  [backdropDismiss]="false"
+  [animated]="false"
+  style="--background: transparent; --box-shadow: none;">
+  <ng-template>
+    <ion-content class="[--background:transparent]">
+      <div class="min-h-full flex items-center justify-center bg-black/45 backdrop-blur-[2px] p-6">
+        <div class="bg-white rounded-3xl p-7 w-full max-w-sm shadow-2xl relative overflow-hidden">
+          <button
+            (click)="skipProfileCompletion()"
+            [disabled]="profileCompletionBusy()"
+            class="absolute top-5 right-5 text-[0.78rem] font-bold text-gray-400 hover:text-gray-600 transition-colors disabled:opacity-60">
+            Skip for now
+          </button>
+
+          <div class="flex flex-col items-center text-center mb-6">
+            <ion-img src="/assets/logo.png" alt="CeyHallo Logo" class="h-28 object-contain mb-3"></ion-img>
+            <h2 class="text-[1.2rem] font-bold text-[#1A1C1E] tracking-tight">Complete Your Profile</h2>
+            <p class="text-[0.9rem] font-medium text-gray-500 leading-[1.2rem] mt-2 max-w-[18rem]">
+              Add your missing details so your account is fully set up.
+            </p>
+          </div>
+
+          <div class="flex items-center justify-center gap-2 mb-6">
+            <div class="h-2.5 w-10 rounded-full transition-colors" [class.bg-[#083594]]="profileCompletionStep() === 1" [class.bg-[#D9E3F5]]="profileCompletionStep() !== 1"></div>
+            <div class="h-2.5 w-10 rounded-full transition-colors" [class.bg-[#083594]]="profileCompletionStep() === 2" [class.bg-[#D9E3F5]]="profileCompletionStep() !== 2"></div>
+          </div>
+
+          @if (profileCompletionStep() === 1) {
+            <div class="space-y-4">
+              <div>
+                <p class="text-xs font-bold text-[#1A1C1E] mb-2 pl-1">Country</p>
+                <div class="relative">
+                  <select
+                    [ngModel]="completionRegion()"
+                    (ngModelChange)="onCompletionRegionChange($event)"
+                    class="w-full h-12 bg-[#F8F9FA] rounded-xl px-4 pr-10 text-[#1A1C1E] font-medium border border-[#E8EEF7] focus:bg-white focus:border-[#083594] focus:ring-4 focus:ring-[#083594]/10 transition-all outline-none appearance-none">
+                    <option value="" disabled>Select Country</option>
+                    @for (country of countries(); track country.id) {
+                      <option [value]="country.id">{{ country.name }}</option>
+                    }
+                  </select>
+                  <div class="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-500">
+                    <ion-icon name="chevron-down"></ion-icon>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <p class="text-xs font-bold text-[#1A1C1E] mb-2 pl-1">City</p>
+                <div class="relative">
+                  <select
+                    [ngModel]="completionCity()"
+                    (ngModelChange)="completionCity.set($event)"
+                    [disabled]="!completionRegion() || availableCompletionCities().length === 0"
+                    class="w-full h-12 bg-[#F8F9FA] rounded-xl px-4 pr-10 text-[#1A1C1E] font-medium border border-[#E8EEF7] focus:bg-white focus:border-[#083594] focus:ring-4 focus:ring-[#083594]/10 transition-all outline-none appearance-none disabled:bg-gray-50 disabled:text-gray-400">
+                    <option value="" disabled>Select City</option>
+                    @for (city of availableCompletionCities(); track city.code) {
+                      <option [value]="city.name">{{ city.name }}</option>
+                    }
+                  </select>
+                  <div class="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-500">
+                    <ion-icon name="chevron-down"></ion-icon>
+                  </div>
+                </div>
+              </div>
+            </div>
+          }
+
+          @if (profileCompletionStep() === 2) {
+            <div class="space-y-4">
+              <div>
+                <p class="text-xs font-bold text-[#1A1C1E] mb-2 pl-1">Phone Number</p>
+                <input
+                  type="tel"
+                  [ngModel]="completionPhoneNumber()"
+                  (ngModelChange)="completionPhoneNumber.set($event)"
+                  class="w-full h-12 bg-[#F8F9FA] rounded-xl px-4 text-[#1A1C1E] font-medium border border-[#E8EEF7] focus:bg-white focus:border-[#083594] focus:ring-4 focus:ring-[#083594]/10 transition-all outline-none placeholder-gray-400"
+                  placeholder="+971 50 123 4567">
+              </div>
+
+              <div>
+                <p class="text-xs font-bold text-[#1A1C1E] mb-2 pl-1">Date of Birth</p>
+                <input
+                  type="date"
+                  min="1900-01-01"
+                  [ngModel]="completionDateOfBirth()"
+                  (ngModelChange)="completionDateOfBirth.set($event)"
+                  class="w-full h-12 bg-[#F8F9FA] rounded-xl px-4 py-0 leading-[3rem] text-[#1A1C1E] font-medium border border-[#E8EEF7] focus:bg-white focus:border-[#083594] focus:ring-4 focus:ring-[#083594]/10 transition-all outline-none appearance-none">
+              </div>
+            </div>
+          }
+
+          <div class="mt-7 flex gap-3">
+            @if (profileCompletionStep() === 2) {
+              <button
+                (click)="previousProfileCompletionStep()"
+                [disabled]="profileCompletionBusy()"
+                class="flex-1 h-[3rem] rounded-full bg-[#EEF2F7] text-[#4B5563] font-bold text-sm transition-all active:scale-[0.98] disabled:opacity-70">
+                Back
+              </button>
+            }
+
+            <button
+              (click)="profileCompletionStep() === 1 ? nextProfileCompletionStep() : saveProfileCompletion()"
+              [disabled]="profileCompletionBusy()"
+              class="h-[3rem] rounded-full bg-[#083594] text-white font-bold text-sm transition-all active:scale-[0.98] disabled:opacity-70 flex items-center justify-center gap-2"
+              [class.flex-1]="profileCompletionStep() === 2"
+              [class.w-full]="profileCompletionStep() === 1">
+              @if (profileCompletionBusy()) {
+                <ion-spinner name="crescent" color="light" class="w-4 h-4"></ion-spinner>
+              } @else {
+                <span>{{ profileCompletionStep() === 1 ? 'Next' : 'Save & Continue' }}</span>
+              }
+            </button>
+          </div>
+        </div>
+      </div>
+    </ion-content>
+  </ng-template>
+</ion-modal>
+
+<ion-modal
+  [isOpen]="verificationDialogState() !== 'closed'"
+  (didDismiss)="closeVerificationDialog()"
+  [backdropDismiss]="!verificationDialogBusy()"
+  [animated]="false"
+  style="--background: transparent; --box-shadow: none;">
+  <ng-template>
+    <ion-content class="[--background:transparent]">
+      <div (click)="onVerificationBackdropClick()" class="min-h-full flex items-center justify-center bg-black/45 backdrop-blur-[2px] p-6">
+        <div (click)="$event.stopPropagation()" class="bg-white rounded-3xl p-8 w-full max-w-xs text-center shadow-2xl relative overflow-hidden">
+          <div class="flex flex-col items-center mb-6">
+            <ion-img src="https://i.ibb.co/B5TnYXWN/logo.png" alt="CeyHallo Logo" class="h-24 object-contain"></ion-img>
+          </div>
+
+          @if (verificationDialogState() === 'confirm') {
+            <h2 class="text-xl font-bold text-[#1A1C1E] mb-3 tracking-tight">Verify Email</h2>
+            <p class="text-gray-600 text-[0.9rem] font-medium leading-[1.15rem] mb-6">
+              We will send a verification code to your email address so you can confirm your account.
+            </p>
+            <div class="flex gap-3">
+              <button
+                (click)="closeVerificationDialog()"
+                [disabled]="verificationDialogBusy()"
+                class="flex-1 h-[3rem] rounded-full bg-[#EEF2F7] text-[#4B5563] font-bold text-sm transition-all active:scale-[0.98] disabled:opacity-70">
+                Cancel
+              </button>
+              <button
+                (click)="sendVerificationCode()"
+                [disabled]="verificationDialogBusy()"
+                class="flex-1 h-[3rem] rounded-full bg-[#083594] text-white font-bold text-sm transition-all active:scale-[0.98] disabled:opacity-70 flex items-center justify-center gap-2">
+                @if (verificationDialogBusy()) {
+                  <ion-spinner name="crescent" color="light" class="w-4 h-4"></ion-spinner>
+                } @else {
+                  <span>Send Code</span>
+                }
+              </button>
+            </div>
+          }
+
+          @if (verificationDialogState() === 'code') {
+            <h2 class="text-xl font-bold text-[#1A1C1E] mb-3 tracking-tight">Enter Verification Code</h2>
+            <p class="text-gray-600 text-[0.9rem] font-medium leading-[1.15rem] mb-5">
+              Check {{ verificationDialogEmail() || 'your email' }} and enter the 6-digit code to verify your account.
+            </p>
+            <input
+              type="text"
+              inputmode="numeric"
+              maxlength="6"
+              autocomplete="one-time-code"
+              [ngModel]="verificationCode()"
+              (ngModelChange)="verificationCode.set($event)"
+              class="w-full h-12 bg-[#F8F9FA] rounded-xl px-4 mb-6 text-center tracking-[0.3em] text-[#1A1C1E] font-bold border border-[#E8EEF7] focus:bg-white focus:border-[#083594] focus:ring-4 focus:ring-[#083594]/10 transition-all outline-none"
+              placeholder="000000">
+            <div class="flex gap-3">
+              <button
+                (click)="closeVerificationDialog()"
+                [disabled]="verificationDialogBusy()"
+                class="flex-1 h-[3rem] rounded-full bg-[#EEF2F7] text-[#4B5563] font-bold text-sm transition-all active:scale-[0.98] disabled:opacity-70">
+                Cancel
+              </button>
+              <button
+                (click)="confirmVerificationCode()"
+                [disabled]="verificationDialogBusy()"
+                class="flex-1 h-[3rem] rounded-full bg-[#083594] text-white font-bold text-sm transition-all active:scale-[0.98] disabled:opacity-70 flex items-center justify-center gap-2">
+                @if (verificationDialogBusy()) {
+                  <ion-spinner name="crescent" color="light" class="w-4 h-4"></ion-spinner>
+                } @else {
+                  <span>Verify</span>
+                }
+              </button>
+            </div>
+          }
+
+          @if (verificationDialogState() === 'success') {
+            <h2 class="text-xl font-bold text-[#1A1C1E] mb-3 tracking-tight">Email Verified</h2>
+            <p class="text-gray-600 text-[0.9rem] font-medium leading-[1.15rem] mb-6">
+              Your email has been verified successfully.
+            </p>
+            <button
+              (click)="finishVerificationFlow()"
+              class="w-full h-[3rem] rounded-full bg-[#083594] text-white font-bold text-sm transition-all active:scale-[0.98]">
+              OK
+            </button>
+          }
+        </div>
+      </div>
+    </ion-content>
+  </ng-template>
+</ion-modal>
 
 <ion-modal [isOpen]="isCountryModalOpen()" (didDismiss)="closeCountrySelector()" [initialBreakpoint]="0.5" [breakpoints]="[0, 0.5, 0.75]">
   <ng-template>

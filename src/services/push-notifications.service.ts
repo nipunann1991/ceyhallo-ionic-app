@@ -10,11 +10,13 @@ import { ToastController } from '@ionic/angular';
 import { auth } from './firebase.service';
 import { extractNotificationLink } from '../utils/notification.utils';
 
+const FCM_TOKEN_STORAGE_KEY = 'ceyhallo_fcm_token';
+
 @Injectable({
   providedIn: 'root'
 })
 export class PushNotificationService {
-  fcmToken = signal<string>('');
+  fcmToken = signal<string>(this.loadStoredToken());
 
   constructor(
     private authService: AuthService,
@@ -59,7 +61,7 @@ export class PushNotificationService {
     try {
       const result = await FirebaseMessaging.getToken();
       if (result.token) {
-        this.fcmToken.set(result.token);
+        this.setFcmToken(result.token);
         await this.saveTokenToFirestore(result.token);
       }
     } catch (error: any) {
@@ -85,7 +87,7 @@ export class PushNotificationService {
         return;
       }
 
-      this.fcmToken.set(event.token);
+      this.setFcmToken(event.token);
       await this.saveTokenToFirestore(event.token);
     });
 
@@ -133,7 +135,7 @@ export class PushNotificationService {
         return;
       }
 
-      this.fcmToken.set(result.token);
+      this.setFcmToken(result.token);
       await this.saveTokenToFirestore(result.token);
     } catch (error: any) {
       console.error('Error refreshing FCM token:', error.message || 'Unknown error');
@@ -166,6 +168,24 @@ export class PushNotificationService {
         // FIX: Safe error logging
         console.error('Error saving FCM token to Firestore:', error.message || 'Unknown error');
       }
+    }
+  }
+
+  private setFcmToken(token: string) {
+    this.fcmToken.set(token);
+
+    try {
+      localStorage.setItem(FCM_TOKEN_STORAGE_KEY, token);
+    } catch {
+      // Ignore storage failures and keep the in-memory token.
+    }
+  }
+
+  private loadStoredToken(): string {
+    try {
+      return localStorage.getItem(FCM_TOKEN_STORAGE_KEY) || '';
+    } catch {
+      return '';
     }
   }
 }

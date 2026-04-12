@@ -2,6 +2,7 @@
 import { Component, ChangeDetectionStrategy, signal, inject, computed, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { IonicModule, ModalController, NavController, ToastController } from '@ionic/angular';
+import { Capacitor } from '@capacitor/core';
 import { AuthService } from '../../services/auth.service';
 import { DataService } from '../../services/data.service';
 import { RouterLink, Router } from '@angular/router';
@@ -25,7 +26,7 @@ import { LegalPageComponent } from '../legal/legal.component';
 
     <!-- Logo Section --> 
     <div class="flex flex-col items-center mb-6">
-       <ion-img src="https://i.ibb.co/B5TnYXWN/logo.png" alt="CeyHallo Logo" class="h-[8rem] object-contain"></ion-img>
+       <ion-img src="/assets/logo.png" alt="CeyHallo Logo" class="h-[8rem] object-contain"></ion-img>
        <h2 class="text-xl font-bold text-[#1A1C1E] mt-2 tracking-tight">Join the community</h2>
        <p class="text-sm font-medium text-gray-500 mt-0">Discover. Connect. Belong — with CeyHallo</p>
     </div>
@@ -159,13 +160,19 @@ import { LegalPageComponent } from '../legal/legal.component';
           <!-- Social Buttons (Design Consistency) -->
           <div class="space-y-3 mb-8">
                <!-- Facebook -->
-               <button class="w-full py-2 px-6 rounded-full font-bold transition-all duration-200 flex items-center justify-center gap-3 active:scale-[0.98] disabled:opacity-70 disabled:active:scale-100 shadow-sm text-sm tracking-tight h-[2.625rem] bg-[#1877F2] text-white hover:bg-[#166fe5]">
+               <button
+                 (click)="signUpWithFacebook()"
+                 [disabled]="isLoading()"
+                 class="w-full py-2 px-6 rounded-full font-bold transition-all duration-200 flex items-center justify-center gap-3 active:scale-[0.98] disabled:opacity-70 disabled:active:scale-100 shadow-sm text-sm tracking-tight h-[2.625rem] bg-[#1877F2] text-white hover:bg-[#166fe5]">
                   <ion-icon name="logo-facebook" class="text-base absolute left-6"></ion-icon>
                   <span>Sign up with Facebook</span>
                </button>
 
                <!-- Google -->
-               <button class="w-full py-2 px-6 rounded-full font-bold transition-all duration-200 flex items-center justify-center gap-3 active:scale-[0.98] disabled:opacity-70 disabled:active:scale-100 shadow-sm text-sm tracking-tight h-[2.625rem] bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 hover:shadow-sm">
+               <button
+                 (click)="signUpWithGoogle()"
+                 [disabled]="isLoading()"
+                 class="w-full py-2 px-6 rounded-full font-bold transition-all duration-200 flex items-center justify-center gap-3 active:scale-[0.98] disabled:opacity-70 disabled:active:scale-100 shadow-sm text-sm tracking-tight h-[2.625rem] bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 hover:shadow-sm">
                   <svg class="w-4 h-4 absolute left-6" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                     <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
                     <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
@@ -175,11 +182,13 @@ import { LegalPageComponent } from '../legal/legal.component';
                   <span>Sign up with Google</span>
                </button>
 
-               <!-- Apple -->
-               <button class="w-full py-2 px-6 rounded-full font-bold transition-all duration-200 flex items-center justify-center gap-3 active:scale-[0.98] disabled:opacity-70 disabled:active:scale-100 shadow-sm text-sm tracking-tight h-[2.625rem] bg-black text-white hover:bg-gray-900">
-                  <ion-icon name="logo-apple" class="text-lg absolute left-6"></ion-icon>
-                  <span>Sign up with Apple</span>
-               </button>
+               @if (showAppleLogin()) {
+                 <!-- Apple -->
+                 <button class="w-full py-2 px-6 rounded-full font-bold transition-all duration-200 flex items-center justify-center gap-3 active:scale-[0.98] disabled:opacity-70 disabled:active:scale-100 shadow-sm text-sm tracking-tight h-[2.625rem] bg-black text-white hover:bg-gray-900">
+                    <ion-icon name="logo-apple" class="text-lg absolute left-6"></ion-icon>
+                    <span>Sign up with Apple</span>
+                 </button>
+               }
           </div>
         }
 
@@ -234,6 +243,7 @@ export class SignUpComponent {
 
   settings = this.dataService.getAppSettings();
   countries = this.dataService.getCountries();
+  showAppleLogin = signal(Capacitor.getPlatform() === 'ios');
 
   // Form data
   name = signal('');
@@ -304,6 +314,7 @@ export class SignUpComponent {
     this.isLoading.set(false);
     
     if (result.success) {
+      this.authService.requestProfileCompletionPrompt();
       if (this.isModal) {
         this.modalCtrl.dismiss({ signedUp: true });
       } else {
@@ -314,6 +325,48 @@ export class SignUpComponent {
       this.errorMessage.set(error);
       this.showErrorToast(error);
     }
+  }
+
+  async signUpWithGoogle() {
+    this.errorMessage.set('');
+    this.isLoading.set(true);
+    const result = await this.authService.signInWithGoogle();
+    this.isLoading.set(false);
+
+    if (result.success) {
+      this.authService.requestProfileCompletionPrompt();
+      if (this.isModal) {
+        this.modalCtrl.dismiss({ signedUp: true });
+      } else {
+        this.router.navigate(['/tabs/home']);
+      }
+      return;
+    }
+
+    const error = result.error || 'Google Sign-In failed. Please try again.';
+    this.errorMessage.set(error);
+    await this.showErrorToast(error);
+  }
+
+  async signUpWithFacebook() {
+    this.errorMessage.set('');
+    this.isLoading.set(true);
+    const result = await this.authService.signInWithFacebook();
+    this.isLoading.set(false);
+
+    if (result.success) {
+      this.authService.requestProfileCompletionPrompt();
+      if (this.isModal) {
+        this.modalCtrl.dismiss({ signedUp: true });
+      } else {
+        this.router.navigate(['/tabs/home']);
+      }
+      return;
+    }
+
+    const error = result.error || 'Facebook Login failed. Please try again.';
+    this.errorMessage.set(error);
+    await this.showErrorToast(error);
   }
 
   private async showErrorToast(message: string) {

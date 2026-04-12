@@ -1,8 +1,9 @@
 
 import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
+import { Capacitor } from '@capacitor/core';
 // This side-effect import is still a good safety measure to ensure the auth module is registered.
 import 'firebase/auth';
-import { Auth, initializeAuth, indexedDBLocalPersistence, browserLocalPersistence } from 'firebase/auth';
+import { Auth, initializeAuth, indexedDBLocalPersistence, browserLocalPersistence, browserPopupRedirectResolver } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 
 const firebaseConfig = {
@@ -23,7 +24,10 @@ const app: FirebaseApp = !getApps().length ? initializeApp(firebaseConfig) : get
 // This allows specifying persistence, which is crucial for a good user experience,
 // ensuring users stay logged in across app sessions.
 export const auth: Auth = initializeAuth(app, {
-  persistence: [indexedDBLocalPersistence, browserLocalPersistence]
+  persistence: [indexedDBLocalPersistence, browserLocalPersistence],
+  ...(Capacitor.isNativePlatform()
+    ? {}
+    : { popupRedirectResolver: browserPopupRedirectResolver })
 });
 
 // Initialize and export the Firestore instance for use in services.

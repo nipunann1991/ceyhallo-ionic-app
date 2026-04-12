@@ -26,6 +26,31 @@ export class LocalNotificationStateService {
     });
   }
 
+  markAllAsRead(ids: string[]): void {
+    if (ids.length === 0) {
+      return;
+    }
+
+    this.readNotificationIds.update((currentIds) => {
+      const nextIds = new Set(currentIds);
+      let changed = false;
+
+      for (const id of ids) {
+        if (!nextIds.has(id)) {
+          nextIds.add(id);
+          changed = true;
+        }
+      }
+
+      if (!changed) {
+        return currentIds;
+      }
+
+      this.persistReadIds(nextIds);
+      return nextIds;
+    });
+  }
+
   hasUnread(notifications: Notification[]): boolean {
     return notifications.some((notification) => !this.isRead(notification));
   }

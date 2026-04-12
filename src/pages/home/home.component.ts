@@ -3,6 +3,7 @@ import { Component, ChangeDetectionStrategy, signal, computed, viewChild, Elemen
 import { CommonModule } from '@angular/common';
 import { IonicModule, ModalController, ToastController, RefresherCustomEvent } from '@ionic/angular';
 import { Router, RouterLink } from '@angular/router';
+import { FormsModule } from '@angular/forms';
 import { DataService } from '../../services/data.service';
 import { AuthService } from '../../services/auth.service';
 import { BannerComponent } from '../../components/banner/banner.component';
@@ -27,13 +28,15 @@ import { Category } from '../../models/category.model';
 import { AppConfig, HomeSection } from '../../models/settings.model';
 import { Observable } from 'rxjs';
 import { Business } from '../../models/business.model';
+import { Notification } from '../../models/notification.model';
+import { LocalNotificationStateService } from '../../services/local-notification-state.service';
 
 @Component({
   selector: 'app-home',
   templateUrl: './home.component.html',
   styleUrl: './home.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, IonicModule, RouterLink, BannerComponent, BusinessCardComponent, NewsCardComponent, OfferCardComponent, EventCardComponent, JobCardComponent],
+  imports: [CommonModule, IonicModule, RouterLink, FormsModule, BannerComponent, BusinessCardComponent, NewsCardComponent, OfferCardComponent, EventCardComponent, JobCardComponent],
 })
 export class HomeComponent implements OnInit, OnDestroy {
   settings: Signal<AppConfig | null | undefined>;
@@ -45,6 +48,8 @@ export class HomeComponent implements OnInit, OnDestroy {
   events: Signal<Event[]>;
   jobs: Signal<Job[]>;
   businesses: Signal<Business[]>;
+  notifications: Signal<Notification[]>;
+  hasUnreadNotifications: Signal<boolean>;
   
 
 
@@ -55,6 +60,19 @@ export class HomeComponent implements OnInit, OnDestroy {
 
   selectedCountryId: Signal<string>;
   isCountryModalOpen = signal(false);
+  profileCompletionModalOpen = signal(false);
+  profileCompletionStep = signal<1 | 2>(1);
+  profileCompletionBusy = signal(false);
+  profileCompletionDismissed = signal(false);
+  completionPhoneNumber = signal('');
+  completionRegion = signal('');
+  completionCity = signal('');
+  completionDateOfBirth = signal('');
+  verificationDialogState = signal<'closed' | 'confirm' | 'code' | 'success'>('closed');
+  verificationDialogBusy = signal(false);
+  verificationDialogEmail = signal('');
+  verificationCode = signal('');
+  homeViewEntered = signal(false);
 
   // Loading state
   isLoading = signal(true);
@@ -62,16 +80,19 @@ export class HomeComponent implements OnInit, OnDestroy {
   private minLoadTime = 1500;
   private loadTimeout: any;
   private dataReady = false;
+  private profileCompletionOpenTimeout: ReturnType<typeof setTimeout> | null = null;
 
   private activeSlider: HTMLElement | null = null;
   private isDown = false;
   private startX = 0;
   private scrollLeft = 0;
   public isDragging = false;
+  availableCompletionCities: Signal<{ code: string; name: string }[]>;
 
   constructor(
     private dataService: DataService,
     private authService: AuthService,
+    private localNotificationState: LocalNotificationStateService,
     private modalCtrl: ModalController,
     private toastCtrl: ToastController,
     private router: Router
@@ -85,6 +106,10 @@ export class HomeComponent implements OnInit, OnDestroy {
     this.events = this.dataService.getEvents();
     this.jobs = this.dataService.getJobs();
     this.businesses = this.dataService.getBusinesses();
+    this.notifications = this.dataService.getNotifications();
+    this.hasUnreadNotifications = computed(() =>
+      this.localNotificationState.hasUnread(this.notifications())
+    );
 
 
     this.selectedCountryId = this.dataService.selectedCountryId;
@@ -116,6 +141,12 @@ export class HomeComponent implements OnInit, OnDestroy {
         const selected = list.find(c => c.id === this.selectedCountryId());
         if (selected) return selected;
         return list.length > 0 ? list[0] : null; 
+    });
+
+    this.availableCompletionCities = computed(() => {
+      const selectedRegion = this.completionRegion();
+      const country = this.countries().find((item) => item.id === selectedRegion);
+      return country?.cities || [];
     });
 
     // Compute sections with data for dynamic rendering
@@ -201,6 +232,45 @@ export class HomeComponent implements OnInit, OnDestroy {
             }
         }
     }, { allowSignalWrites: true });
+
+    effect(() => {
+      const user = this.authService.currentUser();
+      const profile = this.authService.userProfile();
+      const loading = this.isLoading();
+      const shouldPrompt = this.authService.pendingProfileCompletionPrompt();
+
+      if (!user) {
+        this.resetProfileCompletionPrompt();
+        return;
+      }
+
+      if (!shouldPrompt || !profile || loading || !this.homeViewEntered()) {
+        return;
+      }
+
+      const isIncomplete =
+        !profile.phoneNumber ||
+        !profile.region ||
+        !profile.city ||
+        !profile.dateOfBirth;
+
+      if (!isIncomplete) {
+        this.authService.clearProfileCompletionPrompt();
+        if (this.profileCompletionOpenTimeout) {
+          clearTimeout(this.profileCompletionOpenTimeout);
+          this.profileCompletionOpenTimeout = null;
+        }
+        this.profileCompletionModalOpen.set(false);
+        return;
+      }
+
+      if (this.profileCompletionDismissed() || this.profileCompletionModalOpen()) {
+        return;
+      }
+
+      this.initializeProfileCompletionForm();
+      void this.triggerProfileCompletionAfterHomeLoaded();
+    }, { allowSignalWrites: true });
   }
   
 
@@ -210,16 +280,30 @@ export class HomeComponent implements OnInit, OnDestroy {
     }, this.minLoadTime);
   }
 
+  ionViewDidEnter() {
+    this.homeViewEntered.set(true);
+    void this.triggerProfileCompletionAfterHomeLoaded();
+  }
+
+  ionViewDidLeave() {
+    this.homeViewEntered.set(false);
+  }
+
   private hideLoadingIfReady() {
     if (this.dataReady && this.loadTimeout) {
       clearTimeout(this.loadTimeout);
       this.isLoading.set(false);
+      void this.triggerProfileCompletionAfterHomeLoaded();
     }
   }
 
   ngOnDestroy() {
     if (this.loadTimeout) {
       clearTimeout(this.loadTimeout);
+    }
+    if (this.profileCompletionOpenTimeout) {
+      clearTimeout(this.profileCompletionOpenTimeout);
+      this.profileCompletionOpenTimeout = null;
     }
   }
 
@@ -358,21 +442,83 @@ export class HomeComponent implements OnInit, OnDestroy {
   }
 
   async resendVerification() {
-    const result = await this.authService.resendVerificationEmail();
-    let toastMessage = 'Verification email sent. Please check your inbox.';
-    let toastColor: 'success' | 'danger' = 'success';
-    
-    if (!result.success) {
-      toastMessage = result.error || 'Failed to send verification email.';
-      toastColor = 'danger';
+    this.verificationCode.set('');
+    this.verificationDialogEmail.set(this.authService.currentUser()?.email || '');
+    this.verificationDialogState.set('confirm');
+  }
+
+  closeVerificationDialog() {
+    if (this.verificationDialogBusy()) {
+      return;
     }
-    
+
+    this.verificationDialogState.set('closed');
+    this.verificationCode.set('');
+  }
+
+  async sendVerificationCode() {
+    this.verificationDialogBusy.set(true);
+    const result = await this.authService.resendVerificationEmail();
+    this.verificationDialogBusy.set(false);
+
+    if (!result.success) {
+      await this.showToast(result.error || 'Failed to send verification code.', 'danger');
+      return;
+    }
+
+    this.verificationDialogEmail.set(result.email || this.authService.currentUser()?.email || '');
+    this.verificationCode.set('');
+    this.verificationDialogState.set('code');
+    await this.showToast(
+      `Verification code sent to ${result.email || 'your email address'}.`,
+      'success'
+    );
+  }
+
+  async confirmVerificationCode() {
+    const code = this.verificationCode().trim();
+    if (!code) {
+      await this.showToast('Verification code is required.', 'danger');
+      return;
+    }
+
+    this.verificationDialogBusy.set(true);
+    const result = await this.authService.verifyEmailWithCode(code);
+    this.verificationDialogBusy.set(false);
+
+    if (!result.success) {
+      await this.showToast(result.error || 'Failed to verify email.', 'danger');
+      return;
+    }
+
+    this.verificationDialogState.set('success');
+  }
+
+  finishVerificationFlow() {
+    this.verificationDialogState.set('closed');
+    this.verificationCode.set('');
+  }
+
+  onVerificationBackdropClick() {
+    if (this.verificationDialogBusy()) {
+      return;
+    }
+
+    if (this.verificationDialogState() === 'success') {
+      this.finishVerificationFlow();
+      return;
+    }
+
+    this.closeVerificationDialog();
+  }
+
+  private async showToast(message: string, color: 'success' | 'danger') {
     const toast = await this.toastCtrl.create({
-      message: toastMessage,
+      message,
       duration: 3000,
-      color: toastColor,
+      color,
       position: 'top',
-      icon: toastColor === 'success' ? 'checkmark-circle' : 'alert-circle',
+      icon: color === 'success' ? 'checkmark-circle' : 'alert-circle',
       cssClass: 'toast-custom-text'
     });
     await toast.present();
@@ -402,6 +548,152 @@ export class HomeComponent implements OnInit, OnDestroy {
   selectCountry(country: Country) {
     this.dataService.setSelectedCountry(country.id);
     this.closeCountrySelector();
+  }
+
+  closeProfileCompletionModal() {
+    if (this.profileCompletionBusy()) {
+      return;
+    }
+
+    this.profileCompletionModalOpen.set(false);
+  }
+
+  skipProfileCompletion() {
+    if (this.profileCompletionBusy()) {
+      return;
+    }
+
+    this.authService.clearProfileCompletionPrompt();
+    this.profileCompletionDismissed.set(true);
+    this.profileCompletionModalOpen.set(false);
+  }
+
+  onCompletionRegionChange(regionId: string) {
+    this.completionRegion.set(regionId);
+    this.completionCity.set('');
+  }
+
+  previousProfileCompletionStep() {
+    this.profileCompletionStep.set(1);
+  }
+
+  async nextProfileCompletionStep() {
+    if (!this.completionRegion()) {
+      await this.showToast('Country is required.', 'danger');
+      return;
+    }
+
+    if (!this.completionCity()) {
+      await this.showToast('City is required.', 'danger');
+      return;
+    }
+
+    this.profileCompletionStep.set(2);
+  }
+
+  async saveProfileCompletion() {
+    if (!this.completionPhoneNumber().trim()) {
+      await this.showToast('Phone number is required.', 'danger');
+      return;
+    }
+
+    if (!this.completionDateOfBirth()) {
+      await this.showToast('Date of birth is required.', 'danger');
+      return;
+    }
+
+    this.profileCompletionBusy.set(true);
+    const result = await this.authService.updateUserProfile({
+      phoneNumber: this.completionPhoneNumber().trim(),
+      region: this.completionRegion(),
+      city: this.completionCity(),
+      dateOfBirth: this.completionDateOfBirth(),
+    });
+    this.profileCompletionBusy.set(false);
+
+    if (!result.success) {
+      await this.showToast(result.error || 'Failed to update profile.', 'danger');
+      return;
+    }
+
+    this.authService.clearProfileCompletionPrompt();
+    this.profileCompletionDismissed.set(true);
+    this.profileCompletionModalOpen.set(false);
+    await this.showToast('Profile completed successfully.', 'success');
+  }
+
+  private initializeProfileCompletionForm() {
+    const profile = this.authService.userProfile();
+    if (!profile) {
+      return;
+    }
+
+    this.completionPhoneNumber.set(profile.phoneNumber || '');
+    this.completionRegion.set(profile.region || '');
+    this.completionCity.set(profile.city || '');
+    this.completionDateOfBirth.set(profile.dateOfBirth || '');
+    this.profileCompletionStep.set((!profile.region || !profile.city) ? 1 : 2);
+  }
+
+  private resetProfileCompletionPrompt() {
+    if (this.profileCompletionOpenTimeout) {
+      clearTimeout(this.profileCompletionOpenTimeout);
+      this.profileCompletionOpenTimeout = null;
+    }
+
+    this.profileCompletionModalOpen.set(false);
+    this.profileCompletionDismissed.set(false);
+    this.profileCompletionStep.set(1);
+    this.completionPhoneNumber.set('');
+    this.completionRegion.set('');
+    this.completionCity.set('');
+    this.completionDateOfBirth.set('');
+  }
+
+  private async scheduleProfileCompletionModalOpen() {
+    if (this.profileCompletionOpenTimeout || this.profileCompletionModalOpen() || this.profileCompletionDismissed()) {
+      return;
+    }
+
+    this.profileCompletionOpenTimeout = setTimeout(async () => {
+      this.profileCompletionOpenTimeout = null;
+
+      if (!this.homeViewEntered() || this.isLoading() || this.profileCompletionModalOpen() || this.profileCompletionDismissed()) {
+        return;
+      }
+
+      const profile = this.authService.userProfile();
+      const user = this.authService.currentUser();
+      if (!user || !profile) {
+        return;
+      }
+
+      const isIncomplete =
+        !profile.phoneNumber ||
+        !profile.region ||
+        !profile.city ||
+        !profile.dateOfBirth;
+
+      if (!isIncomplete || !this.authService.pendingProfileCompletionPrompt()) {
+        return;
+      }
+
+      const activeModal = await this.modalCtrl.getTop();
+      if (activeModal) {
+        void this.scheduleProfileCompletionModalOpen();
+        return;
+      }
+
+      this.profileCompletionModalOpen.set(true);
+    }, 700);
+  }
+
+  private async triggerProfileCompletionAfterHomeLoaded() {
+    if (!this.homeViewEntered() || this.isLoading()) {
+      return;
+    }
+
+    await this.scheduleProfileCompletionModalOpen();
   }
 
   async handleCategoryClick(category: Category) {

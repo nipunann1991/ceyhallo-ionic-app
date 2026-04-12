@@ -1,7 +1,7 @@
 
 import { Component, ChangeDetectionStrategy, signal, effect, computed, Signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { IonicModule, NavController, ToastController, AlertController } from '@ionic/angular';
+import { IonicModule, NavController, ToastController } from '@ionic/angular';
 import { AuthService } from '../../services/auth.service';
 import { DataService } from '../../services/data.service';
 import { FormsModule } from '@angular/forms';
@@ -47,7 +47,7 @@ import { Country } from '../../models/country.model';
                type="text" 
                [ngModel]="displayName()" 
                (ngModelChange)="displayName.set($event)"
-               class="w-full h-12 bg-[#F8F9FA] rounded-xl px-4 text-[#1A1C1E] font-medium border border-transparent focus:bg-white focus:border-[#083594] focus:ring-4 focus:ring-[#083594]/10 transition-all outline-none placeholder-gray-400"
+               class="w-full h-12 bg-[#F8F9FA] rounded-xl px-4 text-[#1A1C1E] font-medium border border-[#E8EEF7] focus:bg-white focus:border-[#083594] focus:ring-4 focus:ring-[#083594]/10 transition-all outline-none placeholder-gray-400"
                placeholder="Alex Perera">
           </div>
        </div>
@@ -60,7 +60,7 @@ import { Country } from '../../models/country.model';
                type="email" 
                [value]="email()" 
                readonly
-               class="w-full h-12 bg-gray-50 rounded-xl px-4 text-gray-500 font-medium border border-transparent outline-none cursor-not-allowed"
+               class="w-full h-12 bg-gray-50 rounded-xl px-4 text-gray-500 font-medium border border-[#E8EEF7] outline-none cursor-not-allowed"
                placeholder="alex@ceyhallo.com">
           </div>
        </div>
@@ -73,7 +73,7 @@ import { Country } from '../../models/country.model';
                type="tel" 
                [ngModel]="phoneNumber()" 
                (ngModelChange)="phoneNumber.set($event)"
-               class="w-full h-12 bg-[#F8F9FA] rounded-xl px-4 text-[#1A1C1E] font-medium border border-transparent focus:bg-white focus:border-[#083594] focus:ring-4 focus:ring-[#083594]/10 transition-all outline-none placeholder-gray-400"
+               class="w-full h-12 bg-[#F8F9FA] rounded-xl px-4 text-[#1A1C1E] font-medium border border-[#E8EEF7] focus:bg-white focus:border-[#083594] focus:ring-4 focus:ring-[#083594]/10 transition-all outline-none placeholder-gray-400"
                placeholder="+971 50 123 4567">
           </div>
        </div>
@@ -87,7 +87,7 @@ import { Country } from '../../models/country.model';
                [ngModel]="dateOfBirth()" 
                (ngModelChange)="dateOfBirth.set($event)"
                min="1900-01-01"
-               class="w-full min-w-full h-12 bg-[#F8F9FA] rounded-xl px-4 text-[#1A1C1E] font-medium border border-transparent focus:bg-white focus:border-[#083594] focus:ring-4 focus:ring-[#083594]/10 transition-all outline-none block appearance-none">
+               class="w-full min-w-full h-12 bg-[#F8F9FA] rounded-xl px-4 py-0 leading-[3rem] text-[#1A1C1E] font-medium border border-[#E8EEF7] focus:bg-white focus:border-[#083594] focus:ring-4 focus:ring-[#083594]/10 transition-all outline-none block appearance-none">
           </div>
        </div>
 
@@ -98,7 +98,7 @@ import { Country } from '../../models/country.model';
              <textarea 
                [ngModel]="address()" 
                (ngModelChange)="address.set($event)"
-               class="w-full h-24 bg-[#F8F9FA] rounded-xl px-4 py-3 text-[#1A1C1E] font-medium border border-transparent focus:bg-white focus:border-[#083594] focus:ring-4 focus:ring-[#083594]/10 transition-all outline-none placeholder-gray-400 resize-none"
+               class="w-full h-24 bg-[#F8F9FA] rounded-xl px-4 py-3 text-[#1A1C1E] font-medium border border-[#E8EEF7] focus:bg-white focus:border-[#083594] focus:ring-4 focus:ring-[#083594]/10 transition-all outline-none placeholder-gray-400 resize-none"
                placeholder="Enter your address"></textarea>
           </div>
        </div>
@@ -110,7 +110,7 @@ import { Country } from '../../models/country.model';
              <select 
                [ngModel]="region()" 
                (ngModelChange)="onRegionChange($event)"
-               class="w-full h-12 bg-[#F8F9FA] rounded-xl px-4 pr-10 text-[#1A1C1E] font-medium border border-transparent focus:bg-white focus:border-[#083594] focus:ring-4 focus:ring-[#083594]/10 transition-all outline-none appearance-none">
+               class="w-full h-12 bg-[#F8F9FA] rounded-xl px-4 pr-10 text-[#1A1C1E] font-medium border border-[#E8EEF7] focus:bg-white focus:border-[#083594] focus:ring-4 focus:ring-[#083594]/10 transition-all outline-none appearance-none">
                <option value="" disabled>Select Region</option>
                @for (country of countries(); track country.id) {
                  <option [value]="country.id">{{ country.name }}</option>
@@ -130,7 +130,7 @@ import { Country } from '../../models/country.model';
                [ngModel]="city()" 
                (ngModelChange)="city.set($event)"
                [disabled]="!region() || availableCities().length === 0"
-               class="w-full h-12 bg-[#F8F9FA] rounded-xl px-4 pr-10 text-[#1A1C1E] font-medium border border-transparent focus:bg-white focus:border-[#083594] focus:ring-4 focus:ring-[#083594]/10 transition-all outline-none appearance-none disabled:bg-gray-50 disabled:text-gray-400">
+               class="w-full h-12 bg-[#F8F9FA] rounded-xl px-4 pr-10 text-[#1A1C1E] font-medium border border-[#E8EEF7] focus:bg-white focus:border-[#083594] focus:ring-4 focus:ring-[#083594]/10 transition-all outline-none appearance-none disabled:bg-gray-50 disabled:text-gray-400">
                <option value="" disabled>Select City</option>
                @for (c of availableCities(); track c.name) {
                  <option [value]="c.name">{{ c.name }}</option>
@@ -167,6 +167,87 @@ import { Country } from '../../models/country.model';
 
   </div>
 
+  @if (deleteDialogState() !== 'closed') {
+    <div (click)="onDeleteDialogBackdropClick()" class="fixed inset-0 z-[80] flex items-center justify-center bg-black/45 backdrop-blur-[2px] p-6 animate-fade-in">
+      <div (click)="$event.stopPropagation()" class="bg-white rounded-3xl p-8 w-full max-w-xs text-center shadow-2xl relative overflow-hidden">
+        <div class="flex flex-col items-center mb-6">
+          <ion-img src="https://i.ibb.co/B5TnYXWN/logo.png" alt="CeyHallo Logo" class="h-24 object-contain"></ion-img>
+        </div>
+
+        @if (deleteDialogState() === 'confirm') {
+          <h2 class="text-xl font-bold text-[#1A1C1E] mb-3 tracking-tight">Delete Account</h2>
+          <p class="text-gray-600 text-[0.9rem] font-medium leading-[1.15rem] mb-6">
+            This action is permanent and cannot be undone. We will send a verification code to your email before deleting your account.
+          </p>
+          <div class="flex gap-3">
+            <button
+              (click)="closeDeleteDialog()"
+              [disabled]="deleteDialogBusy()"
+              class="flex-1 h-[3rem] rounded-full bg-[#EEF2F7] text-[#4B5563] font-bold text-sm transition-all active:scale-[0.98] disabled:opacity-70">
+              Cancel
+            </button>
+            <button
+              (click)="sendDeleteAccountCode()"
+              [disabled]="deleteDialogBusy()"
+              class="flex-1 h-[3rem] rounded-full bg-[#DC2626] text-white font-bold text-sm transition-all active:scale-[0.98] disabled:opacity-70 flex items-center justify-center gap-2">
+              @if (deleteDialogBusy()) {
+                <ion-spinner name="crescent" color="light" class="w-4 h-4"></ion-spinner>
+              } @else {
+                <span>Send Code</span>
+              }
+            </button>
+          </div>
+        }
+
+        @if (deleteDialogState() === 'code') {
+          <h2 class="text-xl font-bold text-[#1A1C1E] mb-3 tracking-tight">Enter Verification Code</h2>
+          <p class="text-gray-600 text-[0.9rem] font-medium leading-[1.15rem] mb-5">
+            Check {{ deleteDialogEmail() || 'your email' }} and enter the 6-digit code to permanently delete your account.
+          </p>
+          <input
+            type="text"
+            inputmode="numeric"
+            maxlength="6"
+            autocomplete="one-time-code"
+            [ngModel]="deleteVerificationCode()"
+            (ngModelChange)="deleteVerificationCode.set($event)"
+            class="w-full h-12 bg-[#F8F9FA] rounded-xl px-4 mb-6 text-center tracking-[0.3em] text-[#1A1C1E] font-bold border border-[#E8EEF7] focus:bg-white focus:border-[#083594] focus:ring-4 focus:ring-[#083594]/10 transition-all outline-none"
+            placeholder="000000">
+          <div class="flex gap-3">
+            <button
+              (click)="closeDeleteDialog()"
+              [disabled]="deleteDialogBusy()"
+              class="flex-1 h-[3rem] rounded-full bg-[#EEF2F7] text-[#4B5563] font-bold text-sm transition-all active:scale-[0.98] disabled:opacity-70">
+              Cancel
+            </button>
+            <button
+              (click)="confirmDeleteAccount()"
+              [disabled]="deleteDialogBusy()"
+              class="flex-1 h-[3rem] rounded-full bg-[#083594] text-white font-bold text-sm transition-all active:scale-[0.98] disabled:opacity-70 flex items-center justify-center gap-2">
+              @if (deleteDialogBusy()) {
+                <ion-spinner name="crescent" color="light" class="w-4 h-4"></ion-spinner>
+              } @else {
+                <span>Delete</span>
+              }
+            </button>
+          </div>
+        }
+
+        @if (deleteDialogState() === 'success') {
+          <h2 class="text-xl font-bold text-[#1A1C1E] mb-3 tracking-tight">Account Deleted</h2>
+          <p class="text-gray-600 text-[0.9rem] font-medium leading-[1.15rem] mb-6">
+            Your account has been successfully deleted.
+          </p>
+          <button
+            (click)="finishDeleteFlow()"
+            class="w-full h-[3rem] rounded-full bg-[#083594] text-white font-bold text-sm transition-all active:scale-[0.98]">
+            OK
+          </button>
+        }
+      </div>
+    </div>
+  }
+
 </ion-content>
 `,
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -177,7 +258,6 @@ export class EditProfileComponent {
   private dataService = inject(DataService);
   private navCtrl = inject(NavController);
   private toastCtrl = inject(ToastController);
-  private alertCtrl = inject(AlertController);
 
   userProfile: Signal<UserProfile | null> = this.authService.userProfile;
   countries: Signal<Country[]> = this.dataService.getCountries();
@@ -191,6 +271,10 @@ export class EditProfileComponent {
   region = signal('');
   address = signal('');
   dateOfBirth = signal('');
+  deleteDialogState = signal<'closed' | 'confirm' | 'code' | 'success'>('closed');
+  deleteDialogBusy = signal(false);
+  deleteDialogEmail = signal('');
+  deleteVerificationCode = signal('');
   
   isLoading = signal(false);
 
@@ -267,47 +351,70 @@ export class EditProfileComponent {
   }
 
   async deleteAccount() {
-    const alert = await this.alertCtrl.create({
-      header: 'Confirm Deletion',
-      message: 'This action is permanent and cannot be undone. Please enter your password to confirm.',
-      inputs: [
-        {
-          name: 'password',
-          type: 'password',
-          placeholder: 'Enter your password',
-          attributes: {
-            autocapitalize: 'off',
-            autocomplete: 'current-password',
-            spellcheck: 'false',
-          },
-        },
-      ],
-      buttons: [
-        {
-          text: 'Cancel',
-          role: 'cancel',
-        },
-        {
-          text: 'Delete',
-          role: 'destructive',
-          handler: async (data) => {
-            if (!data.password) {
-              await this.showToast('Password is required to delete your account.', 'danger');
-              return;
-            }
+    this.deleteVerificationCode.set('');
+    this.deleteDialogEmail.set(this.email());
+    this.deleteDialogState.set('confirm');
+  }
 
-            const result = await this.authService.deleteAccount(data.password);
-            if (result.success) {
-              await this.showToast('Your account has been successfully deleted.', 'success');
-              // The auth service likely handles navigation on logout/delete, but just in case:
-              this.navCtrl.navigateRoot('/login'); 
-            } else {
-              await this.showToast(result.error || 'An error occurred. Please try again.', 'danger');
-            }
-          },
-        },
-      ],
-    });
-    await alert.present();
+  closeDeleteDialog() {
+    if (this.deleteDialogBusy()) {
+      return;
+    }
+
+    this.deleteDialogState.set('closed');
+    this.deleteVerificationCode.set('');
+  }
+
+  async sendDeleteAccountCode() {
+    this.deleteDialogBusy.set(true);
+    const result = await this.authService.requestDeleteAccountCode();
+    this.deleteDialogBusy.set(false);
+
+    if (!result.success) {
+      await this.showToast(result.error || 'Failed to send verification code.', 'danger');
+      return;
+    }
+
+    this.deleteDialogEmail.set(result.email || this.email());
+    this.deleteVerificationCode.set('');
+    this.deleteDialogState.set('code');
+    await this.showToast(`Verification code sent to ${result.email}.`, 'success');
+  }
+
+  async confirmDeleteAccount() {
+    const code = this.deleteVerificationCode().trim();
+    if (!code) {
+      await this.showToast('Verification code is required.', 'danger');
+      return;
+    }
+
+    this.deleteDialogBusy.set(true);
+    const result = await this.authService.deleteAccountWithCode(code);
+    this.deleteDialogBusy.set(false);
+
+    if (!result.success) {
+      await this.showToast(result.error || 'An error occurred. Please try again.', 'danger');
+      return;
+    }
+
+    this.deleteDialogState.set('success');
+  }
+
+  finishDeleteFlow() {
+    this.deleteDialogState.set('closed');
+    this.navCtrl.navigateRoot('/login');
+  }
+
+  onDeleteDialogBackdropClick() {
+    if (this.deleteDialogBusy()) {
+      return;
+    }
+
+    if (this.deleteDialogState() === 'success') {
+      this.finishDeleteFlow();
+      return;
+    }
+
+    this.closeDeleteDialog();
   }
 }

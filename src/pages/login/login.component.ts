@@ -2,6 +2,7 @@
 import { Component, ChangeDetectionStrategy, signal, computed, Input, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { IonicModule, ModalController, ToastController } from '@ionic/angular';
+import { Capacitor } from '@capacitor/core';
 import { AuthService } from '../../services/auth.service';
 import { DataService } from '../../services/data.service';
 import { RouterLink, Router } from '@angular/router';
@@ -26,7 +27,7 @@ import { LegalPageComponent } from '../legal/legal.component';
 
     <!-- Logo Section -->
     <div class="flex flex-col items-center mb-8">
-       <ion-img src="https://i.ibb.co/B5TnYXWN/logo.png" alt="CeyHallo Logo" class="h-[8rem] object-contain"></ion-img>
+       <ion-img src="/assets/logo.png" alt="CeyHallo Logo" class="h-[8rem] object-contain"></ion-img>
       <p class="text-sm font-semibold text-gray-500 mt-1.5">Discover. Connect. Belong — with CeyHallo</p>
     </div>
 
@@ -147,14 +148,16 @@ import { LegalPageComponent } from '../legal/legal.component';
                   <span>Login with Google</span>
                </button>
 
-               <!-- Apple -->
-               <button
-                 (click)="loginWithApple()"
-                 [disabled]="isLoading()"
-                 class="w-full py-2 px-6 rounded-full font-bold transition-all duration-200 flex items-center justify-center gap-3 active:scale-[0.98] disabled:opacity-70 disabled:active:scale-100 shadow-sm text-sm tracking-tight h-[2.625rem] bg-black text-white hover:bg-gray-900">
-                  <ion-icon name="logo-apple" class="text-lg absolute left-6"></ion-icon>
-                  <span>Login with Apple</span>
-               </button>
+               @if (showAppleLogin()) {
+                 <!-- Apple -->
+                 <button
+                   (click)="loginWithApple()"
+                   [disabled]="isLoading()"
+                   class="w-full py-2 px-6 rounded-full font-bold transition-all duration-200 flex items-center justify-center gap-3 active:scale-[0.98] disabled:opacity-70 disabled:active:scale-100 shadow-sm text-sm tracking-tight h-[2.625rem] bg-black text-white hover:bg-gray-900">
+                    <ion-icon name="logo-apple" class="text-lg absolute left-6"></ion-icon>
+                    <span>Login with Apple</span>
+                 </button>
+               }
           </div>
         }
 
@@ -208,6 +211,7 @@ export class LoginComponent {
   @Input() message: string = '';
 
   settings = this.dataService.getAppSettings();
+  showAppleLogin = signal(Capacitor.getPlatform() === 'ios');
 
   email = signal('');
   password = signal('');
@@ -263,6 +267,7 @@ export class LoginComponent {
     this.isLoading.set(false);
     
     if (result.success) {
+      this.authService.requestProfileCompletionPrompt();
       if (this.isModal) {
         this.modalCtrl.dismiss({ loggedIn: true });
       } else {
@@ -282,6 +287,7 @@ export class LoginComponent {
     this.isLoading.set(false);
 
     if (result.success) {
+      this.authService.requestProfileCompletionPrompt();
       if (this.isModal) {
         this.modalCtrl.dismiss({ loggedIn: true });
       } else {
@@ -302,6 +308,7 @@ export class LoginComponent {
     this.isLoading.set(false);
 
     if (result.success) {
+      this.authService.requestProfileCompletionPrompt();
       if (this.isModal) {
         this.modalCtrl.dismiss({ loggedIn: true });
       } else {
@@ -322,6 +329,7 @@ export class LoginComponent {
     this.isLoading.set(false);
 
     if (result.success) {
+      this.authService.requestProfileCompletionPrompt();
       if (this.isModal) {
         this.modalCtrl.dismiss({ loggedIn: true });
       } else {

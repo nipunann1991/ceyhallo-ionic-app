@@ -15,6 +15,7 @@ import { Offer } from '../models/offer.model';
 import { AppConfig } from '../models/settings.model';
 import { HubSection } from '../models/hub.model';
 import { FirestoreService } from './firestore.service';
+import { AuthService } from './auth.service';
 import { mapNotificationDocument } from '../utils/notification.utils';
 
 @Injectable({
@@ -23,6 +24,8 @@ import { mapNotificationDocument } from '../utils/notification.utils';
 export class DataService {
   private notificationFeedItems: Notification[] = [];
   private pushQueueItems: Notification[] = [];
+  private notificationsUnsubscribe: (() => void) | null = null;
+  private pushQueueUnsubscribe: (() => void) | null = null;
 
 
   // Derived Hub State
@@ -35,7 +38,10 @@ export class DataService {
 
   readonly selectedCountryId = appState.selectedCountryId;
 
-  constructor(private firestoreService: FirestoreService) {
+  constructor(
+    private firestoreService: FirestoreService,
+    private authService: AuthService
+  ) {
     this.listenToNews();
     this.listenToBanners();
     this.listenToCategories();
@@ -45,13 +51,19 @@ export class DataService {
     this.listenToJobs();
     this.listenToLegal();
     this.listenToSupport();
-    this.listenToNotifications();
-    this.listenToPushQueue();
     this.listenToOffers();
     this.listenToSettings();
     
     // Hub Data Listener
     this.listenToHubSections();
+
+    this.authService.authState$.subscribe((user) => {
+      if (user === undefined) {
+        return;
+      }
+
+      this.restartNotificationListeners(!!user);
+    });
   }
 
   getNews() { return appState.articles.asReadonly(); }
@@ -80,6 +92,10 @@ export class DataService {
     // We could force a re-fetch here if we were using one-time gets.
     // For now, this is a placeholder to satisfy the UI refresh action.
     console.log('Refreshing data...');
+
+    if (this.authService.currentUser()) {
+      this.restartNotificationListeners(true);
+    }
   }
 
   async submitBusinessListing(data: any): Promise<string> {
@@ -469,7 +485,7 @@ export class DataService {
         workingHours: 'Mon - Fri, 9am - 6pm',
         faqs: [
             { id: '1', question: 'How do I reset my password?', answer: 'Go to Profile > Change Password to update your credentials.' },
-            { id: '2', question: 'How can I verify my account?', answer: 'Check your email inbox for a verification link.' },
+            { id: '2', question: 'How can I verify my account?', answer: 'Request a verification code from your profile and enter the code sent to your email.' },
             { id: '3', question: 'Is the app free?', answer: 'Yes, CeyHallo is completely free to download and use.' }
         ]
     };
@@ -500,7 +516,7 @@ export class DataService {
   }
 
   private listenToNotifications(): void {
-    this.firestoreService.listenToPath<{ [key: string]: any }>('notifications', (dataObject) => {
+    this.notificationsUnsubscribe = this.firestoreService.listenToPath<{ [key: string]: any }>('notifications', (dataObject) => {
       this.notificationFeedItems = Object.keys(dataObject)
         .map((id) => mapNotificationDocument(id, dataObject[id], 'feed'))
         .sort((a, b) => b.date.getTime() - a.date.getTime());
@@ -513,7 +529,7 @@ export class DataService {
   }
 
   private listenToPushQueue(): void {
-    this.firestoreService.listenToPath<{ [key: string]: any }>('push_queue', (dataObject) => {
+    this.pushQueueUnsubscribe = this.firestoreService.listenToPath<{ [key: string]: any }>('push_queue', (dataObject) => {
       this.pushQueueItems = Object.keys(dataObject)
         .map((id) => mapNotificationDocument(id, dataObject[id], 'queue'))
         .sort((a, b) => b.date.getTime() - a.date.getTime());
@@ -530,6 +546,29 @@ export class DataService {
       [...this.notificationFeedItems, ...this.pushQueueItems]
         .sort((a, b) => b.date.getTime() - a.date.getTime())
     );
+  }
+
+  private restartNotificationListeners(isLoggedIn: boolean): void {
+    if (this.notificationsUnsubscribe) {
+      this.notificationsUnsubscribe();
+      this.notificationsUnsubscribe = null;
+    }
+
+    if (this.pushQueueUnsubscribe) {
+      this.pushQueueUnsubscribe();
+      this.pushQueueUnsubscribe = null;
+    }
+
+    this.notificationFeedItems = [];
+    this.pushQueueItems = [];
+    this.syncNotifications();
+
+    if (!isLoggedIn) {
+      return;
+    }
+
+    this.listenToNotifications();
+    this.listenToPushQueue();
   }
 
   private listenToOffers(): void {

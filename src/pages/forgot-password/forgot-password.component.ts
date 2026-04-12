@@ -16,7 +16,7 @@ import { FormsModule } from '@angular/forms';
 
     <!-- Logo Section -->
     <div class="flex flex-col items-center mb-8">
-       <ion-img src="https://i.ibb.co/B5TnYXWN/logo.png" alt="CeyHallo Logo" class="h-[8rem] object-contain"></ion-img>
+       <ion-img src="/assets/logo.png" alt="CeyHallo Logo" class="h-[8rem] object-contain"></ion-img>
        <p class="text-sm font-semibold text-gray-500 mt-1.5 animate-slide-in">Recover your account</p>
     </div>
 

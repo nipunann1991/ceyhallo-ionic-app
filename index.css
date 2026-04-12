@@ -1,1 +1,96 @@
 /* Global styles */
+
+.delete-account-alert {
+  --backdrop-opacity: 0.34;
+}
+
+.delete-account-alert .alert-wrapper {
+  border-radius: 1.5rem;
+  background: linear-gradient(180deg, #ffffff 0%, #f9fbff 100%);
+  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.22);
+  padding: 1.5rem 1.35rem 1.2rem;
+  max-width: min(22rem, calc(100vw - 2rem));
+}
+
+.delete-account-alert .alert-head {
+  padding: 0;
+  text-align: center;
+}
+
+.delete-account-alert .alert-title {
+  color: #1a1c1e;
+  font-size: 1.2rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.delete-account-alert .alert-message {
+  padding: 0.75rem 0 0;
+  color: #5b6472;
+  font-size: 0.92rem;
+  line-height: 1.45;
+  text-align: center;
+}
+
+.delete-account-alert .alert-input-group {
+  padding: 1rem 0 0;
+}
+
+.delete-account-alert .alert-input-wrapper {
+  border-radius: 0.95rem;
+  background: #f8f9fa;
+  border: 1px solid #e8eef7;
+  padding: 0 0.2rem;
+}
+
+.delete-account-alert .alert-input {
+  margin-top: 0;
+  padding: 0.95rem 0.9rem;
+  color: #1a1c1e;
+  font-weight: 700;
+  text-align: center;
+  letter-spacing: 0.18em;
+}
+
+.delete-account-alert .alert-button-group {
+  padding: 1rem 0 0;
+  gap: 0.75rem;
+  justify-content: center;
+  flex-wrap: nowrap;
+}
+
+.delete-account-alert .alert-button {
+  margin: 0;
+  min-width: 0;
+  border-radius: 9999px;
+  font-weight: 800;
+  text-transform: none;
+  letter-spacing: 0;
+  padding: 0.9rem 1rem;
+  flex: 1 1 0;
+}
+
+.delete-account-alert .alert-button-role-cancel {
+  background: #eef2f7;
+  color: #4b5563;
+}
+
+.delete-account-alert .alert-button:not(.alert-button-role-cancel) {
+  background: #dc2626;
+  color: #ffffff;
+  box-shadow: 0 12px 24px rgba(220, 38, 38, 0.22);
+}
+
+.delete-account-code-alert .alert-button:not(.alert-button-role-cancel) {
+  background: #083594;
+  box-shadow: 0 12px 24px rgba(8, 53, 148, 0.18);
+}
+
+.delete-account-success-alert .alert-button-group {
+  padding-top: 1.1rem;
+}
+
+.delete-account-success-alert .alert-button:not(.alert-button-role-cancel) {
+  background: #083594;
+  box-shadow: 0 12px 24px rgba(8, 53, 148, 0.18);
+}

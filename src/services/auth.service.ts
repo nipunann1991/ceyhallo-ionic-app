@@ -15,22 +15,26 @@ import {
   createUserWithEmailAndPassword, 
   sendPasswordResetEmail, 
   deleteUser, 
-  sendEmailVerification, 
   confirmPasswordReset, 
   verifyPasswordResetCode, 
   Unsubscribe,
   FacebookAuthProvider,
   GoogleAuthProvider,
   OAuthProvider,
-  signInWithCredential
+  signInWithCredential,
+  signInWithPopup,
+  signInWithRedirect
 } from 'firebase/auth';
 import type { User } from 'firebase/auth';
 import { FirestoreService } from './firestore.service';
-import { UserProfile } from '../models/user.model';
+import { UserProfile, UserProfileSource } from '../models/user.model';
 import { EmailService } from './email.service';
 import { BehaviorSubject } from 'rxjs';
 
 type AuthResult = { success: boolean; error?: string };
+const FCM_TOKEN_STORAGE_KEY = 'ceyhallo_fcm_token';
+const DELETE_ACCOUNT_VERIFICATION_KEY = 'ceyhallo_delete_account_verification';
+const EMAIL_VERIFICATION_CODE_KEY = 'ceyhallo_email_verification_code';
 
 @Injectable({
   providedIn: 'root',
@@ -38,6 +42,7 @@ type AuthResult = { success: boolean; error?: string };
 export class AuthService {
   isLoggedIn = signal<boolean | undefined>(undefined);
   currentUser = signal<User | null>(null);
+  pendingProfileCompletionPrompt = signal(false);
   
   // Observable auth state for Guards to avoid 'toObservable' context errors
   readonly authState$ = new BehaviorSubject<User | null | undefined>(undefined);
@@ -46,6 +51,7 @@ export class AuthService {
   userProfile = signal<UserProfile | null>(null);
   
   private userProfileUnsubscribe: Unsubscribe | null = null;
+  private profileInitInFlight = new Map<string, Promise<void>>();
 
   constructor(
     private router: Router,
@@ -58,9 +64,11 @@ export class AuthService {
       this.authState$.next(user);
       
       if (user) {
+         void this.ensureUserProfileExists(user);
          // Start listening to the extended profile in Firestore using the real UID from the token
          this.subscribeToUserProfile(user.uid);
       } else {
+         this.pendingProfileCompletionPrompt.set(false);
          this.userProfile.set(null);
          if (this.userProfileUnsubscribe) {
             this.userProfileUnsubscribe();
@@ -104,10 +112,12 @@ export class AuthService {
   async signInWithGoogle(): Promise<AuthResult> {
     try {
       if (!Capacitor.isNativePlatform()) {
-        return {
-          success: false,
-          error: 'Google Sign-In is available only in the native iOS app.',
-        };
+        const provider = new GoogleAuthProvider();
+        provider.addScope('email');
+        provider.addScope('profile');
+        provider.setCustomParameters({ prompt: 'select_account' });
+
+        return this.signInWithWebProvider(provider, 'google');
       }
 
       const result = await SocialLogin.login({
@@ -133,7 +143,7 @@ export class AuthService {
       const credential = GoogleAuthProvider.credential(idToken);
       const userCredential = await signInWithCredential(auth, credential);
 
-      await this.handleSocialLoginSuccess(userCredential.user);
+      await this.handleSocialLoginSuccess(userCredential.user, 'google');
 
       return { success: true };
     } catch (error: unknown) {
@@ -149,10 +159,11 @@ export class AuthService {
   async signInWithFacebook(): Promise<AuthResult> {
     try {
       if (!Capacitor.isNativePlatform()) {
-        return {
-          success: false,
-          error: 'Facebook Login is available only in the native iOS app.',
-        };
+        const provider = new FacebookAuthProvider();
+        provider.addScope('email');
+        provider.addScope('public_profile');
+
+        return this.signInWithWebProvider(provider, 'fb');
       }
 
       const result = await SocialLogin.login({
@@ -175,7 +186,7 @@ export class AuthService {
       const credential = FacebookAuthProvider.credential(accessToken);
       const userCredential = await signInWithCredential(auth, credential);
 
-      await this.handleSocialLoginSuccess(userCredential.user);
+      await this.handleSocialLoginSuccess(userCredential.user, 'fb');
 
       return { success: true };
     } catch (error: unknown) {
@@ -224,7 +235,7 @@ export class AuthService {
       });
       const userCredential = await signInWithCredential(auth, credential);
 
-      await this.handleSocialLoginSuccess(userCredential.user);
+      await this.handleSocialLoginSuccess(userCredential.user, 'apple');
 
       return { success: true };
     } catch (error: unknown) {
@@ -250,17 +261,17 @@ export class AuthService {
             id: userCredential.user.uid,
             email: email,
             name: name,
+            role: 'user',
+            source: 'app',
             isVerified: false,
             createdAt: new Date().toISOString(),
             region: region || '',
-            phoneNumber: phoneNumber || ''
+            phoneNumber: phoneNumber || '',
+            fcmToken: this.getStoredFcmToken()
          };
          
          await this.firestoreService.updateDocument('users', userCredential.user.uid, newUserProfile);
          
-         // Send Welcome Email
-         this.emailService.sendWelcomeEmail(email, name);
-
          // Force reload to update local auth state
          await userCredential.user.reload();
          this.currentUser.set({ ...auth.currentUser } as User);
@@ -273,20 +284,64 @@ export class AuthService {
     }
   }
 
-  async resendVerificationEmail(): Promise<{success: boolean; error?: string}> {
+  async resendVerificationEmail(): Promise<{success: boolean; error?: string; email?: string}> {
     const user = auth.currentUser;
     if (!user) {
       return { success: false, error: 'No user is logged in.' };
     }
-    if (user.emailVerified) {
+    if (this.userProfile()?.isVerified) {
       return { success: false, error: 'Your email is already verified.' };
     }
+    if (!user.email) {
+      return { success: false, error: 'No email address is associated with this account.' };
+    }
+
+    const code = this.generateVerificationCode();
+    const verification = {
+      uid: user.uid,
+      code,
+      email: user.email,
+      expiresAt: Date.now() + 10 * 60 * 1000,
+    };
+
+    this.persistEmailVerificationCode(verification);
+
     try {
-      await sendEmailVerification(user);
-      return { success: true };
+      await this.emailService.sendRecoveryCode(user.email, code);
+      return { success: true, email: user.email };
     } catch (error: unknown) {
+      this.clearEmailVerificationCode();
       const firebaseError = error as { code: string };
       return { success: false, error: this.mapFirebaseAuthError(firebaseError.code) };
+    }
+  }
+
+  async verifyEmailWithCode(code: string): Promise<{success: boolean; error?: string}> {
+    const user = auth.currentUser;
+    if (!user || !user.email) {
+      return { success: false, error: 'No user is currently logged in.' };
+    }
+
+    const verification = this.loadEmailVerificationCode();
+    if (!verification || verification.uid !== user.uid) {
+      return { success: false, error: 'Please request a new verification code.' };
+    }
+    if (verification.expiresAt < Date.now()) {
+      this.clearEmailVerificationCode();
+      return { success: false, error: 'The verification code has expired. Please request a new code.' };
+    }
+    if (verification.code !== code.trim()) {
+      return { success: false, error: 'The verification code you entered is incorrect.' };
+    }
+
+    try {
+      await this.firestoreService.updateDocument('users', user.uid, { isVerified: true });
+      this.userProfile.update((current) => (current ? { ...current, isVerified: true } : current));
+      this.clearEmailVerificationCode();
+      return { success: true };
+    } catch (error: unknown) {
+      const firebaseError = error as { message?: string };
+      return { success: false, error: firebaseError.message || 'Failed to verify your email. Please try again.' };
     }
   }
 
@@ -360,6 +415,7 @@ export class AuthService {
     }
 
     await signOut(auth);
+    this.pendingProfileCompletionPrompt.set(false);
     if (this.userProfileUnsubscribe) {
         this.userProfileUnsubscribe();
         this.userProfileUnsubscribe = null;
@@ -448,10 +504,48 @@ export class AuthService {
     }
   }
 
-  async deleteAccount(password: string): Promise<{success: boolean; error?: string}> {
+  async requestDeleteAccountCode(): Promise<{success: boolean; error?: string; email?: string}> {
     const user = auth.currentUser;
     if (!user || !user.email) {
       return { success: false, error: 'No user is currently logged in.' };
+    }
+
+    const code = this.generateVerificationCode();
+    const verification = {
+      uid: user.uid,
+      code,
+      email: user.email,
+      expiresAt: Date.now() + 10 * 60 * 1000,
+    };
+
+    this.persistDeleteAccountVerification(verification);
+
+    try {
+      await this.emailService.sendRecoveryCode(user.email, code);
+      return { success: true, email: user.email };
+    } catch (error: unknown) {
+      this.clearDeleteAccountVerification();
+      const emailError = error as { message?: string };
+      return { success: false, error: emailError.message || 'Failed to send verification code. Please try again.' };
+    }
+  }
+
+  async deleteAccountWithCode(code: string): Promise<{success: boolean; error?: string}> {
+    const user = auth.currentUser;
+    if (!user || !user.email) {
+      return { success: false, error: 'No user is currently logged in.' };
+    }
+
+    const verification = this.loadDeleteAccountVerification();
+    if (!verification || verification.uid !== user.uid) {
+      return { success: false, error: 'Please request a new verification code.' };
+    }
+    if (verification.expiresAt < Date.now()) {
+      this.clearDeleteAccountVerification();
+      return { success: false, error: 'The verification code has expired. Please request a new code.' };
+    }
+    if (verification.code !== code.trim()) {
+      return { success: false, error: 'The verification code you entered is incorrect.' };
     }
 
     // Capture details for email before deletion
@@ -459,14 +553,10 @@ export class AuthService {
     const name = this.userProfile()?.name || user.displayName || 'User';
   
     try {
-      // 1. Re-authenticate the user to confirm their identity
-      const credential = EmailAuthProvider.credential(user.email, password);
-      await reauthenticateWithCredential(user, credential);
-  
-      // 2. Queue Goodbye Email (Best Effort)
+      // 1. Queue Goodbye Email (Best Effort)
       this.emailService.sendGoodbyeEmail(email, name);
 
-      // 3. If re-authentication is successful, proceed with deletion
+      // 2. Proceed with deletion once the verification code is confirmed
       // First, attempt to delete Firestore data (Best Effort)
       try {
         await this.firestoreService.deleteDocument('users', user.uid);
@@ -482,20 +572,17 @@ export class AuthService {
       
       // Then, delete the Firebase Auth user
       await deleteUser(user);
-  
-      // onAuthStateChanged will handle the rest (logout, nav)
-      this.router.navigate(['/login']); 
+      this.clearDeleteAccountVerification();
+      this.clearLocalAuthState();
+
       return { success: true };
   
     } catch (error: unknown) {
       const firebaseError = error as { code: string; message: string };
       // FIX: Log only the message to prevent circular structure error
       console.error("Error deleting account:", firebaseError.message || 'Unknown error during deletion');
-      if (firebaseError.code === 'auth/wrong-password' || firebaseError.code === 'auth/invalid-credential') {
-        return { success: false, error: 'The password you entered is incorrect.' };
-      }
       if (firebaseError.code === 'auth/requires-recent-login') {
-        return { success: false, error: 'This is a sensitive operation. Please sign in again before deleting your account.' };
+        return { success: false, error: 'Please log out, sign in again, and then verify with a new code before deleting your account.' };
       }
       return { success: false, error: 'Failed to delete account. Please try again later.' };
     }
@@ -527,10 +614,83 @@ export class AuthService {
     }
   }
 
-  private async handleSocialLoginSuccess(user: User): Promise<void> {
+  private async handleSocialLoginSuccess(user: User, source: UserProfileSource): Promise<void> {
+    await this.ensureUserProfileExists(user, source);
+  }
+
+  requestProfileCompletionPrompt(): void {
+    this.pendingProfileCompletionPrompt.set(true);
+  }
+
+  clearProfileCompletionPrompt(): void {
+    this.pendingProfileCompletionPrompt.set(false);
+  }
+
+  private clearLocalAuthState(): void {
+    this.isLoggedIn.set(false);
+    this.currentUser.set(null);
+    this.pendingProfileCompletionPrompt.set(false);
+    this.authState$.next(null);
+    this.userProfile.set(null);
+
+    if (this.userProfileUnsubscribe) {
+      this.userProfileUnsubscribe();
+      this.userProfileUnsubscribe = null;
+    }
+  }
+
+  private async ensureUserProfileExists(user: User, source?: UserProfileSource): Promise<void> {
+    const existingRequest = this.profileInitInFlight.get(user.uid);
+    if (existingRequest) {
+      return existingRequest;
+    }
+
+    const request = this.runEnsureUserProfileExists(user, source);
+    this.profileInitInFlight.set(user.uid, request);
+
+    try {
+      await request;
+    } finally {
+      this.profileInitInFlight.delete(user.uid);
+    }
+  }
+
+  private async runEnsureUserProfileExists(user: User, source?: UserProfileSource): Promise<void> {
+    const resolvedSource = source || this.resolveUserProfileSource(user);
     const profile = await this.firestoreService.getDocument('users', user.uid);
 
-    if (profile) {
+    if (profile?.id) {
+      const missingFields: Partial<UserProfile> = {};
+
+      if (!profile.email && user.email) {
+        missingFields.email = user.email;
+      }
+      if (!profile.name && user.displayName) {
+        missingFields.name = user.displayName;
+      }
+      if (!profile.phoneNumber && user.phoneNumber) {
+        missingFields.phoneNumber = user.phoneNumber;
+      }
+      if (!profile.photoURL && user.photoURL) {
+        missingFields.photoURL = user.photoURL;
+      }
+      if (!profile.role) {
+        missingFields.role = 'user';
+      }
+      if (!profile.source) {
+        missingFields.source = resolvedSource;
+      }
+      if (!profile.fcmToken) {
+        const fcmToken = this.getStoredFcmToken();
+        if (fcmToken) {
+          missingFields.fcmToken = fcmToken;
+        }
+      }
+
+      if (Object.keys(missingFields).length > 0) {
+        await this.firestoreService.updateDocument('users', user.uid, missingFields);
+      }
+
       return;
     }
 
@@ -538,17 +698,169 @@ export class AuthService {
       id: user.uid,
       email: user.email || '',
       name: user.displayName || 'User',
-      isVerified: user.emailVerified || false,
+      role: 'user',
+      source: resolvedSource,
+      isVerified: false,
       createdAt: new Date().toISOString(),
       region: '',
       phoneNumber: user.phoneNumber || '',
       photoURL: user.photoURL || '',
+      fcmToken: this.getStoredFcmToken(),
     };
 
     await this.firestoreService.updateDocument('users', user.uid, newUserProfile);
 
     if (user.email) {
-      this.emailService.sendWelcomeEmail(user.email, user.displayName || 'User');
+      await this.emailService.sendWelcomeEmail(user.email, user.displayName || 'User');
+    }
+  }
+
+  private async signInWithWebProvider(
+    provider: GoogleAuthProvider | FacebookAuthProvider,
+    source: Extract<UserProfileSource, 'google' | 'fb'>
+  ): Promise<AuthResult> {
+    try {
+      const userCredential = await signInWithPopup(auth, provider);
+      await this.handleSocialLoginSuccess(userCredential.user, source);
+      return { success: true };
+    } catch (error: unknown) {
+      const authError = error as { code?: string; message?: string };
+
+      if (
+        authError.code === 'auth/popup-blocked' ||
+        authError.code === 'auth/popup-closed-by-user' ||
+        authError.code === 'auth/cancelled-popup-request'
+      ) {
+        try {
+          await signInWithRedirect(auth, provider);
+          return { success: true };
+        } catch (redirectError: unknown) {
+          const fallbackError = redirectError as { message?: string };
+          return { success: false, error: fallbackError.message || 'Social sign-in failed. Please try again.' };
+        }
+      }
+
+      return { success: false, error: authError.message || 'Social sign-in failed. Please try again.' };
+    }
+  }
+
+  private getStoredFcmToken(): string {
+    try {
+      return localStorage.getItem(FCM_TOKEN_STORAGE_KEY) || '';
+    } catch {
+      return '';
+    }
+  }
+
+  private resolveUserProfileSource(user: User): UserProfileSource {
+    const providerIds = user.providerData.map((provider) => provider.providerId);
+
+    if (providerIds.includes('google.com')) {
+      return 'google';
+    }
+    if (providerIds.includes('facebook.com')) {
+      return 'fb';
+    }
+    if (providerIds.includes('apple.com')) {
+      return 'apple';
+    }
+
+    return 'app';
+  }
+
+  private generateVerificationCode(): string {
+    return Math.floor(100000 + Math.random() * 900000).toString();
+  }
+
+  private persistDeleteAccountVerification(verification: {
+    uid: string;
+    code: string;
+    email: string;
+    expiresAt: number;
+  }): void {
+    try {
+      localStorage.setItem(DELETE_ACCOUNT_VERIFICATION_KEY, JSON.stringify(verification));
+    } catch {
+      // Ignore storage failures and keep the flow best-effort.
+    }
+  }
+
+  private loadDeleteAccountVerification():
+    | { uid: string; code: string; email: string; expiresAt: number }
+    | null {
+    try {
+      const raw = localStorage.getItem(DELETE_ACCOUNT_VERIFICATION_KEY);
+      if (!raw) {
+        return null;
+      }
+
+      const parsed = JSON.parse(raw);
+      if (
+        typeof parsed?.uid === 'string' &&
+        typeof parsed?.code === 'string' &&
+        typeof parsed?.email === 'string' &&
+        typeof parsed?.expiresAt === 'number'
+      ) {
+        return parsed;
+      }
+    } catch {
+      // Ignore invalid cached verification data.
+    }
+
+    return null;
+  }
+
+  private clearDeleteAccountVerification(): void {
+    try {
+      localStorage.removeItem(DELETE_ACCOUNT_VERIFICATION_KEY);
+    } catch {
+      // Ignore storage failures.
+    }
+  }
+
+  private persistEmailVerificationCode(verification: {
+    uid: string;
+    code: string;
+    email: string;
+    expiresAt: number;
+  }): void {
+    try {
+      localStorage.setItem(EMAIL_VERIFICATION_CODE_KEY, JSON.stringify(verification));
+    } catch {
+      // Ignore storage failures.
+    }
+  }
+
+  private loadEmailVerificationCode():
+    | { uid: string; code: string; email: string; expiresAt: number }
+    | null {
+    try {
+      const raw = localStorage.getItem(EMAIL_VERIFICATION_CODE_KEY);
+      if (!raw) {
+        return null;
+      }
+
+      const parsed = JSON.parse(raw);
+      if (
+        typeof parsed?.uid === 'string' &&
+        typeof parsed?.code === 'string' &&
+        typeof parsed?.email === 'string' &&
+        typeof parsed?.expiresAt === 'number'
+      ) {
+        return parsed;
+      }
+    } catch {
+      // Ignore invalid cached verification data.
+    }
+
+    return null;
+  }
+
+  private clearEmailVerificationCode(): void {
+    try {
+      localStorage.removeItem(EMAIL_VERIFICATION_CODE_KEY);
+    } catch {
+      // Ignore storage failures.
     }
   }
 

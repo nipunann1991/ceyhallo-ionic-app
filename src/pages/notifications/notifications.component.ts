@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, Signal, computed, effect, signal } from '@angular/core';
+import { Component, ChangeDetectionStrategy, Signal, computed, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { IonicModule, InfiniteScrollCustomEvent, NavController } from '@ionic/angular';
 import { DataService } from '../../services/data.service';
@@ -88,11 +88,12 @@ export class NotificationsComponent {
   ) {
     this.notifications = this.dataService.getNotifications();
     this.displayedNotifications = computed(() => this.notifications().slice(0, this.limit()));
+  }
 
-    effect(() => {
-      this.notifications();
-      this.limit.set(10);
-    });
+  ionViewWillEnter() {
+    this.limit.set(10);
+    const notificationIds = this.notifications().map((notification) => notification.id);
+    this.localNotificationState.markAllAsRead(notificationIds);
   }
 
   goBack() {
