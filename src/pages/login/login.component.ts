@@ -1,5 +1,5 @@
 
-import { Component, ChangeDetectionStrategy, signal, computed, Input, inject } from '@angular/core';
+import { Component, ChangeDetectionStrategy, signal, computed, Input, inject, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { IonicModule, ModalController, ToastController } from '@ionic/angular';
 import { Capacitor } from '@capacitor/core';
@@ -217,13 +217,23 @@ export class LoginComponent {
   password = signal('');
   errorMessage = signal('');
   isLoading = signal(false);
+  private authCompletionHandled = false;
   
   showPassword = signal(false);
   rememberMe = signal(false);
 
   passwordFieldType = computed(() => this.showPassword() ? 'text' : 'password');
 
-  constructor() {}
+  constructor() {
+    effect(() => {
+      const user = this.authService.currentUser();
+      if (!user || this.authCompletionHandled) {
+        return;
+      }
+
+      void this.finishSuccessfulAuth();
+    });
+  }
 
   onEmailInput(event: Event) {
     this.email.set((event.target as HTMLInputElement).value);
@@ -267,12 +277,7 @@ export class LoginComponent {
     this.isLoading.set(false);
     
     if (result.success) {
-      this.authService.requestProfileCompletionPrompt();
-      if (this.isModal) {
-        this.modalCtrl.dismiss({ loggedIn: true });
-      } else {
-        this.router.navigate(['/tabs/home']);
-      }
+      await this.finishSuccessfulAuth();
     } else {
       const error = result.error || 'Login failed. Please try again.';
       this.errorMessage.set(error);
@@ -287,16 +292,18 @@ export class LoginComponent {
     this.isLoading.set(false);
 
     if (result.success) {
-      this.authService.requestProfileCompletionPrompt();
-      if (this.isModal) {
-        this.modalCtrl.dismiss({ loggedIn: true });
-      } else {
-        this.router.navigate(['/tabs/home']);
-      }
+      await this.finishSuccessfulAuth();
+      return;
+    }
+
+    if (result.dismissed) {
       return;
     }
 
     const error = result.error || 'Google Sign-In failed. Please try again.';
+    if (this.authService.isDismissedSocialLoginError(error)) {
+      return;
+    }
     this.errorMessage.set(error);
     await this.showErrorToast(error);
   }
@@ -308,16 +315,18 @@ export class LoginComponent {
     this.isLoading.set(false);
 
     if (result.success) {
-      this.authService.requestProfileCompletionPrompt();
-      if (this.isModal) {
-        this.modalCtrl.dismiss({ loggedIn: true });
-      } else {
-        this.router.navigate(['/tabs/home']);
-      }
+      await this.finishSuccessfulAuth();
+      return;
+    }
+
+    if (result.dismissed) {
       return;
     }
 
     const error = result.error || 'Facebook Login failed. Please try again.';
+    if (this.authService.isDismissedSocialLoginError(error)) {
+      return;
+    }
     this.errorMessage.set(error);
     await this.showErrorToast(error);
   }
@@ -329,16 +338,18 @@ export class LoginComponent {
     this.isLoading.set(false);
 
     if (result.success) {
-      this.authService.requestProfileCompletionPrompt();
-      if (this.isModal) {
-        this.modalCtrl.dismiss({ loggedIn: true });
-      } else {
-        this.router.navigate(['/tabs/home']);
-      }
+      await this.finishSuccessfulAuth();
+      return;
+    }
+
+    if (result.dismissed) {
       return;
     }
 
     const error = result.error || 'Apple Login failed. Please try again.';
+    if (this.authService.isDismissedSocialLoginError(error)) {
+      return;
+    }
     this.errorMessage.set(error);
     await this.showErrorToast(error);
   }
@@ -352,6 +363,22 @@ export class LoginComponent {
       cssClass: 'toast-custom-text'
     });
     await toast.present();
+  }
+
+  private async finishSuccessfulAuth() {
+    if (this.authCompletionHandled) {
+      return;
+    }
+
+    this.authCompletionHandled = true;
+    this.authService.requestProfileCompletionPrompt();
+
+    if (this.isModal) {
+      await this.modalCtrl.dismiss({ loggedIn: true });
+      return;
+    }
+
+    await this.router.navigate(['/tabs/home']);
   }
 
   async openLegalModal(type: string) {

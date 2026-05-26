@@ -4,4 +4,6 @@
     <string name="title_activity_main">CeyHallo</string>
     <string name="package_name">com.ceyhallo.app</string>
     <string name="custom_url_scheme">com.ceyhallo.app</string>
+    <string name="facebook_app_id">1273168304320582</string>
+    <string name="facebook_client_token">446d552b822383774784d672ea6ebda5</string>
 </resources>

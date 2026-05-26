@@ -15,10 +15,6 @@ const config: CapacitorConfig = {
       apple: {
         clientId: 'com.ceyhallo.app.signin',
       },
-      facebook: {
-        appId: '1273168304320582',
-        clientToken: '446d552b822383774784d672ea6ebda5',
-      },
       google: {
         iOSClientId: '253346274750-m3pvrbnti009lkdqnc05tfo835vs8g2g.apps.googleusercontent.com', // MY_VALUE_IOS_CLIENT_ID
         iOSServerClientId: '253346274750-2s39r743nn8qe887vbl55den44ej02v4.apps.googleusercontent.com', // MY_VALUE_IOS_SERVER_CLIENT_ID

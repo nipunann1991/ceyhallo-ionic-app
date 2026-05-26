@@ -10,7 +10,7 @@ import { LegalDocument } from '../models/legal.model';
 import { SupportInfo } from '../models/support.model';
 import { Notification } from '../models/notification.model';
 import { Offer } from '../models/offer.model';
-import { AppConfig } from '../models/settings.model';
+import { AppConfig, NewsCategoryItem } from '../models/settings.model';
 import { HubSection } from '../models/hub.model';
 
 export const articles = signal<NewsArticle[]>([]);
@@ -25,5 +25,6 @@ export const supportInfo = signal<SupportInfo | null>(null);
 export const notifications = signal<Notification[]>([]);
 export const offers = signal<Offer[]>([]);
 export const appSettings = signal<AppConfig | null>(null);
+export const newsCategories = signal<NewsCategoryItem[]>([]);
 export const rawHubSections = signal<HubSection[]>([]);
 export const selectedCountryId = signal<string>('uae');

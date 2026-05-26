@@ -19,10 +19,12 @@
         }
         
         <!-- Title -->
-        <h3 class="text-white text-[1.05rem] font-bold leading-tight line-clamp-2 drop-shadow-md">
+        <h3 class="text-white text-[0.9rem] font-bold leading-tight line-clamp-2 drop-shadow-md">
             {{ offer().title }}
         </h3>
         <!-- Target Name (Business/Source) -->
-        <p class="text-white/90 text-xs font-medium mt-1 truncate drop-shadow-md">{{ offer().targetName }}</p>
+        <p class="text-white/90 text-xs font-medium mt-1 truncate drop-shadow-md">
+            {{ (offer().linkType || '').toLowerCase() === 'none' ? (offer().offerBy || offer().targetName) : offer().targetName }}
+        </p>
     </div>
 </div>

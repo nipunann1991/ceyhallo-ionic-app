@@ -17,4 +17,5 @@ export interface UserProfile {
   authToken?: string;
   passwordHash?: string;
   createdAt?: string;
+  lastLogin?: string;
 }

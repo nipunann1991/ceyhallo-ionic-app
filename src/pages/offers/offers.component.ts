@@ -123,22 +123,27 @@ export class OffersComponent implements OnInit {
         return;
     }
 
+    const isNoLinkOffer = (offer.linkType || '').toLowerCase() === 'none';
+    const expiryLabel = offer.endDate
+      ? offer.endDate.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+      : 'No end date';
+
     const offerArticle: NewsArticle = {
       id: offer.id,
       title: offer.title,
-      source: offer.targetName,
-      date: offer.expiryDate,
+      source: isNoLinkOffer ? (offer.offerBy || offer.targetName) : offer.targetName,
+      date: offer.endDate || offer.expiryDate,
       imageUrl: offer.image,
       description: offer.discount,
       content: `
         <div class="space-y-4">
-           <p class="text-base text-gray-600 leading-relaxed">${offer.description || 'No additional details available.'}</p>
+           <p class="text-base text-gray-600 leading-relaxed">${offer.content || offer.description || 'No additional details available.'}</p>
            
-           <div class="flex items-center gap-2 mt-4 text-sm font-medium text-gray-500">
+           <div class="flex items-center gap-2 mt-4 text-sm text-gray-500">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              <span>Expires: ${offer.expiryDate.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
+              <span><span class="font-bold text-gray-700">Expires on:</span> ${expiryLabel}</span>
            </div>
         </div>
       `,

@@ -6,13 +6,16 @@ import { CommonModule } from '@angular/common';
 import { App, URLOpenListenerEvent } from '@capacitor/app';
 import { Capacitor } from '@capacitor/core';
 import { SocialLogin } from '@capgo/capacitor-social-login';
+import { FacebookLogin } from '@capacitor-community/facebook-login';
 import { DataService } from './services/data.service';
 import { PushNotificationService } from './services/push-notifications.service';
 import { AiChatComponent } from './components/ai-chat/ai-chat.component';
 
-const FACEBOOK_APP_ID = 'MY_VALUE_FACEBOOK_APP_ID';
-const FACEBOOK_CLIENT_TOKEN = 'MY_VALUE_FACEBOOK_CLIENT_TOKEN';
+const FACEBOOK_APP_ID = '1273168304320582';
+const FACEBOOK_CLIENT_TOKEN = '446d552b822383774784d672ea6ebda5';
 const APPLE_CLIENT_ID = 'MY_VALUE_APPLE_CLIENT_ID';
+const GOOGLE_WEB_CLIENT_ID = '253346274750-2s39r743nn8qe887vbl55den44ej02v4.apps.googleusercontent.com';
+const GOOGLE_IOS_CLIENT_ID = '253346274750-m3pvrbnti009lkdqnc05tfo835vs8g2g.apps.googleusercontent.com';
 
 @Component({
   selector: 'app-root',
@@ -49,7 +52,7 @@ const APPLE_CLIENT_ID = 'MY_VALUE_APPLE_CLIENT_ID';
           
           <!-- Logo -->
           <div class="flex flex-col items-center mb-6">
-             <ion-img src="https://i.ibb.co/B5TnYXWN/logo.png" alt="CeyHallo Logo" class="h-24 object-contain"></ion-img>
+             <ion-img src="/assets/logo.png" alt="CeyHallo Logo" class="h-24 object-contain"></ion-img>
           </div>
           
           <h2 class="text-xl font-bold text-[#1A1C1E] mb-3 tracking-tight">Under Maintenance</h2>
@@ -104,6 +107,7 @@ export class AppComponent implements OnInit {
   async initializeApp(): Promise<void> {
     await this.platform.ready();
     await this.initializeSocialLogin();
+    await this.initializeFacebookLogin();
 
     // Listen for deep links (e.g., from Firebase Reset Email)
     App.addListener('appUrlOpen', (event: URLOpenListenerEvent) => {
@@ -129,25 +133,26 @@ export class AppComponent implements OnInit {
   }
 
   private async initializeSocialLogin(): Promise<void> {
-    if (Capacitor.getPlatform() !== 'ios') {
+    const platform = Capacitor.getPlatform();
+    if (platform !== 'ios' && platform !== 'android') {
       return;
     }
 
     try {
-      const facebookConfigured =
-        !FACEBOOK_APP_ID.startsWith('MY_VALUE_') &&
-        !FACEBOOK_CLIENT_TOKEN.startsWith('MY_VALUE_');
       const appleConfigured = !APPLE_CLIENT_ID.startsWith('MY_VALUE_');
+      const googleConfig =
+        platform === 'android'
+          ? {
+              webClientId: GOOGLE_WEB_CLIENT_ID,
+            }
+          : {
+              iOSClientId: GOOGLE_IOS_CLIENT_ID,
+              iOSServerClientId: GOOGLE_WEB_CLIENT_ID,
+              mode: 'online' as const,
+            };
 
       await SocialLogin.initialize({
-        ...(appleConfigured
-          ? {
-              apple: {
-                clientId: APPLE_CLIENT_ID,
-              },
-            }
-          : {}),
-        ...(facebookConfigured
+        ...(platform === 'android'
           ? {
               facebook: {
                 appId: FACEBOOK_APP_ID,
@@ -155,14 +160,35 @@ export class AppComponent implements OnInit {
               },
             }
           : {}),
-        google: {
-          iOSClientId: '253346274750-m3pvrbnti009lkdqnc05tfo835vs8g2g.apps.googleusercontent.com', // MY_VALUE_IOS_CLIENT_ID
-          iOSServerClientId: '253346274750-2s39r743nn8qe887vbl55den44ej02v4.apps.googleusercontent.com', // MY_VALUE_IOS_SERVER_CLIENT_ID
-          mode: 'online',
-        },
+        ...(platform === 'ios' && appleConfigured
+          ? {
+              apple: {
+                clientId: APPLE_CLIENT_ID,
+              },
+            }
+          : {}),
+        google: googleConfig,
       });
     } catch (error) {
       console.error('SocialLogin initialization failed:', error);
+    }
+  }
+
+  private async initializeFacebookLogin(): Promise<void> {
+    const facebookConfigured =
+      !FACEBOOK_APP_ID.startsWith('MY_VALUE_') &&
+      !FACEBOOK_CLIENT_TOKEN.startsWith('MY_VALUE_');
+
+    if (!facebookConfigured) {
+      return;
+    }
+
+    try {
+      await FacebookLogin.initialize({
+        appId: FACEBOOK_APP_ID,
+      });
+    } catch (error) {
+      console.error('FacebookLogin initialization failed:', error);
     }
   }
 

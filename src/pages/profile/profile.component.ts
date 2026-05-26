@@ -202,7 +202,7 @@ import { DataService } from '../../services/data.service';
       <div (click)="onVerificationBackdropClick()" class="min-h-full flex items-center justify-center bg-black/45 backdrop-blur-[2px] p-6">
         <div (click)="$event.stopPropagation()" class="bg-white rounded-3xl p-8 w-full max-w-xs text-center shadow-2xl relative overflow-hidden">
           <div class="flex flex-col items-center mb-6">
-            <ion-img src="https://i.ibb.co/B5TnYXWN/logo.png" alt="CeyHallo Logo" class="h-24 object-contain"></ion-img>
+            <ion-img src="/assets/logo.png" alt="CeyHallo Logo" class="h-24 object-contain"></ion-img>
           </div>
 
           @if (verificationDialogState() === 'confirm') {
@@ -324,7 +324,7 @@ export class ProfileComponent {
           isVerified: profile?.isVerified ?? firebaseUser?.emailVerified,
           avatar: profile?.photoURL || firebaseUser?.photoURL || `https://i.pravatar.cc/300?u=${profile?.email || 'user'}`,
           flagUrl: country?.flagUrl || '',
-          showCompleteProfilePrompt: !profile?.phoneNumber || !profile?.region || !profile?.city || !profile?.dateOfBirth
+          showCompleteProfilePrompt: !profile?.phoneNumber?.trim()
         };
     });
   }

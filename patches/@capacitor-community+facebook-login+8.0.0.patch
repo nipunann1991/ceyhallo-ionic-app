@@ -1,0 +1,98 @@
+diff --git a/node_modules/@capacitor-community/facebook-login/Package.swift b/node_modules/@capacitor-community/facebook-login/Package.swift
+index 7d94728..7ff7c29 100644
+--- a/node_modules/@capacitor-community/facebook-login/Package.swift
++++ b/node_modules/@capacitor-community/facebook-login/Package.swift
+@@ -11,7 +11,7 @@ let package = Package(
+     ],
+     dependencies: [
+         .package(url: "https://github.com/ionic-team/capacitor-swift-pm.git", from: "8.0.0"),
+-        .package(url: "https://github.com/facebook/facebook-ios-sdk.git", .upToNextMajor(from: "17.4.0"))
++        .package(url: "https://github.com/facebook/facebook-ios-sdk.git", .upToNextMajor(from: "18.0.3"))
+     ],
+     targets: [
+         .target(
+diff --git a/node_modules/@capacitor-community/facebook-login/dist/esm/definitions.d.ts b/node_modules/@capacitor-community/facebook-login/dist/esm/definitions.d.ts
+index 40eb152..21b7701 100644
+--- a/node_modules/@capacitor-community/facebook-login/dist/esm/definitions.d.ts
++++ b/node_modules/@capacitor-community/facebook-login/dist/esm/definitions.d.ts
+@@ -8,13 +8,18 @@ export interface AccessToken {
+     token: string;
+     userId?: string;
+ }
++export interface AuthenticationToken {
++    token: string;
++}
+ export interface FacebookLoginResponse {
+     accessToken: AccessToken | null;
++    authenticationToken?: AuthenticationToken | null;
+     recentlyGrantedPermissions?: string[];
+     recentlyDeniedPermissions?: string[];
+ }
+ export interface FacebookCurrentAccessTokenResponse {
+     accessToken: AccessToken | null;
++    authenticationToken?: AuthenticationToken | null;
+ }
+ export interface FacebookLoginPlugin {
+     initialize(options: Partial<FacebookConfiguration>): Promise<void>;
+diff --git a/node_modules/@capacitor-community/facebook-login/android/build.gradle b/node_modules/@capacitor-community/facebook-login/android/build.gradle
+index c41ef6c..2ce5818 100644
+--- a/node_modules/@capacitor-community/facebook-login/android/build.gradle
++++ b/node_modules/@capacitor-community/facebook-login/android/build.gradle
+@@ -31,9 +31,10 @@ android {
+     buildTypes {
+         release {
+             minifyEnabled false
+-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
++            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+         }
+     }
+     lintOptions {
+         abortOnError = false
++    }
+     compileOptions {
+         sourceCompatibility JavaVersion.VERSION_21
+         targetCompatibility JavaVersion.VERSION_21
+diff --git a/node_modules/@capacitor-community/facebook-login/ios/Sources/FacebookLoginPlugin/FacebookLoginPlugin.swift b/node_modules/@capacitor-community/facebook-login/ios/Sources/FacebookLoginPlugin/FacebookLoginPlugin.swift
+index 6b3b119..45a1c3c 100644
+--- a/node_modules/@capacitor-community/facebook-login/ios/Sources/FacebookLoginPlugin/FacebookLoginPlugin.swift
++++ b/node_modules/@capacitor-community/facebook-login/ios/Sources/FacebookLoginPlugin/FacebookLoginPlugin.swift
+@@ -113,23 +113,27 @@ public class FacebookLoginPlugin: CAPPlugin, CAPBridgedPlugin {
+     }
+ 
+     @objc func getCurrentAccessToken(_ call: CAPPluginCall) {
+-        guard let authenticationToken = AuthenticationToken.current else {
+-            call.resolve()
+-            return
++        var response: [String: Any] = [:]
++
++        if let accessToken = AccessToken.current {
++            response["accessToken"] = [
++                "token": accessToken.tokenString,
++                "userId": accessToken.userID
++            ]
+         }
+ 
+-        guard let userProfile = Profile.current else {
+-            call.resolve()
++        if let authenticationToken = AuthenticationToken.current {
++            response["authenticationToken"] = [
++                "token": authenticationToken.tokenString
++            ]
++        }
++
++        if !response.isEmpty {
++            call.resolve(response)
+             return
+         }
+ 
+-        call.resolve([ "accessToken": [
+-            "token": authenticationToken.tokenString,
+-            "userId": userProfile.userID,
+-            "name": userProfile.name,
+-            "email": userProfile.email
+-        ]
+-        ])
++        call.resolve()
+     }
+ 
+     @objc func getProfile(_ call: CAPPluginCall) {

@@ -17,6 +17,7 @@ import { handleImageError } from '../../utils/image.utils';
 import { AuthService } from '../../services/auth.service';
 import { LoginComponent } from '../login/login.component';
 import { Country } from '../../models/country.model';
+import { BusinessLocation } from '../../models/business.model';
 
 @Component({
   selector: 'app-businesses',
@@ -116,13 +117,8 @@ export class BusinessesComponent implements OnInit {
         const country = this.countries().find(c => c.id === cid);
         
         if (!country) return [];
-    
-        const cityNames = country.cities.map(c => (c.name || '').toLowerCase());
-        
-        return list.filter(r => {
-           const loc = (r.location || '').toLowerCase();
-           return cityNames.some(city => loc.includes(city));
-        });
+
+        return list.filter((business) => this.businessMatchesCountry(business, country));
     });
 
     this.sectionOffers = computed(() => {
@@ -178,7 +174,7 @@ export class BusinessesComponent implements OnInit {
         }
         
         if (cat !== 'All') {
-          list = list.filter(r => (r.location || '').toLowerCase().includes(cat.toLowerCase()));
+          list = list.filter((business) => this.businessMatchesCityCategory(business, cat));
         }
     
         if (term) {
@@ -227,6 +223,53 @@ export class BusinessesComponent implements OnInit {
     return text.charAt(0).toUpperCase() + text.slice(1);
   }
 
+  private getBusinessLocations(business: Business): BusinessLocation[] {
+    return business.locations ?? [];
+  }
+
+  private businessMatchesCountry(business: Business, country: Country): boolean {
+    const selectedCountryCode = (country.id || '').trim().toUpperCase();
+    if (!selectedCountryCode) {
+      return true;
+    }
+
+    if ((business.countryCode || '').trim().toUpperCase() === selectedCountryCode) {
+      return true;
+    }
+
+    return this.getBusinessLocations(business).some((location) =>
+      (location.countryCode || '').trim().toUpperCase() === selectedCountryCode
+    );
+  }
+
+  private businessMatchesCityCategory(business: Business, cityName: string): boolean {
+    const normalizedCityName = (cityName || '').trim().toLowerCase();
+    if (!normalizedCityName || normalizedCityName === 'all') {
+      return true;
+    }
+
+    const selectedCountryCode = (this.selectedCountryId() || '').trim().toUpperCase();
+    const country = this.countries().find((item) => (item.id || '').trim().toUpperCase() === selectedCountryCode);
+    const matchedCity = country?.cities.find((city) => (city.name || '').trim().toLowerCase() === normalizedCityName);
+
+    if (!matchedCity) {
+      return (business.location || '').toLowerCase().includes(normalizedCityName);
+    }
+
+    const cityCode = (matchedCity.code || '').trim().toUpperCase();
+    if (!cityCode) {
+      return false;
+    }
+
+    if ((business.cityCode || '').trim().toUpperCase() === cityCode) {
+      return true;
+    }
+
+    return this.getBusinessLocations(business).some((location) =>
+      (location.cityCode || '').trim().toUpperCase() === cityCode
+    );
+  }
+
   handleSearch(value: string) {
     this.searchTerm.set(value);
     this.limit.set(10);
@@ -264,22 +307,27 @@ export class BusinessesComponent implements OnInit {
         return;
     }
 
+    const isNoLinkOffer = (offer.linkType || '').toLowerCase() === 'none';
+    const expiryLabel = offer.endDate
+      ? offer.endDate.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+      : 'No end date';
+
     const offerArticle: NewsArticle = {
       id: offer.id,
       title: offer.title,
-      source: offer.targetName,
-      date: offer.expiryDate,
+      source: isNoLinkOffer ? (offer.offerBy || offer.targetName) : offer.targetName,
+      date: offer.endDate || offer.expiryDate,
       imageUrl: offer.image,
       description: offer.discount,
       content: `
         <div class="space-y-4">
-           <p class="text-base text-gray-600 leading-relaxed">${offer.description || 'No additional details available.'}</p>
+           <p class="text-base text-gray-600 leading-relaxed">${offer.content || offer.description || 'No additional details available.'}</p>
            
-           <div class="flex items-center gap-2 mt-4 text-sm font-medium text-gray-500">
+           <div class="flex items-center gap-2 mt-4 text-sm text-gray-500">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              <span>Expires: ${offer.expiryDate.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
+              <span><span class="font-bold text-gray-700">Expires on:</span> ${expiryLabel}</span>
            </div>
         </div>
       `,

@@ -30,6 +30,7 @@ import { Observable } from 'rxjs';
 import { Business } from '../../models/business.model';
 import { Notification } from '../../models/notification.model';
 import { LocalNotificationStateService } from '../../services/local-notification-state.service';
+import { UserProfile } from '../../models/user.model';
 
 @Component({
   selector: 'app-home',
@@ -202,6 +203,10 @@ export class HomeComponent implements OnInit, OnDestroy {
             data = (data as Event[]).filter(e => !e.countryCode || e.countryCode === cid);
           }
 
+          if (typeof section.limit === 'number' && section.limit > 0) {
+            data = data.slice(0, section.limit);
+          }
+
           return { section, data };
         }).filter(item => item.data && item.data.length > 0);
     });
@@ -248,13 +253,7 @@ export class HomeComponent implements OnInit, OnDestroy {
         return;
       }
 
-      const isIncomplete =
-        !profile.phoneNumber ||
-        !profile.region ||
-        !profile.city ||
-        !profile.dateOfBirth;
-
-      if (!isIncomplete) {
+      if (!this.requiresProfileCompletion(profile)) {
         this.authService.clearProfileCompletionPrompt();
         if (this.profileCompletionOpenTimeout) {
           clearTimeout(this.profileCompletionOpenTimeout);
@@ -578,16 +577,6 @@ export class HomeComponent implements OnInit, OnDestroy {
   }
 
   async nextProfileCompletionStep() {
-    if (!this.completionRegion()) {
-      await this.showToast('Country is required.', 'danger');
-      return;
-    }
-
-    if (!this.completionCity()) {
-      await this.showToast('City is required.', 'danger');
-      return;
-    }
-
     this.profileCompletionStep.set(2);
   }
 
@@ -597,17 +586,12 @@ export class HomeComponent implements OnInit, OnDestroy {
       return;
     }
 
-    if (!this.completionDateOfBirth()) {
-      await this.showToast('Date of birth is required.', 'danger');
-      return;
-    }
-
     this.profileCompletionBusy.set(true);
     const result = await this.authService.updateUserProfile({
       phoneNumber: this.completionPhoneNumber().trim(),
       region: this.completionRegion(),
       city: this.completionCity(),
-      dateOfBirth: this.completionDateOfBirth(),
+      dateOfBirth: this.completionDateOfBirth() || '',
     });
     this.profileCompletionBusy.set(false);
 
@@ -632,7 +616,7 @@ export class HomeComponent implements OnInit, OnDestroy {
     this.completionRegion.set(profile.region || '');
     this.completionCity.set(profile.city || '');
     this.completionDateOfBirth.set(profile.dateOfBirth || '');
-    this.profileCompletionStep.set((!profile.region || !profile.city) ? 1 : 2);
+    this.profileCompletionStep.set(1);
   }
 
   private resetProfileCompletionPrompt() {
@@ -668,13 +652,7 @@ export class HomeComponent implements OnInit, OnDestroy {
         return;
       }
 
-      const isIncomplete =
-        !profile.phoneNumber ||
-        !profile.region ||
-        !profile.city ||
-        !profile.dateOfBirth;
-
-      if (!isIncomplete || !this.authService.pendingProfileCompletionPrompt()) {
+      if (!this.requiresProfileCompletion(profile) || !this.authService.pendingProfileCompletionPrompt()) {
         return;
       }
 
@@ -684,6 +662,7 @@ export class HomeComponent implements OnInit, OnDestroy {
         return;
       }
 
+      this.profileCompletionStep.set(1);
       this.profileCompletionModalOpen.set(true);
     }, 700);
   }
@@ -694,6 +673,10 @@ export class HomeComponent implements OnInit, OnDestroy {
     }
 
     await this.scheduleProfileCompletionModalOpen();
+  }
+
+  private requiresProfileCompletion(profile: UserProfile | null | undefined): boolean {
+    return !profile?.phoneNumber?.trim();
   }
 
   async handleCategoryClick(category: Category) {
@@ -781,6 +764,51 @@ export class HomeComponent implements OnInit, OnDestroy {
     this.router.navigateByUrl(url);
   }
 
+  getSectionLinkUrl(section: HomeSection): string | null {
+    if (section.linkUrl?.trim()) {
+      return section.linkUrl.trim();
+    }
+
+    switch (section.template) {
+      case 'latest_offers':
+        return '/offers';
+      case 'featured_businesses':
+        return '/businesses';
+      case 'news_feed':
+        return '/news';
+      case 'events':
+        return '/events';
+      case 'jobs':
+        return '/jobs';
+      default:
+        return null;
+    }
+  }
+
+  async handleSectionLinkClick(section: HomeSection) {
+    const url = this.getSectionLinkUrl(section);
+    if (!url) {
+      return;
+    }
+
+    if (/^https?:\/\//i.test(url)) {
+      window.open(url, '_system');
+      return;
+    }
+
+    if (section.template === 'latest_offers') {
+      await this.router.navigate(['/offers'], {
+        queryParams: {
+          category: this.getSectionCategory(section),
+          title: section.title
+        }
+      });
+      return;
+    }
+
+    await this.router.navigateByUrl(url);
+  }
+
   async handleBannerClick(banner: Banner) {
     if (!(await this.requireLogin())) return;
 
@@ -860,22 +888,27 @@ export class HomeComponent implements OnInit, OnDestroy {
     
     if (!(await this.requireLogin())) return;
 
+    const isNoLinkOffer = (offer.linkType || '').toLowerCase() === 'none';
+    const expiryLabel = offer.endDate
+      ? offer.endDate.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+      : 'No end date';
+
     const offerArticle: NewsArticle = {
       id: offer.id,
       title: offer.title,
-      source: offer.targetName,
-      date: offer.expiryDate,
+      source: isNoLinkOffer ? (offer.offerBy || offer.targetName) : offer.targetName,
+      date: offer.endDate || offer.expiryDate,
       imageUrl: offer.image,
       description: offer.discount,
       content: `
         <div class="space-y-4">
-           <p class="text-base text-gray-600 leading-relaxed">${offer.description || 'No additional details available.'}</p>
+           <p class="text-base text-gray-600 leading-relaxed">${offer.content || offer.description || 'No additional details available.'}</p>
            
-           <div class="flex items-center gap-2 mt-4 text-sm font-medium text-gray-500">
+           <div class="flex items-center gap-2 mt-4 text-sm text-gray-500">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              <span>Expires: ${offer.expiryDate.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
+              <span><span class="font-bold text-gray-700">Expires on:</span> ${expiryLabel}</span>
            </div>
         </div>
       `,

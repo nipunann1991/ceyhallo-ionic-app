@@ -174,20 +174,25 @@ export class SearchComponent implements OnInit {
   }
 
   async openOfferDetail(offer: Offer) {
+    const isNoLinkOffer = (offer.linkType || '').toLowerCase() === 'none';
+    const expiryLabel = offer.endDate
+      ? offer.endDate.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+      : 'No end date';
+
     const offerArticle: NewsArticle = {
       id: offer.id,
       title: offer.title,
-      source: offer.targetName,
-      date: offer.expiryDate,
+      source: isNoLinkOffer ? (offer.offerBy || offer.targetName) : offer.targetName,
+      date: offer.endDate || offer.expiryDate,
       imageUrl: offer.image,
       description: offer.discount,
       content: `
         <div class="space-y-4">
-           <p class="text-base text-gray-600 leading-relaxed">${offer.description || 'No additional details available.'}</p>
+           <p class="text-base text-gray-600 leading-relaxed">${offer.content || offer.description || 'No additional details available.'}</p>
            
-           <div class="flex items-center gap-2 mt-4 text-sm font-medium text-gray-500">
+           <div class="flex items-center gap-2 mt-4 text-sm text-gray-500">
               <ion-icon name="time-outline" class="text-lg"></ion-icon>
-              <span>Expires: ${offer.expiryDate.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
+              <span><span class="font-bold text-gray-700">Expires on:</span> ${expiryLabel}</span>
            </div>
         </div>
       `,

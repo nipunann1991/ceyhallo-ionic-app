@@ -30,6 +30,19 @@ export interface AppConfig {
   showBusinessListing?: boolean;
   showRateApp?: boolean;
   homeSections: HomeSection[];
+  news_categories?: string[];
+}
+
+export interface NewsCategoryItem {
+  id: string;
+  name: string;
+  slug?: string;
+  order?: number;
+}
+
+export interface NewsCategoriesConfig {
+  id: string;
+  categories: NewsCategoryItem[];
 }
 
 export interface Settings {

@@ -1,0 +1,55 @@
+{
+  "project_info": {
+    "project_number": "253346274750",
+    "firebase_url": "https://ceyhallo-89e40-default-rtdb.europe-west1.firebasedatabase.app",
+    "project_id": "ceyhallo-89e40",
+    "storage_bucket": "ceyhallo-89e40.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:253346274750:android:02ac25108b0091ae2b2def",
+        "android_client_info": {
+          "package_name": "com.ceyhallo.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "253346274750-eqhqrd65ericbunackc18r3i1fnngo7j.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.ceyhallo.app",
+            "certificate_hash": "7837c3fcd269e32dd74ecc9b27a5e3177c3d6e2c"
+          }
+        },
+        {
+          "client_id": "253346274750-2s39r743nn8qe887vbl55den44ej02v4.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBLbpdaQTNWxxNzLfexwPhfOCXLuKegsMQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "253346274750-2s39r743nn8qe887vbl55den44ej02v4.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "253346274750-m3pvrbnti009lkdqnc05tfo835vs8g2g.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.ceyhallo.app"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

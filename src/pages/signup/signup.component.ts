@@ -1,5 +1,5 @@
 
-import { Component, ChangeDetectionStrategy, signal, inject, computed, Input } from '@angular/core';
+import { Component, ChangeDetectionStrategy, signal, inject, computed, Input, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { IonicModule, ModalController, NavController, ToastController } from '@ionic/angular';
 import { Capacitor } from '@capacitor/core';
@@ -63,7 +63,7 @@ import { LegalPageComponent } from '../legal/legal.component';
                   placeholder="Email Address">
             </div>
 
-             <!-- Region Select -->
+             <!-- Country Select -->
              <div class="relative group">
                 <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                     <ion-icon name="globe-outline" class="text-[#9CA3AF] text-[1.125rem] group-focus-within:text-[#083594] transition-colors duration-200"></ion-icon>
@@ -73,7 +73,7 @@ import { LegalPageComponent } from '../legal/legal.component';
                   (change)="region.set($any($event.target).value)"
                   class="w-full h-[3rem] pl-[2.75rem] pr-10 bg-white border border-gray-200 rounded-xl text-base font-medium text-[#1A1C1E] focus:outline-none focus:border-[#083594] focus:ring-4 focus:ring-[#083594]/10 transition-all duration-200 shadow-sm appearance-none"
                   [class.text-[#9CA3AF]]="!region()">
-                  <option value="" disabled selected>Select Region</option>
+                  <option value="" disabled selected>Select Country</option>
                   @for (country of countries(); track country.id) {
                     <option [value]="country.id" class="text-[#1A1C1E]">{{ country.name }}</option>
                   }
@@ -83,7 +83,7 @@ import { LegalPageComponent } from '../legal/legal.component';
                 </div>
             </div>
 
-            <!-- Contact Number (Optional) -->
+            <!-- Contact Number -->
             <div class="relative group">
                 <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                     <ion-icon name="call-outline" class="text-[#9CA3AF] text-[1.125rem] group-focus-within:text-[#083594] transition-colors duration-200"></ion-icon>
@@ -93,7 +93,7 @@ import { LegalPageComponent } from '../legal/legal.component';
                   [value]="phoneNumber()" 
                   (input)="phoneNumber.set($any($event.target).value)"
                   class="w-full h-[3rem] pl-[2.75rem] pr-4 bg-white border border-gray-200 rounded-xl text-base font-medium text-[#1A1C1E] placeholder:text-[#9CA3AF] placeholder:font-normal focus:outline-none focus:border-[#083594] focus:ring-4 focus:ring-[#083594]/10 transition-all duration-200 shadow-sm"
-                  placeholder="Contact Number (Optional)">
+                  placeholder="Contact Number">
             </div>
 
             <!-- Password Input -->
@@ -255,9 +255,21 @@ export class SignUpComponent {
   
   errorMessage = signal('');
   isLoading = signal(false);
+  private authCompletionHandled = false;
   
   showPassword = signal(false);
   passwordFieldType = computed(() => this.showPassword() ? 'text' : 'password');
+
+  constructor() {
+    effect(() => {
+      const user = this.authService.currentUser();
+      if (!user || this.authCompletionHandled) {
+        return;
+      }
+
+      void this.finishSuccessfulAuth();
+    });
+  }
 
   togglePasswordVisibility() {
     this.showPassword.update(value => !value);
@@ -280,8 +292,8 @@ export class SignUpComponent {
   }
 
   async signUp() {
-    if (!this.name() || !this.email() || !this.password() || !this.confirmPassword() || !this.region()) {
-      this.showErrorToast('Please fill in all required fields (Region is required).');
+    if (!this.name().trim() || !this.email().trim() || !this.phoneNumber().trim() || !this.password() || !this.confirmPassword() || !this.region()) {
+      this.showErrorToast('Please fill in all required fields (Country and phone number are required).');
       return;
     }
     
@@ -304,22 +316,17 @@ export class SignUpComponent {
     this.isLoading.set(true);
     
     const result = await this.authService.signUp(
-      this.email(), 
+      this.email().trim(), 
       this.password(), 
-      this.name(),
+      this.name().trim(),
       this.region(),
-      this.phoneNumber()
+      this.phoneNumber().trim()
     );
     
     this.isLoading.set(false);
     
     if (result.success) {
-      this.authService.requestProfileCompletionPrompt();
-      if (this.isModal) {
-        this.modalCtrl.dismiss({ signedUp: true });
-      } else {
-        this.router.navigate(['/tabs/home']);
-      }
+      await this.finishSuccessfulAuth();
     } else {
       const error = result.error || 'Registration failed. Please try again.';
       this.errorMessage.set(error);
@@ -334,16 +341,18 @@ export class SignUpComponent {
     this.isLoading.set(false);
 
     if (result.success) {
-      this.authService.requestProfileCompletionPrompt();
-      if (this.isModal) {
-        this.modalCtrl.dismiss({ signedUp: true });
-      } else {
-        this.router.navigate(['/tabs/home']);
-      }
+      await this.finishSuccessfulAuth();
+      return;
+    }
+
+    if (result.dismissed) {
       return;
     }
 
     const error = result.error || 'Google Sign-In failed. Please try again.';
+    if (this.authService.isDismissedSocialLoginError(error)) {
+      return;
+    }
     this.errorMessage.set(error);
     await this.showErrorToast(error);
   }
@@ -355,16 +364,18 @@ export class SignUpComponent {
     this.isLoading.set(false);
 
     if (result.success) {
-      this.authService.requestProfileCompletionPrompt();
-      if (this.isModal) {
-        this.modalCtrl.dismiss({ signedUp: true });
-      } else {
-        this.router.navigate(['/tabs/home']);
-      }
+      await this.finishSuccessfulAuth();
+      return;
+    }
+
+    if (result.dismissed) {
       return;
     }
 
     const error = result.error || 'Facebook Login failed. Please try again.';
+    if (this.authService.isDismissedSocialLoginError(error)) {
+      return;
+    }
     this.errorMessage.set(error);
     await this.showErrorToast(error);
   }
@@ -378,6 +389,22 @@ export class SignUpComponent {
       cssClass: 'toast-custom-text'
     });
     await toast.present();
+  }
+
+  private async finishSuccessfulAuth() {
+    if (this.authCompletionHandled) {
+      return;
+    }
+
+    this.authCompletionHandled = true;
+    this.authService.requestProfileCompletionPrompt();
+
+    if (this.isModal) {
+      await this.modalCtrl.dismiss({ signedUp: true });
+      return;
+    }
+
+    await this.router.navigate(['/tabs/home']);
   }
 
   async openLegalModal(type: string) {

@@ -347,7 +347,7 @@ export function extractNotificationLink(data: LooseRecord): string | undefined {
   return undefined;
 }
 
-export function extractNotificationDate(data: LooseRecord): Date {
+export function extractNotificationDate(data: LooseRecord): Date | null {
   const payload = asRecord(data['payload']);
   const payloadData = asRecord(payload['data']);
 
@@ -386,7 +386,7 @@ export function extractNotificationDate(data: LooseRecord): Date {
     }
   }
 
-  return new Date();
+  return null;
 }
 
 function inferNotificationType(rawType?: string, rawStatus?: string): NotificationType {
@@ -407,10 +407,15 @@ function inferNotificationType(rawType?: string, rawStatus?: string): Notificati
   return 'info';
 }
 
-export function mapNotificationDocument(id: string, data: LooseRecord, source: NotificationSource): Notification {
+export function mapNotificationDocument(id: string, data: LooseRecord, source: NotificationSource): Notification | null {
   const payload = asRecord(data['payload']);
   const payloadNotification = asRecord(payload['notification']);
   const payloadData = asRecord(payload['data']);
+  const date = extractNotificationDate(data);
+
+  if (!date) {
+    return null;
+  }
 
   const status = firstString(
     data['status'],
@@ -448,7 +453,7 @@ export function mapNotificationDocument(id: string, data: LooseRecord, source: N
       payloadData['body'],
       payload['body']
     ) || '',
-    date: extractNotificationDate(data),
+    date,
     read: data['read'] ?? false,
     type: inferNotificationType(rawType, status),
     source,

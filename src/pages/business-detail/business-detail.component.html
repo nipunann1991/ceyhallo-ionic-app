@@ -57,12 +57,12 @@
           </div>
 
           <!-- Location Badge in Header -->
-          @if (biz.location) {
+          @if (displayLocationLabel()) {
             <div class="w-full bg-[#F8F9FA] rounded-xl p-3 flex items-center gap-3 text-left">
                 <div class="w-8 h-8 rounded-full bg-white flex items-center justify-center shadow-sm text-[#083594] shrink-0">
                    <ion-icon name="location" class="text-lg"></ion-icon>
                 </div>
-                <span class="text-[0.9rem] font-semibold text-[#1A1C1E] leading-tight">{{ biz.location }}</span>
+                <span class="text-[0.9rem] font-semibold text-[#1A1C1E] leading-[1.5]">{{ displayLocationLabel() }}</span>
             </div>
           }
        </div>
@@ -177,14 +177,14 @@
        }
 
        <!-- Opening Hours Section -->
-       @if (biz.openingHours && biz.openingHours.length > 0) {
+       @if (displayOpeningHours().length > 0) {
          <div class="mb-8">
             <h2 class="text-md font-bold text-[#1A1C1E] mb-3">Opening Hours</h2>
             <div class="bg-gray-50 rounded-2xl p-5 space-y-3">
-               @for (openingHour of biz.openingHours; track $index) {
+               @for (openingHour of displayOpeningHours(); track $index) {
                   <div class="flex justify-between items-center text-sm">
-                     <span class="font-bold text-[#1A1C1E]">{{ openingHour.day }}</span>
-                     <span class="font-medium text-gray-500">{{ openingHour.hours }}</span>
+                     <span class="font-bold text-[#1A1C1E]">{{ openingHour.days || openingHour.day }}</span>
+                     <span class="font-medium text-gray-500">{{ openingHour.time || openingHour.hours }}</span>
                   </div>
                }
             </div>
@@ -192,14 +192,18 @@
        }
 
        <!-- Location Section -->
-       @if (biz.location) {
+       @if (mapSafeUrl() || displayLocationLabel()) {
          <div class="mb-8">
             <h2 class="text-md font-bold text-[#1A1C1E] mb-3">Location</h2>
             <div (click)="openMap()" class="w-full aspect-[16/8] rounded-2xl overflow-hidden relative border border-gray-100 shadow-sm bg-gray-100 cursor-pointer active:opacity-95 transition-opacity group">
                 
-                @if (mapSafeUrl(); as url) {
+                @if (mapIframeHtml(); as iframeHtml) {
+                   <div [innerHTML]="iframeHtml" class="map-embed w-full h-full pointer-events-none"></div>
+                   pp
+                } @else if (mapSafeUrl(); as url) {
                    <iframe [src]="url" width="100%" height="100%" frameborder="0" style="border:0; pointer-events: none;" allowfullscreen></iframe>
                 } @else {
+                  09
                    <img src="https://i.ibb.co/hyg73xG/map-placeholder.png" class="w-full h-full object-cover" alt="Map">
                 }
                 
@@ -215,20 +219,20 @@
        }
 
        <!-- Contact Information (Grouped Phones/Emails) -->
-       @if ((biz.phones && biz.phones.length > 0) || (biz.emails && biz.emails.length > 0) || biz.website) {
+       @if (displayPhones().length > 0 || displayEmails().length > 0 || biz.website) {
          <div class="mb-8">
             <h2 class="text-md font-bold text-[#1A1C1E] mb-3">Contact Information</h2>
             <div class="bg-gray-50 rounded-2xl p-5 space-y-4">
                
                <!-- Phones Group -->
-               @if (biz.phones && biz.phones.length > 0) {
+               @if (displayPhones().length > 0) {
                  <div class="flex justify-between items-start text-sm">
                     <div class="flex items-center gap-2 font-bold text-[#1A1C1E] shrink-0 mt-0.5 text-left w-24">
                         <ion-icon name="call-outline" class="text-lg text-gray-400"></ion-icon>
                         <span>Phone</span>
                     </div>
                     <div class="flex flex-col items-end gap-1.5 flex-1">
-                       @for (phone of biz.phones; track phone) {
+                       @for (phone of displayPhones(); track phone) {
                           <a [href]="'tel:' + phone" class="font-medium text-gray-500 hover:text-[#083594] transition-colors text-right leading-tight">{{ phone }}</a>
                        }
                     </div>
@@ -236,14 +240,14 @@
                }
                
                <!-- Emails Group -->
-               @if (biz.emails && biz.emails.length > 0) {
+               @if (displayEmails().length > 0) {
                  <div class="flex justify-between items-start text-sm">
                     <div class="flex items-center gap-2 font-bold text-[#1A1C1E] shrink-0 mt-0.5 text-left w-24">
                         <ion-icon name="mail-outline" class="text-lg text-gray-400"></ion-icon>
                         <span>Email</span>
                     </div>
                     <div class="flex flex-col items-end gap-1.5 flex-1">
-                       @for (email of biz.emails; track email) {
+                       @for (email of displayEmails(); track email) {
                           <a [href]="'mailto:' + email" class="font-medium text-gray-500 hover:text-[#083594] transition-colors truncate max-w-[220px] text-right leading-tight">{{ email }}</a>
                        }
                     </div>
@@ -262,7 +266,55 @@
                     </div>
                  </div>
                }
+
             </div>
+         </div>
+       }
+
+       @if (branches().length > 0) {
+         <div class="mb-8">
+           <h2 class="text-md font-bold text-[#1A1C1E] mb-3">Other Locations</h2>
+           <div class="space-y-3">
+             @for (branch of branches(); track $index) {
+               <div class="rounded-2xl border border-gray-300 p-4">
+                 <div class="flex items-start gap-3">
+                   <div class="w-4 rounded-full text-[#1A1C1E] flex items-center justify-center shrink-0">
+                     <ion-icon name="location-outline" class="text-lg"></ion-icon>
+                   </div>
+                   <div class="flex-1 min-w-0">
+                     <div class="text-sm font-bold text-[#1A1C1E] leading-tight">
+                       {{ getLocationCityName(branch) }}
+                     </div>
+                     @if (branch.address || branch.country) {
+                       <div class="text-xs text-gray-500 font-medium mt-1 leading-snug">
+                         {{ branch.address || '' }}@if (branch.address && branch.country) {<span>, </span>}{{ branch.country || '' }}
+                       </div>
+                     }
+                     @if (branch.phones && branch.phones.length > 0) {
+                       <div class="mt-1 flex flex-col gap-1">
+                         @for (phone of branch.phones; track phone) {
+                           <a [href]="'tel:' + phone" class="text-xs font-bold text-gray-600 hover:text-[#083594] transition-colors">{{ phone }}</a>
+                         }
+                       </div>
+                     }
+                     @if (branch.openingHours && branch.openingHours.length > 0) {
+                       <div class="mt-3">
+                         <div class="text-[0.65rem] font-bold text-gray-400 uppercase tracking-[0.12em] mb-1">Hours</div>
+                         <div class="space-y-1">
+                           @for (openingHour of branch.openingHours; track $index) {
+                             <div class="text-xs text-gray-500 leading-snug">
+                               <span class="font-semibold text-gray-700">{{ openingHour.days || openingHour.day }}</span>
+                               <span>: {{ openingHour.time || openingHour.hours }}</span>
+                             </div>
+                           }
+                         </div>
+                       </div>
+                     }
+                   </div>
+                 </div>
+               </div>
+             }
+           </div>
          </div>
        }
 

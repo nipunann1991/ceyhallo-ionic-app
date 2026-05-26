@@ -144,9 +144,18 @@
         @case ('latest_offers') {
           <div class="relative z-10 pl-5" [class.pb-4]="!isLast" [class.-mt-12]="i === 0" [class.mt-4]="i !== 0">
               <div class="flex items-center justify-between pr-5 mb-4">
-                <a routerLink="/offers" [queryParams]="{category: getSectionCategory(section), title: section.title}" class="text-[1.1rem] font-bold text-[#1A1C1E] tracking-tight" [class.text-white]="i === 0">
+                <h2 class="text-[1.1rem] font-bold text-[#1A1C1E] tracking-tight" [class.text-white]="i === 0">
                   {{ section.title }}
-                </a>
+                </h2>
+                @if (getSectionLinkUrl(section)) {
+                  <button
+                    type="button"
+                    (click)="handleSectionLinkClick(section)"
+                    class="text-[0.82rem] font-bold text-gray-400 transition-opacity active:opacity-80"
+                    [class.text-white/80]="i === 0">
+                    {{ section.linkTitle || 'View all' }}
+                  </button>
+                }
               </div>
               <div #slider class="flex overflow-x-auto gap-3 pb-4 pr-5 scrollbar-hide snap-x">
                 @for (offer of data; track offer.id) {
@@ -159,7 +168,16 @@
         @case ('featured_businesses') {
           <div class="relative z-10 pl-5" [class.pb-4]="!isLast" [class.-mt-12]="i === 0" [class.mt-4]="i !== 0">
             <div class="flex items-center justify-between pr-5 mb-4">
-              <a routerLink="/businesses" class="text-[1.1rem] font-bold text-[#1A1C1E]" [class.text-white]="i === 0">{{ section.title }}</a>
+              <h2 class="text-[1.1rem] font-bold text-[#1A1C1E]" [class.text-white]="i === 0">{{ section.title }}</h2>
+              @if (getSectionLinkUrl(section)) {
+                <button
+                  type="button"
+                  (click)="handleSectionLinkClick(section)"
+                  class="text-[0.82rem] font-bold text-gray-400 transition-opacity active:opacity-80"
+                  [class.text-white/80]="i === 0">
+                  {{ section.linkTitle || 'View all' }}
+                </button>
+              }
             </div>
             <div #slider class="flex overflow-x-auto gap-3 pb-4 pr-5 scrollbar-hide snap-x">
               @for (biz of data; track biz.id) {
@@ -172,7 +190,16 @@
         @case ('news_feed') {
           <div class="relative z-10 pl-5" [class.pb-4]="!isLast" [class.-mt-12]="i === 0" [class.mt-4]="i !== 0">
             <div class="flex items-center justify-between pr-5 mb-4">
-              <a routerLink="/news" class="text-[1.1rem] font-bold text-[#1A1C1E]" [class.text-white]="i === 0">{{ section.title }}</a>
+              <h2 class="text-[1.1rem] font-bold text-[#1A1C1E]" [class.text-white]="i === 0">{{ section.title }}</h2>
+              @if (getSectionLinkUrl(section)) {
+                <button
+                  type="button"
+                  (click)="handleSectionLinkClick(section)"
+                  class="text-[0.82rem] font-bold text-gray-400 transition-opacity active:opacity-80"
+                  [class.text-white/80]="i === 0">
+                  {{ section.linkTitle || 'View all' }}
+                </button>
+              }
             </div>
             <div #slider class="flex overflow-x-auto gap-4 pb-4 pr-5 scrollbar-hide snap-x">
               @for (item of data; track item.id) {
@@ -185,7 +212,16 @@
         @case ('events') {
           <div class="relative z-10 pl-5" [class.pb-4]="!isLast" [class.-mt-12]="i === 0" [class.mt-4]="i !== 0">
             <div class="flex items-center justify-between pr-5 mb-4">
-              <a routerLink="/events" class="text-[1.1rem] font-bold text-[#1A1C1E]" [class.text-white]="i === 0">{{ section.title }}</a>
+              <h2 class="text-[1.1rem] font-bold text-[#1A1C1E]" [class.text-white]="i === 0">{{ section.title }}</h2>
+              @if (getSectionLinkUrl(section)) {
+                <button
+                  type="button"
+                  (click)="handleSectionLinkClick(section)"
+                  class="text-[0.82rem] font-bold text-gray-400 transition-opacity active:opacity-80"
+                  [class.text-white/80]="i === 0">
+                  {{ section.linkTitle || 'View all' }}
+                </button>
+              }
             </div>
             <div #slider class="flex overflow-x-auto gap-4 pb-4 pr-5 scrollbar-hide snap-x">
               @for (item of data; track item.id) {
@@ -198,7 +234,16 @@
         @case ('jobs') {
           <div class="relative z-10 pl-5" [class.pb-4]="!isLast" [class.-mt-12]="i === 0" [class.mt-4]="i !== 0">
             <div class="flex items-center justify-between pr-5 mb-4">
-              <a routerLink="/jobs" class="text-[1.1rem] font-bold text-[#1A1C1E]" [class.text-white]="i === 0">{{ section.title }}</a>
+              <h2 class="text-[1.1rem] font-bold text-[#1A1C1E]" [class.text-white]="i === 0">{{ section.title }}</h2>
+              @if (getSectionLinkUrl(section)) {
+                <button
+                  type="button"
+                  (click)="handleSectionLinkClick(section)"
+                  class="text-[0.82rem] font-bold text-gray-400 transition-opacity active:opacity-80"
+                  [class.text-white/80]="i === 0">
+                  {{ section.linkTitle || 'View all' }}
+                </button>
+              }
             </div>
             <div #slider class="flex overflow-x-auto gap-4 pb-4 pr-5 scrollbar-hide snap-x">
               @for (item of data; track item.id) {
@@ -299,7 +344,7 @@
               </div>
 
               <div>
-                <p class="text-xs font-bold text-[#1A1C1E] mb-2 pl-1">Date of Birth</p>
+                <p class="text-xs font-bold text-[#1A1C1E] mb-2 pl-1">Date of Birth (Optional)</p>
                 <input
                   type="date"
                   min="1900-01-01"
@@ -350,7 +395,7 @@
       <div (click)="onVerificationBackdropClick()" class="min-h-full flex items-center justify-center bg-black/45 backdrop-blur-[2px] p-6">
         <div (click)="$event.stopPropagation()" class="bg-white rounded-3xl p-8 w-full max-w-xs text-center shadow-2xl relative overflow-hidden">
           <div class="flex flex-col items-center mb-6">
-            <ion-img src="https://i.ibb.co/B5TnYXWN/logo.png" alt="CeyHallo Logo" class="h-24 object-contain"></ion-img>
+            <ion-img src="/assets/logo.png" alt="CeyHallo Logo" class="h-24 object-contain"></ion-img>
           </div>
 
           @if (verificationDialogState() === 'confirm') {

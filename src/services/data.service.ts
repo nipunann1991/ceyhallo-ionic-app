@@ -5,14 +5,14 @@ import { NewsArticle } from '../models/news.model';
 import { Banner } from '../models/banner.model';
 import { Category } from '../models/category.model';
 import { Country } from '../models/country.model';
-import { Business } from '../models/business.model';
+import { Business, BusinessLocation, BusinessOpeningHour } from '../models/business.model';
 import { Event } from '../models/event.model';
 import { Job } from '../models/job.model';
 import { LegalDocument } from '../models/legal.model';
 import { SupportInfo } from '../models/support.model';
 import { Notification } from '../models/notification.model';
 import { Offer } from '../models/offer.model';
-import { AppConfig } from '../models/settings.model';
+import { AppConfig, NewsCategoriesConfig, NewsCategoryItem } from '../models/settings.model';
 import { HubSection } from '../models/hub.model';
 import { FirestoreService } from './firestore.service';
 import { AuthService } from './auth.service';
@@ -79,6 +79,7 @@ export class DataService {
   getNotifications() { return appState.notifications.asReadonly(); }
   getOffers() { return appState.offers.asReadonly(); }
   getAppSettings() { return appState.appSettings.asReadonly(); }
+  getNewsCategories() { return appState.newsCategories.asReadonly(); }
   
   // Return the computed signal directly
   getHubSections() { return this.hubSections; }
@@ -235,6 +236,171 @@ export class DataService {
     return { phones, emails };
   }
 
+  private extractContactsFromRecord(record: any): { phones: string[]; emails: string[] } {
+    if (!record || typeof record !== 'object') {
+      return { phones: [], emails: [] };
+    }
+
+    const contact = record['contact'] || record['contacts'] || {};
+
+    let phones: string[] = [];
+    if (Array.isArray(record['phones'])) phones = record['phones'];
+    else if (Array.isArray(contact['phones'])) phones = contact['phones'];
+    else if (record['phone']) phones = [record['phone']];
+    else if (contact['phone']) phones = [contact['phone']];
+    phones = phones.filter((p) => typeof p === 'string' && p.trim().length > 0).map((p) => p.trim());
+
+    let emails: string[] = [];
+    if (Array.isArray(record['emails'])) emails = record['emails'];
+    else if (Array.isArray(contact['emails'])) emails = contact['emails'];
+    else if (record['email']) emails = [record['email']];
+    else if (contact['email']) emails = [contact['email']];
+    emails = emails.filter((e) => typeof e === 'string' && e.trim().length > 0).map((e) => e.trim());
+
+    return { phones, emails };
+  }
+
+  private normalizeOpeningHours(raw: any): BusinessOpeningHour[] {
+    if (!Array.isArray(raw)) {
+      return [];
+    }
+
+    return raw
+      .map((row) => {
+        if (!row || typeof row !== 'object') {
+          return null;
+        }
+
+        const days = typeof row['days'] === 'string' ? row['days'] : undefined;
+        const time = typeof row['time'] === 'string' ? row['time'] : undefined;
+        const day = typeof row['day'] === 'string' ? row['day'] : undefined;
+        const hours = typeof row['hours'] === 'string' ? row['hours'] : undefined;
+
+        const normalized: BusinessOpeningHour = {
+          ...(days ? { days } : {}),
+          ...(time ? { time } : {}),
+          ...(day ? { day } : {}),
+          ...(hours ? { hours } : {}),
+        };
+
+        if (Object.keys(normalized).length === 0) {
+          return null;
+        }
+
+        return normalized;
+      })
+      .filter((row): row is BusinessOpeningHour => row !== null);
+  }
+
+  private extractBusinessLocations(data: any): BusinessLocation[] {
+    const rawLocations = data?.['locations'] ?? data?.['branches'] ?? data?.['outlets'];
+    if (!Array.isArray(rawLocations)) {
+      return [];
+    }
+
+    return rawLocations
+      .map((row, index) => {
+        if (!row || typeof row !== 'object') {
+          return null;
+        }
+
+        const isPrimary = row['isPrimary'] === true || row['primary'] === true;
+
+        const label =
+          (typeof row['label'] === 'string' && row['label'].trim()) ||
+          (typeof row['name'] === 'string' && row['name'].trim()) ||
+          (typeof row['title'] === 'string' && row['title'].trim()) ||
+          (rawLocations.length > 1 ? `Branch ${index + 1}` : undefined);
+
+        const address =
+          (typeof row['address'] === 'string' && row['address'].trim()) ||
+          (typeof row['location'] === 'string' && row['location'].trim()) ||
+          (typeof row['fullAddress'] === 'string' && row['fullAddress'].trim()) ||
+          undefined;
+
+        const city = typeof row['city'] === 'string' ? row['city'].trim() : undefined;
+        const country =
+          typeof row['country'] === 'string'
+            ? row['country'].trim()
+            : typeof row['region'] === 'string'
+              ? row['region'].trim()
+              : undefined;
+
+        const cityCode = typeof row['cityCode'] === 'string' ? row['cityCode'].trim() : undefined;
+        const countryCode = typeof row['countryCode'] === 'string' ? row['countryCode'].trim() : undefined;
+        const googlePlaceId =
+          typeof row['googlePlaceId'] === 'string'
+            ? row['googlePlaceId'].trim()
+            : typeof row['google_place_id'] === 'string'
+              ? row['google_place_id'].trim()
+              : undefined;
+        const rating = typeof row['rating'] === 'number' ? row['rating'] : undefined;
+        const reviews = typeof row['reviews'] === 'number' ? row['reviews'] : undefined;
+
+        const lat =
+          typeof row['lat'] === 'number'
+            ? row['lat']
+            : typeof row['latitude'] === 'number'
+              ? row['latitude']
+              : undefined;
+        const lng =
+          typeof row['lng'] === 'number'
+            ? row['lng']
+            : typeof row['longitude'] === 'number'
+              ? row['longitude']
+              : undefined;
+
+        const mapIframe =
+          (typeof row['mapIframe'] === 'string' && row['mapIframe'].trim()) ||
+          (typeof row['map_iframe'] === 'string' && row['map_iframe'].trim()) ||
+          (typeof row['mapEmbed'] === 'string' && row['mapEmbed'].trim()) ||
+          (typeof row['map_embed'] === 'string' && row['map_embed'].trim()) ||
+          undefined;
+        const mapQuery =
+          (typeof row['mapQuery'] === 'string' && row['mapQuery'].trim()) ||
+          (typeof row['map_query'] === 'string' && row['map_query'].trim()) ||
+          undefined;
+
+        const { phones, emails } = this.extractContactsFromRecord(row);
+        const website =
+          (typeof row['website'] === 'string' && row['website'].trim()) ||
+          (typeof row?.['contact']?.['website'] === 'string' && row['contact']['website'].trim()) ||
+          undefined;
+
+        const openingHours = this.normalizeOpeningHours(
+          row['openingHours'] ?? row['opening_hours'] ?? row['hours'] ?? row['workingHours']
+        );
+
+        const normalized: BusinessLocation = {
+          ...(isPrimary ? { isPrimary: true } : {}),
+          ...(label ? { label } : {}),
+          ...(address ? { address } : {}),
+          ...(city ? { city } : {}),
+          ...(country ? { country } : {}),
+          ...(cityCode ? { cityCode } : {}),
+          ...(countryCode ? { countryCode } : {}),
+          ...(googlePlaceId ? { googlePlaceId } : {}),
+          ...(typeof rating === 'number' ? { rating } : {}),
+          ...(typeof reviews === 'number' ? { reviews } : {}),
+          ...(typeof lat === 'number' ? { latitude: lat } : {}),
+          ...(typeof lng === 'number' ? { longitude: lng } : {}),
+          ...(mapIframe ? { mapIframe } : {}),
+          ...(mapQuery ? { mapQuery } : {}),
+          ...(phones.length > 0 ? { phones } : {}),
+          ...(emails.length > 0 ? { emails } : {}),
+          ...(website ? { website } : {}),
+          ...(openingHours.length > 0 ? { openingHours } : {}),
+        };
+
+        if (Object.keys(normalized).length === 0) {
+          return null;
+        }
+
+        return normalized;
+      })
+      .filter((row): row is BusinessLocation => row !== null);
+  }
+
   private listenToBusinesses(): void {
     this.firestoreService.listenToCollectionMapped<any, Business>(
       'businesses',
@@ -244,32 +410,63 @@ export class DataService {
           return null;
         }
 
-        const { phones, emails } = this.extractContacts(data);
+        const locations = this.extractBusinessLocations(data);
+        const { phones: legacyPhones, emails: legacyEmails } = this.extractContacts(data);
         const contact = data['contact'] || {};
         
         // Ensure isFeatured maps to isPromoted
         const isPromoted = data['isPromoted'] || data['isFeatured'] || false;
 
+        const primaryLocation = locations.find((loc) => loc.isPrimary) ?? (locations.length > 0 ? locations[0] : undefined);
+        const locationLabel =
+          primaryLocation?.address ||
+          primaryLocation?.city ||
+          (typeof data['location'] === 'string' && data['location'].trim()) ||
+          'Unknown Location';
+
+        const primaryPhones = (primaryLocation?.phones ?? []).filter(Boolean);
+        const phones = (primaryPhones.length > 0 ? primaryPhones : legacyPhones)
+          .filter((p, idx, arr) => arr.indexOf(p) === idx);
+
+        const primaryEmails = (primaryLocation?.emails ?? []).filter(Boolean);
+        const emails = (primaryEmails.length > 0 ? primaryEmails : legacyEmails)
+          .filter((e, idx, arr) => arr.indexOf(e) === idx);
+
+        const openingHours =
+          (primaryLocation?.openingHours && primaryLocation.openingHours.length > 0)
+            ? primaryLocation.openingHours
+            : this.normalizeOpeningHours(data['openingHours']);
+
+        const rating =
+          typeof primaryLocation?.rating === 'number'
+            ? primaryLocation.rating
+            : (typeof data['rating'] === 'number' ? data['rating'] : 0);
+        const reviewCount =
+          typeof primaryLocation?.reviews === 'number'
+            ? primaryLocation.reviews
+            : (data['reviewCount'] || data['reviews'] || 0);
+
         return {
           id: id,
           name: data['name'] || data['title'] || 'Business Name',
           category: data['category'] || 'General',
-          location: data['location'] || 'Unknown Location',
-          rating: data['rating'] || 0,
-          reviewCount: data['reviewCount'] || data['reviews'] || 0,
+          location: locationLabel,
+          rating,
+          reviewCount,
           imageUrl: data['imageUrl'] || '',
           logo: data['logo'] || data['logoUrl'],
           isPromoted: isPromoted,
           isVerified: data['isVerified'] ?? false,
-          cityCode: data['cityCode'],
-          countryCode: data['countryCode'],
+          cityCode: primaryLocation?.cityCode || data['cityCode'],
+          countryCode: primaryLocation?.countryCode || data['countryCode'],
           description: data['description'] || 'Providing excellent service to our valued customers. Contact us for more information about our products and services.',
           phone: phones.length > 0 ? phones[0] : '', // Backward compat
           phones: phones,
           email: emails.length > 0 ? emails[0] : '', // Backward compat
           emails: emails,
           website: data['website'] || contact['website'] || '',
-          openingHours: data['openingHours'] || [],
+          openingHours,
+          locations: locations.length > 0 ? locations : undefined,
           gallery: data['gallery'] || [],
           menuUrl: data['menuUrl'],
           actionType: data['actionType'],
@@ -519,6 +716,7 @@ export class DataService {
     this.notificationsUnsubscribe = this.firestoreService.listenToPath<{ [key: string]: any }>('notifications', (dataObject) => {
       this.notificationFeedItems = Object.keys(dataObject)
         .map((id) => mapNotificationDocument(id, dataObject[id], 'feed'))
+        .filter((item): item is Notification => item !== null)
         .sort((a, b) => b.date.getTime() - a.date.getTime());
 
       this.syncNotifications();
@@ -532,6 +730,7 @@ export class DataService {
     this.pushQueueUnsubscribe = this.firestoreService.listenToPath<{ [key: string]: any }>('push_queue', (dataObject) => {
       this.pushQueueItems = Object.keys(dataObject)
         .map((id) => mapNotificationDocument(id, dataObject[id], 'queue'))
+        .filter((item): item is Notification => item !== null)
         .sort((a, b) => b.date.getTime() - a.date.getTime());
 
       this.syncNotifications();
@@ -583,10 +782,11 @@ export class DataService {
 
         let date: Date = new Date(); // Default to current date
         try {
-            if (data['expiryDate']) {
-                if (typeof data['expiryDate'].toDate === 'function') date = data['expiryDate'].toDate();
-                else if (typeof data['expiryDate'] === 'string') date = new Date(data['expiryDate']);
-                else if (data['expiryDate'] instanceof Date) date = data['expiryDate'];
+            const rawEndDate = data['endDate'] || data['expiryDate'];
+            if (rawEndDate) {
+                if (typeof rawEndDate.toDate === 'function') date = rawEndDate.toDate();
+                else if (typeof rawEndDate === 'string') date = new Date(rawEndDate);
+                else if (rawEndDate instanceof Date) date = rawEndDate;
             }
         } catch (e) {
             // Fallback to default date if parsing fails
@@ -597,10 +797,13 @@ export class DataService {
             title: data['title'] || 'Special Offer',
             // Map either targetName or businessName for compatibility
             targetName: data['targetName'] || data['businessName'] || '',
+            offerBy: data['offerBy'] || data['offer_by'] || '',
             discount: data['discount'] || '',
             description: data['description'] || '',
+            content: data['content'] || data['details'] || '',
             image: data['image'] || '',
             expiryDate: date,
+            endDate: data['endDate'] ? date : undefined,
             businessId: data['businessId'],
             targetId: data['targetId'],
             color: data['color'] || '#EFF6FF',
@@ -667,6 +870,17 @@ export class DataService {
             ]
          });
        }
+    });
+
+    this.firestoreService.listenToDocument<NewsCategoriesConfig>('settings', 'news_categories', (data) => {
+      if (data?.categories && Array.isArray(data.categories)) {
+        const categories = data.categories
+          .filter((item): item is NewsCategoryItem => !!item && typeof item.name === 'string')
+          .sort((a, b) => (a.order ?? Number.MAX_SAFE_INTEGER) - (b.order ?? Number.MAX_SAFE_INTEGER));
+        appState.newsCategories.set(categories);
+      } else {
+        appState.newsCategories.set([]);
+      }
     });
   }
 

@@ -3,6 +3,10 @@ import { Injectable, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { Capacitor } from '@capacitor/core';
 import { SocialLogin } from '@capgo/capacitor-social-login';
+import {
+  FacebookLogin,
+  FacebookLoginResponse,
+} from '@capacitor-community/facebook-login';
 import { auth } from './firebase.service';
 import { 
   onAuthStateChanged, 
@@ -23,7 +27,8 @@ import {
   OAuthProvider,
   signInWithCredential,
   signInWithPopup,
-  signInWithRedirect
+  signInWithRedirect,
+  getRedirectResult
 } from 'firebase/auth';
 import type { User } from 'firebase/auth';
 import { FirestoreService } from './firestore.service';
@@ -31,10 +36,52 @@ import { UserProfile, UserProfileSource } from '../models/user.model';
 import { EmailService } from './email.service';
 import { BehaviorSubject } from 'rxjs';
 
-type AuthResult = { success: boolean; error?: string };
+type AuthResult = { success: boolean; error?: string; dismissed?: boolean };
+type FacebookGraphProfile = {
+  id?: string | null;
+  name?: string | null;
+  email?: string | null;
+  first_name?: string | null;
+  last_name?: string | null;
+  picture?: {
+    data?: {
+      url?: string | null;
+      width?: number | null;
+      height?: number | null;
+      is_silhouette?: boolean | null;
+    } | null;
+  } | null;
+  [key: string]: unknown;
+};
+type FacebookTokenResponse = FacebookLoginResponse & {
+  authenticationToken?: {
+    token?: string | null;
+  } | null;
+};
+type SocialLoginFacebookResult = {
+  accessToken?: {
+    token?: string | null;
+    userId?: string | null;
+  } | null;
+  idToken?: string | null;
+};
+type AppleProfileData = {
+  user?: string | null;
+  email?: string | null;
+  givenName?: string | null;
+  familyName?: string | null;
+};
+type SocialProfileSeed = {
+  email?: string;
+  name?: string;
+  phoneNumber?: string;
+  photoURL?: string;
+};
+
 const FCM_TOKEN_STORAGE_KEY = 'ceyhallo_fcm_token';
 const DELETE_ACCOUNT_VERIFICATION_KEY = 'ceyhallo_delete_account_verification';
 const EMAIL_VERIFICATION_CODE_KEY = 'ceyhallo_email_verification_code';
+const WEB_SOCIAL_REDIRECT_PROMPT_KEY = 'ceyhallo_web_social_redirect_prompt';
 
 @Injectable({
   providedIn: 'root',
@@ -58,12 +105,19 @@ export class AuthService {
     private firestoreService: FirestoreService,
     private emailService: EmailService
   ) {
+    if (!Capacitor.isNativePlatform()) {
+      void this.restorePendingWebSocialRedirect();
+    }
+
     onAuthStateChanged(auth, (user) => {
       this.isLoggedIn.set(!!user);
       this.currentUser.set(user);
       this.authState$.next(user);
       
       if (user) {
+         if (this.consumePendingWebSocialRedirectPrompt()) {
+           this.pendingProfileCompletionPrompt.set(true);
+         }
          void this.ensureUserProfileExists(user);
          // Start listening to the extended profile in Firestore using the real UID from the token
          this.subscribeToUserProfile(user.uid);
@@ -120,12 +174,21 @@ export class AuthService {
         return this.signInWithWebProvider(provider, 'google');
       }
 
-      const result = await SocialLogin.login({
-        provider: 'google',
-        options: {
-          scopes: ['email', 'profile'],
-        },
-      });
+      const result =
+        Capacitor.getPlatform() === 'android'
+          ? await SocialLogin.login({
+              provider: 'google',
+              options: {
+                style: 'bottom',
+                filterByAuthorizedAccounts: false,
+              },
+            })
+          : await SocialLogin.login({
+              provider: 'google',
+              options: {
+                scopes: ['email', 'profile'],
+              },
+            });
 
       const idToken =
         result.result.responseType === 'online'
@@ -147,6 +210,10 @@ export class AuthService {
 
       return { success: true };
     } catch (error: unknown) {
+      if (this.isSocialLoginCancellation(error)) {
+        return { success: false, dismissed: true };
+      }
+
       console.error('Google Sign-In failed:', error);
       return { success: false, error: this.mapGoogleSignInError(error) };
     }
@@ -158,38 +225,60 @@ export class AuthService {
 
   async signInWithFacebook(): Promise<AuthResult> {
     try {
-      if (!Capacitor.isNativePlatform()) {
-        const provider = new FacebookAuthProvider();
-        provider.addScope('email');
-        provider.addScope('public_profile');
+      await this.clearFacebookSessionIfNeeded();
 
-        return this.signInWithWebProvider(provider, 'fb');
+      const rawNonce = Capacitor.getPlatform() === 'ios' ? this.generateNonce() : null;
+      const loginOptions: {
+        permissions: string[];
+        tracking?: 'limited' | 'enabled';
+        nonce?: string;
+      } = {
+        permissions: ['email', 'public_profile'],
+      };
+
+      if (Capacitor.getPlatform() === 'ios') {
+        loginOptions.tracking = 'enabled';
+        if (rawNonce) {
+          loginOptions.nonce = rawNonce;
+        }
       }
 
-      const result = await SocialLogin.login({
-        provider: 'facebook',
-        options: {
-          permissions: ['email', 'public_profile'],
-        },
-      });
+      const result =
+        Capacitor.getPlatform() === 'android'
+          ? ((await SocialLogin.login({
+              provider: 'facebook',
+              options: {
+                permissions: loginOptions.permissions,
+              },
+            })).result as FacebookTokenResponse)
+          : ((await FacebookLogin.login(loginOptions)) as FacebookTokenResponse);
+      const graphProfile = await this.getFacebookGraphProfile();
+      const tokens = await this.resolveFacebookFirebaseTokens(result);
 
-      const accessToken = result.result.accessToken?.token ?? null;
+      if (!tokens.authenticationToken && !tokens.accessToken) {
+        if (!Capacitor.isNativePlatform()) {
+          return { success: false, dismissed: true };
+        }
 
-      if (!accessToken) {
         return {
           success: false,
           error:
-            'No Facebook access token was returned. Check MY_VALUE_FACEBOOK_APP_ID and MY_VALUE_FACEBOOK_CLIENT_TOKEN.',
+            'No Facebook token was returned. Check the Facebook app configuration for this platform.',
         };
       }
 
-      const credential = FacebookAuthProvider.credential(accessToken);
+      const credential = this.createFacebookFirebaseCredential(tokens, rawNonce);
       const userCredential = await signInWithCredential(auth, credential);
+      await this.applyFacebookGraphProfile(userCredential.user, graphProfile);
 
       await this.handleSocialLoginSuccess(userCredential.user, 'fb');
 
       return { success: true };
     } catch (error: unknown) {
+      if (this.isSocialLoginCancellation(error)) {
+        return { success: false, dismissed: true };
+      }
+
       console.error('Facebook Login failed:', error);
       return { success: false, error: this.mapFacebookSignInError(error) };
     }
@@ -219,6 +308,7 @@ export class AuthService {
       });
 
       const idToken = result.result.idToken;
+      const appleProfileSeed = this.buildAppleProfileSeed(result.result.profile);
 
       if (!idToken) {
         return {
@@ -235,10 +325,15 @@ export class AuthService {
       });
       const userCredential = await signInWithCredential(auth, credential);
 
-      await this.handleSocialLoginSuccess(userCredential.user, 'apple');
+      await this.applyAppleProfileData(userCredential.user, appleProfileSeed);
+      await this.handleSocialLoginSuccess(userCredential.user, 'apple', appleProfileSeed);
 
       return { success: true };
     } catch (error: unknown) {
+      if (this.isSocialLoginCancellation(error)) {
+        return { success: false, dismissed: true };
+      }
+
       console.error('Apple Login failed:', error);
       return { success: false, error: this.mapAppleSignInError(error) };
     }
@@ -255,6 +350,7 @@ export class AuthService {
       // Update display name immediately in Auth
       if (userCredential.user) {
          await updateProfile(userCredential.user, { displayName: name });
+         const profileTimestamps = this.buildProfileTimestamps(userCredential.user);
          
          // Create initial Firestore profile
          const newUserProfile: UserProfile = {
@@ -264,7 +360,8 @@ export class AuthService {
             role: 'user',
             source: 'app',
             isVerified: false,
-            createdAt: new Date().toISOString(),
+            createdAt: profileTimestamps.createdAt,
+            lastLogin: profileTimestamps.lastLogin,
             region: region || '',
             phoneNumber: phoneNumber || '',
             fcmToken: this.getStoredFcmToken()
@@ -395,20 +492,18 @@ export class AuthService {
 
   async logout(): Promise<void> {
     try {
-      if (Capacitor.isNativePlatform()) {
-        const providerIds = auth.currentUser?.providerData.map((provider) => provider.providerId) ?? [];
+      const providerIds = auth.currentUser?.providerData.map((provider) => provider.providerId) ?? [];
 
-        if (providerIds.includes('google.com')) {
-          await SocialLogin.logout({ provider: 'google' });
-        }
+      if (Capacitor.isNativePlatform() && providerIds.includes('google.com')) {
+        await SocialLogin.logout({ provider: 'google' });
+      }
 
-        if (providerIds.includes('facebook.com')) {
-          await SocialLogin.logout({ provider: 'facebook' });
-        }
+      if (providerIds.includes('facebook.com')) {
+        await this.clearFacebookSessionIfNeeded();
+      }
 
-        if (providerIds.includes('apple.com')) {
-          await SocialLogin.logout({ provider: 'apple' });
-        }
+      if (Capacitor.isNativePlatform() && providerIds.includes('apple.com')) {
+        await SocialLogin.logout({ provider: 'apple' });
       }
     } catch (error) {
       console.warn('SocialLogin logout skipped:', error);
@@ -614,8 +709,159 @@ export class AuthService {
     }
   }
 
-  private async handleSocialLoginSuccess(user: User, source: UserProfileSource): Promise<void> {
-    await this.ensureUserProfileExists(user, source);
+  private async handleSocialLoginSuccess(
+    user: User,
+    source: UserProfileSource,
+    profileSeed?: SocialProfileSeed
+  ): Promise<void> {
+    await this.ensureUserProfileExists(user, source, profileSeed);
+  }
+
+  private async getFacebookGraphProfile(): Promise<FacebookGraphProfile | null> {
+    try {
+      if (Capacitor.getPlatform() === 'android') {
+        const response = (await SocialLogin.providerSpecificCall({
+          call: 'facebook#getProfile',
+          options: {
+            fields: ['id', 'name', 'email', 'first_name', 'last_name', 'picture.width(400).height(400)'],
+          },
+        })) as { profile?: FacebookGraphProfile | null };
+        return response.profile || null;
+      }
+
+      return await FacebookLogin.getProfile<FacebookGraphProfile>({
+        fields: ['id', 'name', 'email', 'first_name', 'last_name', 'picture.width(400).height(400)'],
+      });
+    } catch (error) {
+      console.warn('Failed to fetch Facebook Graph profile:', error);
+      return null;
+    }
+  }
+
+  private async resolveFacebookFirebaseTokens(
+    loginResult: FacebookTokenResponse
+  ): Promise<{ accessToken: string | null; authenticationToken: string | null }> {
+    if (Capacitor.getPlatform() === 'android') {
+      const androidResult = loginResult as FacebookTokenResponse & SocialLoginFacebookResult;
+      return {
+        accessToken: androidResult.accessToken?.token?.trim() || null,
+        authenticationToken: androidResult.idToken?.trim() || null,
+      };
+    }
+
+    const immediateAccessToken = loginResult.accessToken?.token?.trim() || null;
+    const immediateAuthenticationToken =
+      loginResult.authenticationToken?.token?.trim() || null;
+
+    if (Capacitor.getPlatform() !== 'ios') {
+      return {
+        accessToken: immediateAccessToken,
+        authenticationToken: immediateAuthenticationToken,
+      };
+    }
+
+    await this.delay(350);
+
+    try {
+      const refreshedTokens = (await FacebookLogin.getCurrentAccessToken()) as FacebookTokenResponse;
+
+      return {
+        accessToken: refreshedTokens.accessToken?.token?.trim() || immediateAccessToken,
+        authenticationToken:
+          refreshedTokens.authenticationToken?.token?.trim() || immediateAuthenticationToken,
+      };
+    } catch {
+      return {
+        accessToken: immediateAccessToken,
+        authenticationToken: immediateAuthenticationToken,
+      };
+    }
+  }
+
+  private createFacebookFirebaseCredential(
+    tokens: { accessToken: string | null; authenticationToken: string | null },
+    rawNonce: string | null
+  ): ReturnType<typeof FacebookAuthProvider.credential> | ReturnType<OAuthProvider['credential']> {
+    if (tokens.authenticationToken && rawNonce) {
+      const provider = new OAuthProvider('facebook.com');
+      return provider.credential({
+        idToken: tokens.authenticationToken,
+        rawNonce,
+        accessToken: tokens.accessToken || undefined,
+      } as {
+        idToken: string;
+        rawNonce: string;
+        accessToken?: string;
+      });
+    }
+
+    return FacebookAuthProvider.credential(tokens.accessToken || '');
+  }
+
+  private async clearFacebookSessionIfNeeded(): Promise<void> {
+    try {
+      if (Capacitor.getPlatform() === 'android') {
+        await SocialLogin.logout({ provider: 'facebook' });
+        return;
+      }
+
+      const currentToken = await FacebookLogin.getCurrentAccessToken();
+      if (currentToken.accessToken?.token) {
+        await FacebookLogin.logout();
+      }
+    } catch {
+      // Ignore stale-session lookup/logout failures and continue.
+    }
+  }
+
+  private delay(ms: number): Promise<void> {
+    return new Promise((resolve) => {
+      window.setTimeout(resolve, ms);
+    });
+  }
+
+  private async applyFacebookGraphProfile(user: User, profile: FacebookGraphProfile | null): Promise<void> {
+    if (!profile) {
+      return;
+    }
+
+    const displayName = profile.name?.trim() || user.displayName || 'User';
+    const photoURL = profile.picture?.data?.url?.trim() || user.photoURL || '';
+    const authUpdate: { displayName?: string; photoURL?: string } = {};
+
+    if (displayName && displayName !== user.displayName) {
+      authUpdate.displayName = displayName;
+    }
+
+    if (photoURL && photoURL !== user.photoURL) {
+      authUpdate.photoURL = photoURL;
+    }
+
+    if (Object.keys(authUpdate).length > 0) {
+      await updateProfile(user, authUpdate);
+      await user.reload();
+      this.currentUser.set({ ...auth.currentUser } as User);
+    }
+
+    const firestoreUpdate: Partial<UserProfile> = {};
+
+    if (profile.email?.trim()) {
+      firestoreUpdate.email = profile.email.trim();
+    }
+    if (displayName) {
+      firestoreUpdate.name = displayName;
+    }
+    if (photoURL) {
+      firestoreUpdate.photoURL = photoURL;
+    }
+
+    if (Object.keys(firestoreUpdate).length > 0) {
+      try {
+        await this.firestoreService.updateDocument('users', user.uid, firestoreUpdate);
+      } catch (error) {
+        console.warn('Failed to persist Facebook Graph profile to Firestore:', error);
+      }
+    }
   }
 
   requestProfileCompletionPrompt(): void {
@@ -639,13 +885,21 @@ export class AuthService {
     }
   }
 
-  private async ensureUserProfileExists(user: User, source?: UserProfileSource): Promise<void> {
+  private async ensureUserProfileExists(
+    user: User,
+    source?: UserProfileSource,
+    profileSeed?: SocialProfileSeed
+  ): Promise<void> {
     const existingRequest = this.profileInitInFlight.get(user.uid);
     if (existingRequest) {
-      return existingRequest;
+      await existingRequest;
+      if (profileSeed) {
+        await this.mergeProfileSeed(user, source, profileSeed);
+      }
+      return;
     }
 
-    const request = this.runEnsureUserProfileExists(user, source);
+    const request = this.runEnsureUserProfileExists(user, source, profileSeed);
     this.profileInitInFlight.set(user.uid, request);
 
     try {
@@ -655,24 +909,33 @@ export class AuthService {
     }
   }
 
-  private async runEnsureUserProfileExists(user: User, source?: UserProfileSource): Promise<void> {
+  private async runEnsureUserProfileExists(
+    user: User,
+    source?: UserProfileSource,
+    profileSeed?: SocialProfileSeed
+  ): Promise<void> {
     const resolvedSource = source || this.resolveUserProfileSource(user);
     const profile = await this.firestoreService.getDocument('users', user.uid);
+    const profileTimestamps = this.buildProfileTimestamps(user, profile);
+    const seededEmail = profileSeed?.email?.trim() || '';
+    const seededName = profileSeed?.name?.trim() || '';
+    const seededPhoneNumber = profileSeed?.phoneNumber?.trim() || '';
+    const seededPhotoURL = profileSeed?.photoURL?.trim() || '';
 
     if (profile?.id) {
       const missingFields: Partial<UserProfile> = {};
 
-      if (!profile.email && user.email) {
-        missingFields.email = user.email;
+      if (!profile.email && (seededEmail || user.email)) {
+        missingFields.email = seededEmail || user.email || '';
       }
-      if (!profile.name && user.displayName) {
-        missingFields.name = user.displayName;
+      if (!profile.name && (seededName || user.displayName)) {
+        missingFields.name = seededName || user.displayName || 'User';
       }
-      if (!profile.phoneNumber && user.phoneNumber) {
-        missingFields.phoneNumber = user.phoneNumber;
+      if (!profile.phoneNumber && (seededPhoneNumber || user.phoneNumber)) {
+        missingFields.phoneNumber = seededPhoneNumber || user.phoneNumber || '';
       }
-      if (!profile.photoURL && user.photoURL) {
-        missingFields.photoURL = user.photoURL;
+      if (!profile.photoURL && (seededPhotoURL || user.photoURL)) {
+        missingFields.photoURL = seededPhotoURL || user.photoURL || '';
       }
       if (!profile.role) {
         missingFields.role = 'user';
@@ -686,6 +949,11 @@ export class AuthService {
           missingFields.fcmToken = fcmToken;
         }
       }
+      if (!profile.createdAt) {
+        missingFields.createdAt = profileTimestamps.createdAt;
+      }
+
+      missingFields.lastLogin = profileTimestamps.lastLogin;
 
       if (Object.keys(missingFields).length > 0) {
         await this.firestoreService.updateDocument('users', user.uid, missingFields);
@@ -696,23 +964,149 @@ export class AuthService {
 
     const newUserProfile: UserProfile = {
       id: user.uid,
-      email: user.email || '',
-      name: user.displayName || 'User',
+      email: seededEmail || user.email || '',
+      name: seededName || user.displayName || 'User',
       role: 'user',
       source: resolvedSource,
       isVerified: false,
-      createdAt: new Date().toISOString(),
+      createdAt: profileTimestamps.createdAt,
+      lastLogin: profileTimestamps.lastLogin,
       region: '',
-      phoneNumber: user.phoneNumber || '',
-      photoURL: user.photoURL || '',
+      phoneNumber: seededPhoneNumber || user.phoneNumber || '',
+      photoURL: seededPhotoURL || user.photoURL || '',
       fcmToken: this.getStoredFcmToken(),
     };
 
     await this.firestoreService.updateDocument('users', user.uid, newUserProfile);
 
-    if (user.email) {
-      await this.emailService.sendWelcomeEmail(user.email, user.displayName || 'User');
+    if (newUserProfile.email) {
+      await this.emailService.sendWelcomeEmail(newUserProfile.email, newUserProfile.name || 'User');
     }
+  }
+
+  private buildAppleProfileSeed(profile: AppleProfileData | null | undefined): SocialProfileSeed | undefined {
+    if (!profile) {
+      return undefined;
+    }
+
+    const email = profile.email?.trim() || '';
+    const givenName = profile.givenName?.trim() || '';
+    const familyName = profile.familyName?.trim() || '';
+    const name = [givenName, familyName].filter(Boolean).join(' ').trim();
+
+    if (!email && !name) {
+      return undefined;
+    }
+
+    return {
+      ...(email ? { email } : {}),
+      ...(name ? { name } : {}),
+    };
+  }
+
+  private async applyAppleProfileData(user: User, profileSeed?: SocialProfileSeed): Promise<void> {
+    const name = profileSeed?.name?.trim() || '';
+    if (!name || name === user.displayName) {
+      return;
+    }
+
+    await updateProfile(user, { displayName: name });
+    await user.reload();
+    this.currentUser.set({ ...auth.currentUser } as User);
+  }
+
+  private async mergeProfileSeed(
+    user: User,
+    source: UserProfileSource | undefined,
+    profileSeed: SocialProfileSeed
+  ): Promise<void> {
+    const seededEmail = profileSeed.email?.trim() || '';
+    const seededName = profileSeed.name?.trim() || '';
+    const seededPhoneNumber = profileSeed.phoneNumber?.trim() || '';
+    const seededPhotoURL = profileSeed.photoURL?.trim() || '';
+
+    if (!seededEmail && !seededName && !seededPhoneNumber && !seededPhotoURL) {
+      return;
+    }
+
+    if (seededName && seededName !== user.displayName) {
+      await this.applyAppleProfileData(user, profileSeed);
+    }
+
+    const profile = await this.firestoreService.getDocument('users', user.uid);
+    const missingFields: Partial<UserProfile> = {};
+
+    if ((!profile?.email || !profile.email.trim()) && seededEmail) {
+      missingFields.email = seededEmail;
+    }
+    if ((!profile?.name || !profile.name.trim()) && seededName) {
+      missingFields.name = seededName;
+    }
+    if ((!profile?.phoneNumber || !profile.phoneNumber.trim()) && seededPhoneNumber) {
+      missingFields.phoneNumber = seededPhoneNumber;
+    }
+    if ((!profile?.photoURL || !profile.photoURL.trim()) && seededPhotoURL) {
+      missingFields.photoURL = seededPhotoURL;
+    }
+    if (!profile?.source && source) {
+      missingFields.source = source;
+    }
+
+    if (Object.keys(missingFields).length > 0) {
+      await this.firestoreService.updateDocument('users', user.uid, missingFields);
+    }
+  }
+
+  private buildProfileTimestamps(
+    user: User,
+    profile?: Partial<UserProfile> | null
+  ): { createdAt: string; lastLogin: string } {
+    const nowIso = new Date().toISOString();
+    const createdAt =
+      this.normalizeDateString(profile?.createdAt) ||
+      this.normalizeDateString(user.metadata.creationTime) ||
+      nowIso;
+    const lastLogin =
+      this.normalizeDateString(user.metadata.lastSignInTime) ||
+      nowIso;
+
+    return { createdAt, lastLogin };
+  }
+
+  private normalizeDateString(value: unknown): string | null {
+    if (!value) {
+      return null;
+    }
+
+    if (value instanceof Date) {
+      return Number.isNaN(value.getTime()) ? null : value.toISOString();
+    }
+
+    if (typeof value === 'number' && Number.isFinite(value)) {
+      const ms = value > 1_000_000_000_000 ? value : value * 1000;
+      const date = new Date(ms);
+      return Number.isNaN(date.getTime()) ? null : date.toISOString();
+    }
+
+    if (typeof value === 'string') {
+      const numericValue = Number(value);
+      if (!Number.isNaN(numericValue) && value.trim() !== '') {
+        return this.normalizeDateString(numericValue);
+      }
+
+      const date = new Date(value);
+      return Number.isNaN(date.getTime()) ? null : date.toISOString();
+    }
+
+    if (typeof (value as { toDate?: () => Date }).toDate === 'function') {
+      return this.normalizeDateString((value as { toDate?: () => Date }).toDate?.());
+    }
+
+    if (typeof (value as { seconds?: number }).seconds === 'number') {
+      return this.normalizeDateString((value as { seconds?: number }).seconds);
+    }
+
+    return null;
   }
 
   private async signInWithWebProvider(
@@ -728,19 +1122,52 @@ export class AuthService {
 
       if (
         authError.code === 'auth/popup-blocked' ||
-        authError.code === 'auth/popup-closed-by-user' ||
         authError.code === 'auth/cancelled-popup-request'
       ) {
         try {
+          this.persistPendingWebSocialRedirectPrompt();
           await signInWithRedirect(auth, provider);
           return { success: true };
         } catch (redirectError: unknown) {
+          if (this.isSocialLoginCancellation(redirectError)) {
+            return { success: false, dismissed: true };
+          }
+
           const fallbackError = redirectError as { message?: string };
           return { success: false, error: fallbackError.message || 'Social sign-in failed. Please try again.' };
         }
       }
 
+      if (this.isSocialLoginCancellation(error)) {
+        return { success: false, dismissed: true };
+      }
+
+      if (!authError.code && !authError.message) {
+        return { success: false, dismissed: true };
+      }
+
       return { success: false, error: authError.message || 'Social sign-in failed. Please try again.' };
+    }
+  }
+
+  private async restorePendingWebSocialRedirect(): Promise<void> {
+    try {
+      const result = await getRedirectResult(auth);
+      if (!result?.user) {
+        return;
+      }
+
+      await this.handleSocialLoginSuccess(
+        result.user,
+        this.resolveUserProfileSource(result.user)
+      );
+
+      if (this.consumePendingWebSocialRedirectPrompt()) {
+        this.pendingProfileCompletionPrompt.set(true);
+      }
+    } catch (error) {
+      console.warn('Failed to restore social redirect result:', error);
+      this.clearPendingWebSocialRedirectPrompt();
     }
   }
 
@@ -862,6 +1289,90 @@ export class AuthService {
     } catch {
       // Ignore storage failures.
     }
+  }
+
+  private persistPendingWebSocialRedirectPrompt(): void {
+    try {
+      sessionStorage.setItem(WEB_SOCIAL_REDIRECT_PROMPT_KEY, '1');
+    } catch {
+      // Ignore storage failures.
+    }
+  }
+
+  private consumePendingWebSocialRedirectPrompt(): boolean {
+    try {
+      const shouldPrompt = sessionStorage.getItem(WEB_SOCIAL_REDIRECT_PROMPT_KEY) === '1';
+      if (shouldPrompt) {
+        sessionStorage.removeItem(WEB_SOCIAL_REDIRECT_PROMPT_KEY);
+      }
+      return shouldPrompt;
+    } catch {
+      return false;
+    }
+  }
+
+  private clearPendingWebSocialRedirectPrompt(): void {
+    try {
+      sessionStorage.removeItem(WEB_SOCIAL_REDIRECT_PROMPT_KEY);
+    } catch {
+      // Ignore storage failures.
+    }
+  }
+
+  isDismissedSocialLoginError(message?: string): boolean {
+    const details = (message || '').toLowerCase();
+
+    return (
+      details.includes('cancel') ||
+      details.includes('closed by user') ||
+      details.includes('popup closed by user') ||
+      details.includes('user canceled') ||
+      details.includes('user cancelled') ||
+      details.includes('dismissed')
+    );
+  }
+
+  private isSocialLoginCancellation(error: unknown): boolean {
+    if (!error) {
+      return false;
+    }
+
+    const nativeError = error as {
+      code?: string;
+      message?: string;
+      errorMessage?: string;
+      error_description?: string;
+    };
+
+    const details = [
+      nativeError.code,
+      nativeError.message,
+      nativeError.errorMessage,
+      nativeError.error_description,
+      typeof error === 'string' ? error : '',
+    ]
+      .filter((value): value is string => !!value)
+      .join(' ')
+      .toLowerCase();
+
+    return (
+      details.includes('cancel') ||
+      details.includes('canceled') ||
+      details.includes('cancelled') ||
+      details.includes('dismissed') ||
+      details.includes('closed by user') ||
+      details.includes('popup closed by user') ||
+      details.includes('popup-closed-by-user') ||
+      details.includes('cancelled-popup-request') ||
+      details.includes('user canceled the sign-in flow') ||
+      details.includes('user cancelled the sign-in flow') ||
+      details.includes('sign in flow was cancelled') ||
+      details.includes('sign-in flow was cancelled') ||
+      details.includes('the user canceled the sign-in flow') ||
+      details.includes('the user cancelled the sign-in flow') ||
+      details.includes('"token":null') ||
+      details.includes("'token':null")
+    );
   }
 
   private mapGoogleSignInError(error: unknown): string {

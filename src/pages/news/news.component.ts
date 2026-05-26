@@ -30,13 +30,15 @@ export class NewsComponent implements OnInit {
   readonly isModalSignal = signal(false);
 
   allNews: Signal<NewsArticle[]>;
+  appSettings = this.dataService.getAppSettings();
+  newsCategoriesConfig = this.dataService.getNewsCategories();
 
   selectedCategory = signal('All');
   searchTerm = signal('');
   limit = signal(10);
   isLoading = signal(true); // Initial loading state
 
-  categories = signal(['All', 'General', 'Business', 'Tech', 'Community', 'Lifestyle', 'Food', 'Travel', 'Health', 'Sports']);
+  categories: Signal<string[]>;
 
   categoryContainer = viewChild<ElementRef>('categoryContainer');
   private isDown = false;
@@ -48,8 +50,43 @@ export class NewsComponent implements OnInit {
   filteredNews: Signal<NewsArticle[]>;
   displayedNews: Signal<NewsArticle[]>;
 
+  private normalizeNewsCategories(raw: unknown): string[] {
+    const values = Array.isArray(raw)
+      ? raw
+      : typeof raw === 'string'
+        ? raw.split(',')
+        : [];
+
+    return values
+      .map((value) => {
+        if (typeof value === 'string') {
+          return value.trim();
+        }
+
+        if (value && typeof value === 'object') {
+          const record = value as Record<string, unknown>;
+          const candidate = record['name'] ?? record['label'] ?? record['title'] ?? record['value'];
+          return typeof candidate === 'string' ? candidate.trim() : '';
+        }
+
+        return '';
+      })
+      .filter(Boolean)
+      .filter((category, index, categories) => categories.findIndex((value) => value.toLowerCase() === category.toLowerCase()) === index)
+      .filter((category) => category.toLowerCase() !== 'all');
+  }
+
   constructor() {
     this.allNews = this.dataService.getNews();
+    this.categories = computed(() => {
+      const configuredNewsCategories = this.newsCategoriesConfig();
+      const normalizedCategories =
+        configuredNewsCategories.length > 0
+          ? this.normalizeNewsCategories(configuredNewsCategories)
+          : this.normalizeNewsCategories(this.appSettings()?.news_categories);
+
+      return ['All', ...normalizedCategories];
+    });
 
     this.featuredBanners = computed(() => {
         const list = this.allNews();

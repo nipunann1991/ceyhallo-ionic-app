@@ -48,7 +48,7 @@ import { Country } from '../../models/country.model';
                [ngModel]="displayName()" 
                (ngModelChange)="displayName.set($event)"
                class="w-full h-12 bg-[#F8F9FA] rounded-xl px-4 text-[#1A1C1E] font-medium border border-[#E8EEF7] focus:bg-white focus:border-[#083594] focus:ring-4 focus:ring-[#083594]/10 transition-all outline-none placeholder-gray-400"
-               placeholder="Alex Perera">
+               placeholder="Full Name">
           </div>
        </div>
 
@@ -80,7 +80,7 @@ import { Country } from '../../models/country.model';
 
        <!-- Date of Birth -->
        <div>
-          <label class="block text-xs font-bold text-[#1A1C1E] mb-2 pl-1">Date of Birth</label>
+          <label class="block text-xs font-bold text-[#1A1C1E] mb-2 pl-1">Date of Birth (Optional)</label>
           <div class="relative">
              <input 
                type="date" 
@@ -93,7 +93,7 @@ import { Country } from '../../models/country.model';
 
        <!-- Address (Text Area) -->
        <div>
-          <label class="block text-xs font-bold text-[#1A1C1E] mb-2 pl-1">Address</label>
+          <label class="block text-xs font-bold text-[#1A1C1E] mb-2 pl-1">Address (Optional)</label>
           <div class="relative">
              <textarea 
                [ngModel]="address()" 
@@ -103,15 +103,15 @@ import { Country } from '../../models/country.model';
           </div>
        </div>
 
-       <!-- Region/Country (Select) -->
+       <!-- Country (Select) -->
        <div>
-          <label class="block text-xs font-bold text-[#1A1C1E] mb-2 pl-1">Region</label>
+          <label class="block text-xs font-bold text-[#1A1C1E] mb-2 pl-1">Country (Optional)</label>
           <div class="relative">
              <select 
                [ngModel]="region()" 
                (ngModelChange)="onRegionChange($event)"
                class="w-full h-12 bg-[#F8F9FA] rounded-xl px-4 pr-10 text-[#1A1C1E] font-medium border border-[#E8EEF7] focus:bg-white focus:border-[#083594] focus:ring-4 focus:ring-[#083594]/10 transition-all outline-none appearance-none">
-               <option value="" disabled>Select Region</option>
+               <option value="" disabled>Select Country</option>
                @for (country of countries(); track country.id) {
                  <option [value]="country.id">{{ country.name }}</option>
                }
@@ -122,9 +122,9 @@ import { Country } from '../../models/country.model';
           </div>
        </div>
 
-       <!-- City (Select - Dependent on Region) -->
+       <!-- City (Select - Dependent on Country) -->
        <div>
-          <label class="block text-xs font-bold text-[#1A1C1E] mb-2 pl-1">City</label>
+          <label class="block text-xs font-bold text-[#1A1C1E] mb-2 pl-1">City (Optional)</label>
           <div class="relative">
              <select 
                [ngModel]="city()" 
@@ -171,7 +171,7 @@ import { Country } from '../../models/country.model';
     <div (click)="onDeleteDialogBackdropClick()" class="fixed inset-0 z-[80] flex items-center justify-center bg-black/45 backdrop-blur-[2px] p-6 animate-fade-in">
       <div (click)="$event.stopPropagation()" class="bg-white rounded-3xl p-8 w-full max-w-xs text-center shadow-2xl relative overflow-hidden">
         <div class="flex flex-col items-center mb-6">
-          <ion-img src="https://i.ibb.co/B5TnYXWN/logo.png" alt="CeyHallo Logo" class="h-24 object-contain"></ion-img>
+          <ion-img src="/assets/logo.png" alt="CeyHallo Logo" class="h-24 object-contain"></ion-img>
         </div>
 
         @if (deleteDialogState() === 'confirm') {
@@ -316,11 +316,16 @@ export class EditProfileComponent {
       return;
     }
 
+    if (!this.phoneNumber().trim()) {
+      this.showToast('Phone number is required', 'danger');
+      return;
+    }
+
     this.isLoading.set(true);
     
     const updateData: Partial<UserProfile> = {
-        name: this.displayName() || '',
-        phoneNumber: this.phoneNumber() || '',
+        name: this.displayName().trim(),
+        phoneNumber: this.phoneNumber().trim(),
         city: this.city() || '',
         region: this.region() || '',
         address: this.address() || '',

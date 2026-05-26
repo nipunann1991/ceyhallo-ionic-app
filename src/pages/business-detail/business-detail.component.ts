@@ -4,13 +4,14 @@ import { CommonModule } from '@angular/common';
 import { IonicModule, ModalController, NavController, ToastController } from '@ionic/angular';
 import { DataService } from '../../services/data.service';
 import { handleImageError } from '../../utils/image.utils';
-import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
+import { DomSanitizer, SafeHtml, SafeResourceUrl } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
 import { OfferCardComponent } from '../../components/offer-card/offer-card.component';
 import { Offer } from '../../models/offer.model';
 import { NewsDetailComponent } from '../news-detail/news-detail.component';
 import { NewsArticle } from '../../models/news.model';
-import { Business } from '../../models/business.model';
+import { Business, BusinessLocation, BusinessOpeningHour } from '../../models/business.model';
+import { Country } from '../../models/country.model';
 import { Event } from '../../models/event.model';
 import { EventDetailComponent } from '../event-detail/event-detail.component';
 import { EventCardComponent } from '../../components/event-card/event-card.component';
@@ -21,6 +22,15 @@ import { EventCardComponent } from '../../components/event-card/event-card.compo
   styles: [`
     .scrollbar-hide::-webkit-scrollbar { display: none; }
     .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+    .map-embed,
+    .map-embed iframe {
+      width: 100%;
+      height: 100%;
+    }
+    .map-embed iframe {
+      border: 0;
+      display: block;
+    }
   `],
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [CommonModule, IonicModule, OfferCardComponent, EventCardComponent],
@@ -56,14 +66,22 @@ export class BusinessDetailComponent implements OnInit {
   isMenuOpen = signal(false);
 
   business: Signal<Business | undefined>;
+  countries: Signal<Country[]>;
   businessOffers: Signal<Offer[]>;
   businessEvents: Signal<Event[]>;
   isOpenNow: Signal<boolean | null>;
   galleryImages: Signal<string[]>;
+  mapIframeHtml: Signal<SafeHtml | null>;
   mapSafeUrl: Signal<SafeResourceUrl | null>;
   menuSafeUrl: Signal<SafeResourceUrl | null>;
   
   actionButtonConfig: Signal<{ label: string, icon: string } | null>;
+  primaryLocation: Signal<BusinessLocation | null>;
+  branches: Signal<BusinessLocation[]>;
+  displayPhones: Signal<string[]>;
+  displayEmails: Signal<string[]>;
+  displayOpeningHours: Signal<BusinessOpeningHour[]>;
+  displayLocationLabel: Signal<string>;
 
   constructor(
     private modalCtrl: ModalController,
@@ -80,6 +98,8 @@ export class BusinessDetailComponent implements OnInit {
         // Search in businesses
         return this.dataService.getBusinesses()().find(b => b.id === id);
     });
+
+    this.countries = this.dataService.getCountries();
 
     this.businessOffers = computed(() => {
         const bizId = this.businessIdSignal();
@@ -99,7 +119,8 @@ export class BusinessDetailComponent implements OnInit {
 
     this.isOpenNow = computed(() => {
         const biz = this.business();
-        if (!biz || !biz.openingHours || biz.openingHours.length === 0) return null;
+        const openingHours = this.displayOpeningHours();
+        if (!biz || openingHours.length === 0) return null;
     
         const now = new Date();
         const currentDay = now.toLocaleString('en-US', { weekday: 'short' }); 
@@ -121,13 +142,16 @@ export class BusinessDetailComponent implements OnInit {
             } catch { return null; }
         };
     
-        for (const rule of biz.openingHours) {
-            if (!rule || !rule.time) continue;
-    
+        for (const rule of openingHours) {
+            if (!rule) continue;
+
             let appliesToday = false;
             
-            const ruleDays = rule.days || '';
-            const ruleTimeLower = (rule.time || '').toLowerCase();
+            const ruleDays = (rule.days || rule.day || '');
+            const ruleTimeValue = (rule.time || rule.hours || '');
+            const ruleTimeLower = ruleTimeValue.toLowerCase();
+
+            if (!ruleTimeValue) continue;
     
             if (ruleDays.includes('-')) {
                 const parts = ruleDays.split('-');
@@ -154,7 +178,7 @@ export class BusinessDetailComponent implements OnInit {
                 if (ruleTimeLower === 'closed') return false;
                 if (ruleTimeLower === '24 hours') return true;
     
-                const parts = rule.time.split('-');
+                const parts = ruleTimeValue.split('-');
                 if (parts.length === 2) {
                     const startVal = parseTime(parts[0]);
                     const endVal = parseTime(parts[1]);
@@ -172,20 +196,100 @@ export class BusinessDetailComponent implements OnInit {
         return false;
     });
 
+    this.primaryLocation = computed(() => {
+      const biz = this.business();
+      const locations = biz?.locations ?? [];
+      return locations.find((loc) => loc.isPrimary) ?? (locations.length > 0 ? locations[0] : null);
+    });
+
+    this.branches = computed(() => {
+      const biz = this.business();
+      const locations = biz?.locations ?? [];
+      const others = locations.filter((loc) => !loc.isPrimary);
+      return others.length > 0 ? others : [];
+    });
+
+    this.displayPhones = computed(() => {
+      const location = this.primaryLocation();
+      const fromLocation = (location?.phones ?? []).filter(Boolean);
+      const biz = this.business();
+      const fallback = (biz?.phones ?? []).filter(Boolean);
+      const result = (fromLocation.length > 0 ? fromLocation : fallback)
+        .filter((value, index, arr) => arr.indexOf(value) === index);
+      return result;
+    });
+
+    this.displayEmails = computed(() => {
+      const location = this.primaryLocation();
+      const fromLocation = (location?.emails ?? []).filter(Boolean);
+      const biz = this.business();
+      const fallback = (biz?.emails ?? []).filter(Boolean);
+      const result = (fromLocation.length > 0 ? fromLocation : fallback)
+        .filter((value, index, arr) => arr.indexOf(value) === index);
+      return result;
+    });
+
+    this.displayOpeningHours = computed(() => {
+      const location = this.primaryLocation();
+      const fromLocation = (location?.openingHours ?? []).filter(Boolean);
+      const biz = this.business();
+      const fallback = (biz?.openingHours ?? []).filter(Boolean);
+      return fromLocation.length > 0 ? fromLocation : fallback;
+    });
+
+    this.displayLocationLabel = computed(() => {
+      const location = this.primaryLocation();
+      const biz = this.business();
+      return (
+        location?.address ||
+        location?.city ||
+        biz?.location ||
+        ''
+      );
+    });
+
     this.galleryImages = computed(() => {
         const biz = this.business();
         if (!biz || !biz.gallery) return [];
         return biz.gallery;
     });
 
-    this.mapSafeUrl = computed(() => {
-        const biz = this.business();
-        if (biz && biz.location) {
-          const query = encodeURIComponent(biz.location);
-          const url = `https://maps.google.com/maps?q=${query}&t=&z=15&ie=UTF8&iwloc=&output=embed`;
-          return this.sanitizer.bypassSecurityTrustResourceUrl(url);
-        }
+    this.mapIframeHtml = computed(() => {
+      const location = this.primaryLocation();
+      const iframe = (location?.mapIframe || '').trim();
+      if (!iframe) {
         return null;
+      }
+
+      if (/<iframe[\s\S]*<\/iframe>/i.test(iframe)) {
+        return this.sanitizer.bypassSecurityTrustHtml(iframe);
+      }
+
+      return null;
+    });
+
+    this.mapSafeUrl = computed(() => {
+      if (this.mapIframeHtml()) {
+        return null;
+      }
+
+      const location = this.primaryLocation();
+      const iframe = (location?.mapIframe || '').trim();
+      const iframeUrl = this.extractIframeSource(iframe) || (this.isLikelyUrl(iframe) ? iframe : '');
+
+      if (iframeUrl) {
+        return this.sanitizer.bypassSecurityTrustResourceUrl(iframeUrl);
+      }
+
+      const queryValue = this.getMapQuery(location);
+      if (queryValue) {
+        const query = encodeURIComponent(queryValue);
+
+        const url = `https://maps.google.com/maps?q=${query}&t=&z=15&ie=UTF8&iwloc=&output=embed`;
+        return this.sanitizer.bypassSecurityTrustResourceUrl(url);
+      }
+
+      return null;
     });
 
     this.menuSafeUrl = computed(() => {
@@ -232,11 +336,61 @@ export class BusinessDetailComponent implements OnInit {
   }
 
   openMap() {
-    const biz = this.business();
-    if (biz && biz.location) {
-        const query = encodeURIComponent(biz.location);
-        window.open(`https://www.google.com/maps/search/?api=1&query=${query}`, '_system');
+    const location = this.primaryLocation();
+    const iframe = (location?.mapIframe || '').trim();
+    const iframeUrl = this.extractIframeSource(iframe) || (this.isLikelyUrl(iframe) ? iframe : '');
+
+    if (iframeUrl) {
+      window.open(iframeUrl, '_system');
+      return;
     }
+
+    const queryValue = this.getMapQuery(location);
+    if (queryValue) {
+      const query = encodeURIComponent(queryValue);
+      window.open(`https://www.google.com/maps/search/?api=1&query=${query}`, '_system');
+    }
+  }
+
+  private getMapQuery(location: BusinessLocation | null): string {
+    return (
+      location?.mapQuery?.trim() ||
+      location?.address?.trim() ||
+      this.displayLocationLabel()
+    );
+  }
+
+  private isLikelyUrl(raw: string): boolean {
+    return /^(https?:)?\/\//i.test(raw) || /^https?:/i.test(raw);
+  }
+
+  private extractIframeSource(raw: string): string | null {
+    if (!raw) {
+      return null;
+    }
+
+    const match = raw.match(/<iframe[^>]*\s+src=["']([^"']+)["'][^>]*>/i);
+    if (match && match[1]) {
+      return match[1].trim();
+    }
+
+    return null;
+  }
+
+  getLocationCityName(location: BusinessLocation): string {
+    if (location.city?.trim()) {
+      return location.city.trim();
+    }
+
+    const countryCode = location.countryCode?.trim().toUpperCase();
+    const cityCode = location.cityCode?.trim().toUpperCase();
+    if (!countryCode || !cityCode) {
+      return location.label || location.address || 'Location';
+    }
+
+    const country = this.countries().find((item) => item.id?.toUpperCase() === countryCode);
+    const city = country?.cities?.find((item) => item.code?.toUpperCase() === cityCode);
+    return city?.name || location.label || location.address || cityCode;
   }
   
   openMenu() {
@@ -389,20 +543,25 @@ export class BusinessDetailComponent implements OnInit {
         return;
     }
 
+    const isNoLinkOffer = (offer.linkType || '').toLowerCase() === 'none';
+    const expiryLabel = offer.endDate
+      ? offer.endDate.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+      : 'No end date';
+
     const offerArticle: NewsArticle = {
       id: offer.id,
       title: offer.title,
-      source: offer.targetName,
-      date: offer.expiryDate,
+      source: isNoLinkOffer ? (offer.offerBy || offer.targetName) : offer.targetName,
+      date: offer.endDate || offer.expiryDate,
       imageUrl: offer.image,
       description: offer.discount,
       content: `
         <div class="space-y-4">
-           <p class="text-base text-gray-600 leading-relaxed">${offer.description || 'No additional details available.'}</p>
+           <p class="text-base text-gray-600 leading-relaxed">${offer.content || offer.description || 'No additional details available.'}</p>
            
-           <div class="flex items-center gap-2 mt-4 text-sm font-medium text-gray-500">
+           <div class="flex items-center gap-2 mt-4 text-sm text-gray-500">
               <ion-icon name="time-outline" class="text-lg"></ion-icon>
-              <span>Expires: ${offer.expiryDate.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
+              <span><span class="font-bold text-gray-700">Expires on:</span> ${expiryLabel}</span>
            </div>
         </div>
       `,
