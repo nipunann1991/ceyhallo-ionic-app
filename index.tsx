@@ -17,5 +17,3 @@ bootstrapApplication(AppComponent, {
     importProvidersFrom(IonicModule.forRoot({}))
   ],
 }).catch(err => console.error('Bootstrap error:', err?.message || 'Unknown error'));
-
-// AI Studio always uses an `index.tsx` file for all project types.
