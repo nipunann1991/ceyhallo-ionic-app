@@ -23,10 +23,7 @@ import { BannerTargetType } from '../../enums/banner.enum';
 @Component({
   selector: 'app-businesses',
   templateUrl: './businesses.component.html',
-  styles: [`
-    .scrollbar-hide::-webkit-scrollbar { display: none; }
-    .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
-  `],
+  styleUrls: ['./businesses.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [CommonModule, IonicModule, BusinessCardComponent, OfferCardComponent, PageHeaderComponent],
 })

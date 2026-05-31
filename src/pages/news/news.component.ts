@@ -17,7 +17,7 @@ import { LoginComponent } from '../login/login.component';
 @Component({
   selector: 'app-news',
   templateUrl: './news.component.html',
-  styleUrls: ['./news.component.css'],
+  styleUrls: ['./news.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [CommonModule, IonicModule, NewsCardComponent, BannerComponent, PageHeaderComponent],
 })

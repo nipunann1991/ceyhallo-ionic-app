@@ -18,7 +18,7 @@ import { Country } from '../../models/country.model';
 @Component({
   selector: 'app-jobs',
   templateUrl: './jobs.component.html',
-  styleUrls: ['./jobs.component.css'],
+  styleUrls: ['./jobs.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [CommonModule, IonicModule, JobCardComponent, BannerComponent, PageHeaderComponent],
 })

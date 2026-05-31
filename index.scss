@@ -94,6 +94,15 @@ html.is-iphone ion-toast.toast-custom-text {
   transform: translateY(calc(4rem + var(--ion-safe-area-top, 0px)));
 }
 
+@keyframes slow-dot-pulse {
+  0%, 100% { opacity: 0.4; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1.2); }
+}
+
+.dot {
+  animation: slow-dot-pulse 1.8s infinite ease-in-out both;
+}
+
 .delete-account-alert {
   --backdrop-opacity: 0.34;
 }
