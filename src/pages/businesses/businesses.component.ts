@@ -305,12 +305,16 @@ export class BusinessesComponent implements OnInit {
         return;
     }
 
+    await this.openOfferModal(offer, isSection ? 'Back to Page' : 'Back');
+  }
+
+  private buildOfferArticle(offer: Offer): NewsArticle {
     const isNoLinkOffer = (offer.linkType || '').toLowerCase() === 'none';
     const expiryLabel = offer.endDate
       ? offer.endDate.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
       : 'No end date';
 
-    const offerArticle: NewsArticle = {
+    return {
       id: offer.id,
       title: offer.title,
       source: isNoLinkOffer ? (offer.offerBy || offer.targetName) : offer.targetName,
@@ -320,7 +324,7 @@ export class BusinessesComponent implements OnInit {
       content: `
         <div class="space-y-4">
            <p class="text-base text-gray-600 leading-relaxed">${offer.content || offer.description || 'No additional details available.'}</p>
-           
+
            <div class="flex items-center gap-2 mt-4 text-sm text-gray-500">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -329,25 +333,20 @@ export class BusinessesComponent implements OnInit {
            </div>
         </div>
       `,
-      category: 'Special Offer'
+      category: 'Special Offer',
     };
+  }
 
-    // For Businesses Page, the action is simply 'Back to Page' (Close)
-    const actionType: 'share' | 'external' | 'internal' | 'close' = 'close';
-    const actionLabel = 'Back to Page';
-    const actionIcon = 'arrow-back';
-    const targetUrl = '';
-    const targetType: BannerTargetType | undefined = undefined;
-
+  private async openOfferModal(offer: Offer, backLabel: string): Promise<void> {
     const modal = await this.modalCtrl.create({
       component: NewsDetailComponent,
       componentProps: {
-        articleData: offerArticle,
-        actionType: actionType,
-        actionLabel: actionLabel,
-        actionIcon: actionIcon,
-        targetUrl: targetUrl,
-        targetType: targetType
+        articleData: this.buildOfferArticle(offer),
+        actionType: 'close',
+        actionLabel: backLabel,
+        actionIcon: 'arrow-back',
+        targetUrl: '',
+        targetType: undefined,
       }
     });
     await modal.present();

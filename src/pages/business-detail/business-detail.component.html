@@ -11,13 +11,9 @@
       <div class="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-transparent h-32 pointer-events-none"></div>
 
       <!-- Header Actions -->
-      <div class="absolute top-0 left-0 right-0 nav-overlay-safe px-5 flex justify-between items-start z-10">
-        <button (click)="close()" class="active:scale-90 transition-transform">
-           <ion-icon name="arrow-back" class="text-3xl text-white drop-shadow-md"></ion-icon>
-        </button>
-        
-        <button class="active:scale-90 transition-transform">
-           <ion-icon name="bookmark-outline" class="text-2xl text-white drop-shadow-md"></ion-icon>
+      <div class="absolute top-0 left-0 right-0 nav-overlay-safe mt-4 px-5 flex items-start z-10">
+        <button (click)="close()" class="w-10 h-10 rounded-full bg-black/45 shadow-sm flex items-center justify-center text-white hover:bg-black/55 active:scale-95 transition-all border border-white/10">
+           <ion-icon name="arrow-back" class="text-xl text-white"></ion-icon>
         </button>
       </div>
     </div>

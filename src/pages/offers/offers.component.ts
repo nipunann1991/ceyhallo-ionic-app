@@ -124,12 +124,16 @@ export class OffersComponent implements OnInit {
         return;
     }
 
+    await this.openOfferModal(offer, 'Back');
+  }
+
+  private buildOfferArticle(offer: Offer): NewsArticle {
     const isNoLinkOffer = (offer.linkType || '').toLowerCase() === 'none';
     const expiryLabel = offer.endDate
       ? offer.endDate.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
       : 'No end date';
 
-    const offerArticle: NewsArticle = {
+    return {
       id: offer.id,
       title: offer.title,
       source: isNoLinkOffer ? (offer.offerBy || offer.targetName) : offer.targetName,
@@ -139,7 +143,7 @@ export class OffersComponent implements OnInit {
       content: `
         <div class="space-y-4">
            <p class="text-base text-gray-600 leading-relaxed">${offer.content || offer.description || 'No additional details available.'}</p>
-           
+
            <div class="flex items-center gap-2 mt-4 text-sm text-gray-500">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -148,55 +152,49 @@ export class OffersComponent implements OnInit {
            </div>
         </div>
       `,
-      category: 'Special Offer'
+      category: 'Special Offer',
     };
+  }
 
-    let actionType: 'share' | 'external' | 'internal' | 'close' = 'close';
-    let actionLabel = 'Back';
-    let actionIcon = 'arrow-back';
-    let targetUrl = '';
-    let targetType: BannerTargetType | undefined = undefined;
-
+  private buildOfferAction(offer: Offer, backLabel: string): { actionType: 'share' | 'external' | 'internal' | 'close'; actionLabel: string; actionIcon: string; targetUrl: string; targetType?: BannerTargetType } {
     const targetId = offer.targetId || offer.businessId;
-    if (targetId) {
-        actionType = 'internal';
-        actionLabel = 'View in Page';
-        actionIcon = 'open-outline';
-        
-        let type = (offer.linkType || 'business').toLowerCase();
-        if (type === 'businesses') type = 'business';
-
-        switch (type) {
-            case 'event':
-                targetType = BannerTargetType.Event;
-                targetUrl = `/event/${targetId}`;
-                break;
-            case 'job':
-                targetType = BannerTargetType.Job;
-                targetUrl = `/job/${targetId}`;
-                break;
-            case 'news':
-                targetType = BannerTargetType.News;
-                targetUrl = `/news/${targetId}`;
-                break;
-            case 'restaurant':
-            case 'business':
-            default:
-                targetType = BannerTargetType.Business;
-                targetUrl = `/business/${targetId}`;
-                break;
-        }
+    if (!targetId) {
+      return {
+        actionType: 'close',
+        actionLabel: backLabel,
+        actionIcon: 'arrow-back',
+        targetUrl: '',
+      };
     }
 
+    const type = (offer.linkType || 'business').toLowerCase() === 'businesses'
+      ? 'business'
+      : (offer.linkType || 'business').toLowerCase();
+
+    const routeMap: Record<string, { targetType: BannerTargetType; routePrefix: string }> = {
+      event: { targetType: BannerTargetType.Event, routePrefix: '/event' },
+      job: { targetType: BannerTargetType.Job, routePrefix: '/job' },
+      news: { targetType: BannerTargetType.News, routePrefix: '/news' },
+      restaurant: { targetType: BannerTargetType.Business, routePrefix: '/business' },
+      business: { targetType: BannerTargetType.Business, routePrefix: '/business' },
+    };
+    const resolved = routeMap[type] || routeMap.business;
+
+    return {
+      actionType: 'internal',
+      actionLabel: 'View in Page',
+      actionIcon: 'open-outline',
+      targetUrl: `${resolved.routePrefix}/${targetId}`,
+      targetType: resolved.targetType,
+    };
+  }
+
+  private async openOfferModal(offer: Offer, backLabel: string): Promise<void> {
     const modal = await this.modalCtrl.create({
       component: NewsDetailComponent,
       componentProps: {
-        articleData: offerArticle,
-        actionType: actionType,
-        actionLabel: actionLabel,
-        actionIcon: actionIcon,
-        targetUrl: targetUrl,
-        targetType: targetType
+        articleData: this.buildOfferArticle(offer),
+        ...this.buildOfferAction(offer, backLabel),
       }
     });
     await modal.present();

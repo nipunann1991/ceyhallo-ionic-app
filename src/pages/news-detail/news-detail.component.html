@@ -19,10 +19,10 @@
       }
 
       <!-- Navigation Overlay -->
-      <div class="absolute top-0 left-0 right-0 nav-overlay-safe px-5 flex justify-between items-start z-10" (click)="$event.stopPropagation()">
-        <!-- Back Button (Replaces Share) -->
-        <button (click)="close()" class="text-white hover:opacity-80 transition-opacity active:scale-90">
-           <ion-icon name="arrow-back" class="text-[1.75rem] drop-shadow-md"></ion-icon>
+      <div class="absolute top-0 left-0 right-0 nav-overlay-safe mt-4 px-5 flex justify-between items-start z-10" (click)="$event.stopPropagation()">
+        <!-- Back Button -->
+        <button (click)="close()" class="w-10 h-10 rounded-full bg-black/45 shadow-sm flex items-center justify-center text-white hover:bg-black/55 active:scale-95 transition-all border border-white/10">
+           <ion-icon name="arrow-back" class="text-xl text-white"></ion-icon>
         </button>
       </div>
     </div>

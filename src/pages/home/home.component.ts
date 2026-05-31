@@ -99,6 +99,12 @@ export class HomeComponent implements OnInit, OnDestroy {
     private toastCtrl: ToastController,
     private router: Router
   ) {
+    this.initializeState();
+    this.initializeComputedState();
+    this.setupEffects();
+  }
+
+  private initializeState(): void {
     this.settings = this.dataService.getAppSettings();
     this.banners = this.dataService.getBanners();
     this.categories = this.dataService.getCategories();
@@ -109,40 +115,41 @@ export class HomeComponent implements OnInit, OnDestroy {
     this.jobs = this.dataService.getJobs();
     this.businesses = this.dataService.getBusinesses();
     this.notifications = this.dataService.getNotifications();
+    this.selectedCountryId = this.dataService.selectedCountryId;
+  }
+
+  private initializeComputedState(): void {
     this.hasUnreadNotifications = computed(() =>
       this.localNotificationState.hasUnread(this.notifications())
     );
 
-
-    this.selectedCountryId = this.dataService.selectedCountryId;
-
     this.user = computed(() => {
-        const profile = this.authService.userProfile();
-        const currentUser = this.authService.currentUser();
-        const fullName = profile?.name || currentUser?.displayName || 'Guest';
-        
-        const parts = fullName.trim().split(/\s+/);
-        let displayName = parts[0];
-        
-        if (displayName.length < 3 && parts.length > 1) {
-            displayName = parts[parts.length - 1];
-        }
+      const profile = this.authService.userProfile();
+      const currentUser = this.authService.currentUser();
+      const fullName = profile?.name || currentUser?.displayName || 'Guest';
 
-        return {
-          name: displayName,
-          greeting: 'Hello',
-          subtitle: 'Proud to be a member of this CeyHallo.',
-          avatar: profile?.photoURL || currentUser?.photoURL || `https://i.pravatar.cc/150?u=${profile?.email || 'guest'}`,
-          isVerified: profile?.isVerified ?? currentUser?.emailVerified ?? false,
-          isLoggedIn: !!currentUser
-        };
+      const parts = fullName.trim().split(/\s+/);
+      let displayName = parts[0];
+
+      if (displayName.length < 3 && parts.length > 1) {
+        displayName = parts[parts.length - 1];
+      }
+
+      return {
+        name: displayName,
+        greeting: 'Hello',
+        subtitle: 'Proud to be a member of this CeyHallo.',
+        avatar: profile?.photoURL || currentUser?.photoURL || `https://i.pravatar.cc/150?u=${profile?.email || 'guest'}`,
+        isVerified: profile?.isVerified ?? currentUser?.emailVerified ?? false,
+        isLoggedIn: !!currentUser
+      };
     });
 
     this.currentCountry = computed(() => {
-        const list = this.countries();
-        const selected = list.find(c => c.id === this.selectedCountryId());
-        if (selected) return selected;
-        return list.length > 0 ? list[0] : null; 
+      const list = this.countries();
+      const selected = list.find(c => c.id === this.selectedCountryId());
+      if (selected) return selected;
+      return list.length > 0 ? list[0] : null;
     });
 
     this.availableCompletionCities = computed(() => {
@@ -151,92 +158,86 @@ export class HomeComponent implements OnInit, OnDestroy {
       return country?.cities || [];
     });
 
-    // Compute sections with data for dynamic rendering
     this.sectionsWithData = computed(() => {
-        const settings = this.settings();
-        if (settings === undefined) return []; // Loading
-        
-        let sections = settings?.homeSections || [];
-        
+      const settings = this.settings();
+      if (settings === undefined) return [];
 
-        
-        const enabled = sections.filter(s => s.enabled).sort((a, b) => (a.order ?? 999) - (b.order ?? 999));
+      const sections = settings?.homeSections || [];
+      const enabled = sections.filter(s => s.enabled).sort((a, b) => (a.order ?? 999) - (b.order ?? 999));
 
-        return enabled.map(section => {
-          const dataSignal = this.getSectionData(section);
-          let data = dataSignal();
+      return enabled.map(section => {
+        const dataSignal = this.getSectionData(section);
+        let data = dataSignal();
 
-          // Apply additional filtering based on section properties
-          if (section.dataSource === 'offers') {
-            data = this.filterOffers(data as Offer[], section);
-          } else if (section.dataSource === 'businesses') {
-            const cid = this.selectedCountryId();
-            // Filter by country first
-            let filteredData = (data as Business[]).filter(b => !b.countryCode || b.countryCode === cid);
+        if (section.dataSource === 'offers') {
+          data = this.filterOffers(data as Offer[], section);
+        } else if (section.dataSource === 'businesses') {
+          const cid = this.selectedCountryId();
+          let filteredData = (data as Business[]).filter(b => !b.countryCode || b.countryCode === cid);
 
-            if (section.filterData && section.filterData.length > 0) {
-              filteredData = filteredData.filter((item: any) => {
-                return section.filterData!.every(criterion => {
-                  const filterType = criterion.filterType === 'isFeatured' ? 'isPromoted' : criterion.filterType;
-                  
-                  // Handle case-insensitive category matching
-                  if (filterType === 'category') {
-                    const itemCategory = (item.category || '').toLowerCase();
-                    const filterValue = (criterion.filterValue || '').toLowerCase();
-                    return itemCategory === filterValue;
-                  }
-                  
-                  return item[filterType] == criterion.filterValue;
-                });
-              });
-            }
+          if (section.filterData && section.filterData.length > 0) {
+            filteredData = filteredData.filter((item: any) => {
+              return section.filterData!.every(criterion => {
+                const filterType = criterion.filterType === 'isFeatured' ? 'isPromoted' : criterion.filterType;
 
-            if (section.excludedCategories && section.excludedCategories.length > 0) {
-              const excluded = section.excludedCategories.map(c => c.toLowerCase());
-              filteredData = filteredData.filter((item: any) => {
-                const itemCategory = (item.category || '').toLowerCase();
-                return !excluded.includes(itemCategory);
-              });
-            }
-            data = filteredData;
-          } else if (section.dataSource === 'events') {
-            const cid = this.selectedCountryId();
-            data = (data as Event[]).filter(e => !e.countryCode || e.countryCode === cid);
-          }
-
-          if (typeof section.limit === 'number' && section.limit > 0) {
-            data = data.slice(0, section.limit);
-          }
-
-          return { section, data };
-        }).filter(item => item.data && item.data.length > 0);
-    });
-
-    // Loading effect
-    effect(() => {
-        const settings = this.settings();
-        const currentCountry = this.currentCountry();
-
-        if (settings !== null && currentCountry !== null) {
-            this.dataReady = true;
-            this.hideLoadingIfReady();
-        }
-    });
-
-    effect(() => {
-        const countries = this.countries();
-        const selectedId = this.selectedCountryId();
-        
-        if (countries.length > 0) {
-            const countryExists = countries.some(c => c.id === selectedId);
-            if (!countryExists) {
-                // The default ID is not in the list. Let's find 'AE' by name.
-                const aeCountry = countries.find(c => c.name.toLowerCase().includes('emirates') || c.name.toUpperCase() === 'AE');
-                if (aeCountry) {
-                    this.dataService.setSelectedCountry(aeCountry.id);
+                if (filterType === 'category') {
+                  const itemCategory = (item.category || '').toLowerCase();
+                  const filterValue = (criterion.filterValue || '').toLowerCase();
+                  return itemCategory === filterValue;
                 }
-            }
+
+                return item[filterType] == criterion.filterValue;
+              });
+            });
+          }
+
+          if (section.excludedCategories && section.excludedCategories.length > 0) {
+            const excluded = section.excludedCategories.map(c => c.toLowerCase());
+            filteredData = filteredData.filter((item: any) => {
+              const itemCategory = (item.category || '').toLowerCase();
+              return !excluded.includes(itemCategory);
+            });
+          }
+          data = filteredData;
+        } else if (section.dataSource === 'events') {
+          const cid = this.selectedCountryId();
+          data = (data as Event[]).filter(e => !e.countryCode || e.countryCode === cid);
         }
+
+        if (typeof section.limit === 'number' && section.limit > 0) {
+          data = data.slice(0, section.limit);
+        }
+
+        return { section, data };
+      }).filter(item => item.data && item.data.length > 0);
+    });
+  }
+
+  private setupEffects(): void {
+    effect(() => {
+      const settings = this.settings();
+      const currentCountry = this.currentCountry();
+
+      if (settings !== null && currentCountry !== null) {
+        this.dataReady = true;
+        this.hideLoadingIfReady();
+      }
+    });
+
+    effect(() => {
+      const countries = this.countries();
+      const selectedId = this.selectedCountryId();
+      
+      if (countries.length > 0) {
+        const countryExists = countries.some(c => c.id === selectedId);
+        if (!countryExists) {
+          // The default ID is not in the list. Let's find 'AE' by name.
+          const aeCountry = countries.find(c => c.name.toLowerCase().includes('emirates') || c.name.toUpperCase() === 'AE');
+          if (aeCountry) {
+            this.dataService.setSelectedCountry(aeCountry.id);
+          }
+        }
+      }
     }, { allowSignalWrites: true });
 
     effect(() => {
@@ -272,7 +273,6 @@ export class HomeComponent implements OnInit, OnDestroy {
       void this.triggerProfileCompletionAfterHomeLoaded();
     }, { allowSignalWrites: true });
   }
-  
 
   ngOnInit() {
     this.loadTimeout = setTimeout(() => {
@@ -812,62 +812,10 @@ export class HomeComponent implements OnInit, OnDestroy {
 
   async handleBannerClick(banner: Banner) {
     if (!(await this.requireLogin())) return;
-
-    const navType = banner.navigationType || 'none';
-    
-    const bannerArticle: NewsArticle = {
-      id: banner.id,
-      title: banner.title,
-      source: 'Featured',
-      date: new Date(),
-      imageUrl: banner.image,
-      description: banner.description || '',
-      content: `<p class="text-lg font-medium">${banner.description || ''}</p>`,
-      category: banner.category
-    };
-
-    let actionType: 'share' | 'external' | 'internal' | 'close' = 'close';
-    let actionLabel = 'Back to Home';
-    let actionIcon = 'arrow-back';
-    let targetUrl = '';
-    let targetType = banner.targetType;
-
-    switch (navType) {
-        case BannerNavigationType.External:
-            if (banner.targetId) {
-                actionType = 'external';
-                actionLabel = 'Visit Website';
-                actionIcon = 'globe-outline';
-                targetUrl = banner.targetId;
-            }
-            break;
-        case BannerNavigationType.Internal:
-            if (banner.targetId) {
-                actionType = 'internal';
-                actionLabel = 'View in Page';
-                actionIcon = 'open-outline';
-                targetUrl = banner.targetId;
-            }
-            break;
-        case BannerNavigationType.Share:
-            actionType = 'share';
-            actionLabel = 'Share Article';
-            actionIcon = 'share-social';
-            break;
-    }
-
-    const modal = await this.modalCtrl.create({
-      component: NewsDetailComponent,
-      componentProps: {
-        articleData: bannerArticle,
-        actionType: actionType,
-        actionLabel: actionLabel,
-        actionIcon: actionIcon,
-        targetUrl: targetUrl,
-        targetType: targetType
-      }
-    });
-    await modal.present();
+    await this.openArticleModal(
+      this.buildBannerArticle(banner),
+      this.buildBannerAction(banner)
+    );
   }
   
   async handleBusinessClick(businessId: string) {
@@ -889,12 +837,32 @@ export class HomeComponent implements OnInit, OnDestroy {
     
     if (!(await this.requireLogin())) return;
 
+    await this.openArticleModal(
+      this.buildOfferArticle(offer),
+      this.buildOfferAction(offer, isBusinessSection)
+    );
+  }
+
+  private buildBannerArticle(banner: Banner): NewsArticle {
+    return {
+      id: banner.id,
+      title: banner.title,
+      source: 'Featured',
+      date: new Date(),
+      imageUrl: banner.image,
+      description: banner.description || '',
+      content: `<p class="text-lg font-medium">${banner.description || ''}</p>`,
+      category: banner.category,
+    };
+  }
+
+  private buildOfferArticle(offer: Offer): NewsArticle {
     const isNoLinkOffer = (offer.linkType || '').toLowerCase() === 'none';
     const expiryLabel = offer.endDate
       ? offer.endDate.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
       : 'No end date';
 
-    const offerArticle: NewsArticle = {
+    return {
       id: offer.id,
       title: offer.title,
       source: isNoLinkOffer ? (offer.offerBy || offer.targetName) : offer.targetName,
@@ -904,7 +872,7 @@ export class HomeComponent implements OnInit, OnDestroy {
       content: `
         <div class="space-y-4">
            <p class="text-base text-gray-600 leading-relaxed">${offer.content || offer.description || 'No additional details available.'}</p>
-           
+
            <div class="flex items-center gap-2 mt-4 text-sm text-gray-500">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -913,55 +881,91 @@ export class HomeComponent implements OnInit, OnDestroy {
            </div>
         </div>
       `,
-      category: 'Special Offer'
+      category: 'Special Offer',
     };
+  }
 
+  private buildBannerAction(banner: Banner): { actionType: 'share' | 'external' | 'internal' | 'close'; actionLabel: string; actionIcon: string; targetUrl: string; targetType?: BannerTargetType } {
+    const navType = banner.navigationType || BannerNavigationType.None;
+    const targetUrl = banner.targetId || '';
     let actionType: 'share' | 'external' | 'internal' | 'close' = 'close';
     let actionLabel = 'Back to Home';
     let actionIcon = 'arrow-back';
-    let targetUrl = '';
-    let targetType: BannerTargetType | undefined = undefined;
 
-    const targetId = offer.targetId || offer.businessId;
-    if (targetId) {
-        actionType = 'internal';
-        actionLabel = 'View in Page';
-        actionIcon = 'open-outline';
-        
-        let type = (offer.linkType || 'business').toLowerCase();
-        if (type === 'businesses') type = 'business';
-
-        switch (type) {
-            case 'event':
-                targetType = BannerTargetType.Event;
-                targetUrl = `/event/${targetId}`;
-                break;
-            case 'job':
-                targetType = BannerTargetType.Job;
-                targetUrl = `/job/${targetId}`;
-                break;
-            case 'news':
-                targetType = BannerTargetType.News;
-                targetUrl = `/news/${targetId}`;
-                break;
-            case 'business':
-            default:
-                targetType = BannerTargetType.Business;
-                targetUrl = `/business/${targetId}`;
-                break;
+    switch (navType) {
+      case BannerNavigationType.External:
+        if (targetUrl) {
+          actionType = 'external';
+          actionLabel = 'Visit Website';
+          actionIcon = 'globe-outline';
         }
+        break;
+      case BannerNavigationType.Internal:
+        if (targetUrl) {
+          actionType = 'internal';
+          actionLabel = 'View in Page';
+          actionIcon = 'open-outline';
+        }
+        break;
+      case BannerNavigationType.Share:
+        actionType = 'share';
+        actionLabel = 'Share Article';
+        actionIcon = 'share-social';
+        break;
     }
 
+    return {
+      actionType,
+      actionLabel,
+      actionIcon,
+      targetUrl,
+      targetType: banner.targetType,
+    };
+  }
+
+  private buildOfferAction(offer: Offer, isBusinessSection = false): { actionType: 'share' | 'external' | 'internal' | 'close'; actionLabel: string; actionIcon: string; targetUrl: string; targetType?: BannerTargetType } {
+    const targetId = offer.targetId || offer.businessId;
+    const rawType = (offer.linkType || 'business').toLowerCase();
+    const type = rawType === 'businesses' ? 'business' : rawType;
+
+    if (!targetId || isBusinessSection) {
+      return {
+        actionType: 'close',
+        actionLabel: isBusinessSection ? 'Back to Page' : 'Back to Home',
+        actionIcon: 'arrow-back',
+        targetUrl: '',
+        targetType: undefined,
+      };
+    }
+
+    const routeMap: Record<string, { targetType: BannerTargetType; routePrefix: string }> = {
+      event: { targetType: BannerTargetType.Event, routePrefix: '/event' },
+      job: { targetType: BannerTargetType.Job, routePrefix: '/job' },
+      news: { targetType: BannerTargetType.News, routePrefix: '/news' },
+      business: { targetType: BannerTargetType.Business, routePrefix: '/business' },
+      restaurant: { targetType: BannerTargetType.Business, routePrefix: '/business' },
+    };
+
+    const resolved = routeMap[type] || routeMap.business;
+    return {
+      actionType: 'internal',
+      actionLabel: 'View in Page',
+      actionIcon: 'open-outline',
+      targetUrl: `${resolved.routePrefix}/${targetId}`,
+      targetType: resolved.targetType,
+    };
+  }
+
+  private async openArticleModal(
+    articleData: NewsArticle,
+    action: { actionType: 'share' | 'external' | 'internal' | 'close'; actionLabel: string; actionIcon: string; targetUrl: string; targetType?: BannerTargetType }
+  ): Promise<void> {
     const modal = await this.modalCtrl.create({
       component: NewsDetailComponent,
       componentProps: {
-        articleData: offerArticle,
-        actionType: actionType,
-        actionLabel: actionLabel,
-        actionIcon: actionIcon,
-        targetUrl: targetUrl,
-        targetType: targetType
-      }
+        articleData,
+        ...action,
+      },
     });
     await modal.present();
   }

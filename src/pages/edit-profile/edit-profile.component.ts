@@ -37,8 +37,6 @@ export class EditProfileComponent {
   deleteDialogBusy = signal(false);
   deleteDialogEmail = signal('');
   deleteVerificationCode = signal('');
-  
-  isLoading = signal(false);
 
   constructor() {
     this.availableCities = computed(() => {
@@ -70,39 +68,6 @@ export class EditProfileComponent {
   onRegionChange(newRegion: string) {
     this.region.set(newRegion);
     this.city.set(''); // Reset city when region changes
-  }
-
-  async save() {
-    if (!this.displayName()?.trim()) {
-      this.showToast('Display Name cannot be empty', 'danger');
-      return;
-    }
-
-    if (!this.phoneNumber().trim()) {
-      this.showToast('Phone number is required', 'danger');
-      return;
-    }
-
-    this.isLoading.set(true);
-    
-    const updateData: Partial<UserProfile> = {
-        name: this.displayName().trim(),
-        phoneNumber: this.phoneNumber().trim(),
-        city: this.city() || '',
-        region: this.region() || '',
-        address: this.address() || '',
-        dateOfBirth: this.dateOfBirth() || ''
-    };
-
-    const result = await this.authService.updateUserProfile(updateData);
-    this.isLoading.set(false);
-
-    if (result.success) {
-      await this.showToast('Profile updated successfully', 'success');
-      this.navCtrl.navigateBack('/tabs/profile');
-    } else {
-      await this.showToast(result.error || 'Failed to update profile', 'danger');
-    }
   }
 
   async showToast(message: string, color: 'success' | 'danger') {

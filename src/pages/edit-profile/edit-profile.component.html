@@ -130,19 +130,7 @@
 
     </div>
 
-    <!-- Save Button (Flows with content) -->
     <div class="mt-8 space-y-4">
-       <button 
-         (click)="save()" 
-         [disabled]="isLoading()"
-         class="w-full h-[3.25rem] bg-[#083594] hover:bg-[#07308a] active:scale-[0.98] text-white font-bold text-[0.95rem] rounded-full shadow-[0_8px_20px_rgba(8,53,148,0.25)] flex items-center justify-center gap-2 transition-all disabled:opacity-70 disabled:cursor-not-allowed">
-         @if (isLoading()) {
-            <ion-spinner name="crescent" color="light" class="w-6 h-6"></ion-spinner>
-         } @else {
-            Save Changes
-         }
-       </button>
-
        <button 
          (click)="deleteAccount()" 
          class="w-full h-[3.25rem] bg-transparent hover:bg-red-50 active:scale-[0.98] text-red-600 font-bold text-[0.95rem] rounded-full border border-red-200 flex items-center justify-center gap-2 transition-all">
@@ -235,4 +223,3 @@
   }
 
 </ion-content>
-
