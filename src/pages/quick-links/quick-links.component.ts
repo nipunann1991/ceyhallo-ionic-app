@@ -5,6 +5,7 @@ import { IonicModule } from '@ionic/angular';
 import { Router } from '@angular/router';
 import { DataService } from '../../services/data.service';
 import { HubSection, HubItem } from '../../models/hub.model';
+import { HubActionType } from '../../enums/hub.enum';
 import { handleImageError } from '../../utils/image.utils';
 
 @Component({
@@ -40,16 +41,16 @@ export class QuickLinksComponent {
 
   handleItemClick(item: HubItem) {
     switch (item.actionType) {
-      case 'url':
+      case HubActionType.Url:
         window.open(item.actionValue, '_system');
         break;
-      case 'call':
+      case HubActionType.Call:
         window.open(`tel:${item.actionValue}`, '_system');
         break;
-      case 'email':
+      case HubActionType.Email:
         window.open(`mailto:${item.actionValue}`, '_system');
         break;
-      case 'route':
+      case HubActionType.Route:
         if (item.actionValue) {
           this.router.navigateByUrl(item.actionValue);
         }

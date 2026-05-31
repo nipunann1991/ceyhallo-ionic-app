@@ -8,6 +8,7 @@ import { EventDetailComponent } from '../event-detail/event-detail.component';
 import { EventCardComponent } from '../../components/event-card/event-card.component';
 import { BannerComponent } from '../../components/banner/banner.component';
 import { Banner } from '../../models/banner.model';
+import { BannerNavigationType, BannerTargetType } from '../../enums/banner.enum';
 import { PageHeaderComponent } from '../../components/page-header/page-header.component';
 import { handleImageError } from '../../utils/image.utils';
 import { AuthService } from '../../services/auth.service';
@@ -82,8 +83,8 @@ export class EventsComponent implements OnInit {
            description: e.location || 'Upcoming Event',
            image: e.imageUrl,
            targetId: e.id,
-           targetType: 'event',
-           navigationType: 'internal'
+           targetType: BannerTargetType.Event,
+           navigationType: BannerNavigationType.Internal
         }));
     });
 

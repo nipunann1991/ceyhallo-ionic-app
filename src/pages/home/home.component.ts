@@ -18,6 +18,7 @@ import { EventCardComponent } from '../../components/event-card/event-card.compo
 import { JobCardComponent } from '../../components/job-card/job-card.component';
 import { handleImageError } from '../../utils/image.utils';
 import { Banner } from '../../models/banner.model';
+import { BannerNavigationType, BannerTargetType } from '../../enums/banner.enum';
 import { NewsArticle } from '../../models/news.model';
 import { Offer } from '../../models/offer.model';
 import { Event } from '../../models/event.model';
@@ -832,7 +833,7 @@ export class HomeComponent implements OnInit, OnDestroy {
     let targetType = banner.targetType;
 
     switch (navType) {
-        case 'external':
+        case BannerNavigationType.External:
             if (banner.targetId) {
                 actionType = 'external';
                 actionLabel = 'Visit Website';
@@ -840,7 +841,7 @@ export class HomeComponent implements OnInit, OnDestroy {
                 targetUrl = banner.targetId;
             }
             break;
-        case 'internal':
+        case BannerNavigationType.Internal:
             if (banner.targetId) {
                 actionType = 'internal';
                 actionLabel = 'View in Page';
@@ -848,7 +849,7 @@ export class HomeComponent implements OnInit, OnDestroy {
                 targetUrl = banner.targetId;
             }
             break;
-        case 'share':
+        case BannerNavigationType.Share:
             actionType = 'share';
             actionLabel = 'Share Article';
             actionIcon = 'share-social';
@@ -919,7 +920,7 @@ export class HomeComponent implements OnInit, OnDestroy {
     let actionLabel = 'Back to Home';
     let actionIcon = 'arrow-back';
     let targetUrl = '';
-    let targetType: 'news' | 'business' | 'restaurant' | 'event' | 'job' | undefined = undefined;
+    let targetType: BannerTargetType | undefined = undefined;
 
     const targetId = offer.targetId || offer.businessId;
     if (targetId) {
@@ -932,20 +933,20 @@ export class HomeComponent implements OnInit, OnDestroy {
 
         switch (type) {
             case 'event':
-                targetType = 'event';
+                targetType = BannerTargetType.Event;
                 targetUrl = `/event/${targetId}`;
                 break;
             case 'job':
-                targetType = 'job';
+                targetType = BannerTargetType.Job;
                 targetUrl = `/job/${targetId}`;
                 break;
             case 'news':
-                targetType = 'news';
+                targetType = BannerTargetType.News;
                 targetUrl = `/news/${targetId}`;
                 break;
             case 'business':
             default:
-                targetType = 'business';
+                targetType = BannerTargetType.Business;
                 targetUrl = `/business/${targetId}`;
                 break;
         }

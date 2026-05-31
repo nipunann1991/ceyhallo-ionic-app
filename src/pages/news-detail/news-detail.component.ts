@@ -9,6 +9,7 @@ import { handleImageError } from '../../utils/image.utils';
 import { BusinessDetailComponent } from '../business-detail/business-detail.component';
 import { EventDetailComponent } from '../event-detail/event-detail.component';
 import { JobDetailComponent } from '../job-detail/job-detail.component';
+import { BannerTargetType } from '../../enums/banner.enum';
 
 @Component({
   selector: 'app-news-detail',
@@ -31,7 +32,7 @@ export class NewsDetailComponent implements OnInit {
   @Input() actionLabel: string = 'Back';
   @Input() actionIcon: string = 'arrow-back';
   @Input() targetUrl?: string;
-  @Input() targetType?: 'news' | 'business' | 'restaurant' | 'event' | 'job';
+  @Input() targetType?: BannerTargetType;
 
   private readonly articleIdSignal = signal<string | undefined>(undefined);
   private readonly articleDataSignal = signal<NewsArticle | undefined>(undefined);

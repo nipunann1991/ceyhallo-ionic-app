@@ -32,7 +32,8 @@ import {
 } from 'firebase/auth';
 import type { User } from 'firebase/auth';
 import { FirestoreService } from './firestore.service';
-import { UserProfile, UserProfileSource } from '../models/user.model';
+import { UserProfile } from '../models/user.model';
+import { UserProfileSource } from '../enums/user.enum';
 import { EmailService } from './email.service';
 import { BehaviorSubject } from 'rxjs';
 
@@ -171,7 +172,7 @@ export class AuthService {
         provider.addScope('profile');
         provider.setCustomParameters({ prompt: 'select_account' });
 
-        return this.signInWithWebProvider(provider, 'google');
+        return this.signInWithWebProvider(provider, UserProfileSource.Google);
       }
 
       const result =
@@ -206,7 +207,7 @@ export class AuthService {
       const credential = GoogleAuthProvider.credential(idToken);
       const userCredential = await signInWithCredential(auth, credential);
 
-      await this.handleSocialLoginSuccess(userCredential.user, 'google');
+      await this.handleSocialLoginSuccess(userCredential.user, UserProfileSource.Google);
 
       return { success: true };
     } catch (error: unknown) {
@@ -271,7 +272,7 @@ export class AuthService {
       const userCredential = await signInWithCredential(auth, credential);
       await this.applyFacebookGraphProfile(userCredential.user, graphProfile);
 
-      await this.handleSocialLoginSuccess(userCredential.user, 'fb');
+      await this.handleSocialLoginSuccess(userCredential.user, UserProfileSource.Facebook);
 
       return { success: true };
     } catch (error: unknown) {
@@ -326,7 +327,7 @@ export class AuthService {
       const userCredential = await signInWithCredential(auth, credential);
 
       await this.applyAppleProfileData(userCredential.user, appleProfileSeed);
-      await this.handleSocialLoginSuccess(userCredential.user, 'apple', appleProfileSeed);
+      await this.handleSocialLoginSuccess(userCredential.user, UserProfileSource.Apple, appleProfileSeed);
 
       return { success: true };
     } catch (error: unknown) {
@@ -358,7 +359,7 @@ export class AuthService {
             email: email,
             name: name,
             role: 'user',
-            source: 'app',
+            source: UserProfileSource.App,
             isVerified: false,
             createdAt: profileTimestamps.createdAt,
             lastLogin: profileTimestamps.lastLogin,
@@ -1111,7 +1112,7 @@ export class AuthService {
 
   private async signInWithWebProvider(
     provider: GoogleAuthProvider | FacebookAuthProvider,
-    source: Extract<UserProfileSource, 'google' | 'fb'>
+    source: UserProfileSource.Google | UserProfileSource.Facebook
   ): Promise<AuthResult> {
     try {
       const userCredential = await signInWithPopup(auth, provider);
@@ -1183,16 +1184,16 @@ export class AuthService {
     const providerIds = user.providerData.map((provider) => provider.providerId);
 
     if (providerIds.includes('google.com')) {
-      return 'google';
+      return UserProfileSource.Google;
     }
     if (providerIds.includes('facebook.com')) {
-      return 'fb';
+      return UserProfileSource.Facebook;
     }
     if (providerIds.includes('apple.com')) {
-      return 'apple';
+      return UserProfileSource.Apple;
     }
 
-    return 'app';
+    return UserProfileSource.App;
   }
 
   private generateVerificationCode(): string {

@@ -1,3 +1,5 @@
+import { BannerNavigationType, BannerTargetType } from '../enums/banner.enum';
+
 export interface Banner {
   id: string;
   category: string;
@@ -6,7 +8,7 @@ export interface Banner {
   image: string;
   active?: boolean;
   targetId?: string;
-  targetType?: 'news' | 'business' | 'restaurant' | 'event' | 'job';
-  navigationType?: 'none' | 'internal' | 'external' | 'share';
+  targetType?: BannerTargetType;
+  navigationType?: BannerNavigationType;
   order?: number;
 }

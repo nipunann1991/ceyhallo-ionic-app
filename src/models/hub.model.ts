@@ -1,11 +1,13 @@
 
+import { HubActionType, HubLayout } from '../enums/hub.enum';
+
 export interface HubItem {
   id?: string;
   label: string;
   subLabel?: string;
   icon: string;
   iconUrl?: string; // For image logos
-  actionType: 'url' | 'call' | 'route' | 'email';
+  actionType: HubActionType;
   actionValue: string;
   colorClass?: string;
   order?: number;
@@ -16,7 +18,7 @@ export interface HubSection {
   title: string;
   subTitle?: string;
   order: number;
-  layout: 'list' | 'grid' | 'row';
+  layout: HubLayout;
   items: HubItem[];
   enabled: boolean;
   isTitleVisible: boolean;

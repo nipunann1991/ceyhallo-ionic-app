@@ -1,4 +1,5 @@
-import { Notification, NotificationSource, NotificationType } from '../models/notification.model';
+import { Notification } from '../models/notification.model';
+import { NotificationSource, NotificationType } from '../enums/notification.enum';
 
 type FirestoreLikeTimestamp = {
   toDate?: () => Date;
@@ -393,18 +394,18 @@ function inferNotificationType(rawType?: string, rawStatus?: string): Notificati
   const value = (rawType || rawStatus || '').toLowerCase();
 
   if (value.includes('error') || value.includes('alert') || value.includes('fail') || value.includes('denied')) {
-    return 'alert';
+    return NotificationType.Alert;
   }
 
   if (value.includes('warn') || value.includes('queue') || value.includes('pending') || value.includes('scheduled')) {
-    return 'warning';
+    return NotificationType.Warning;
   }
 
   if (value.includes('success') || value.includes('sent') || value.includes('deliver') || value.includes('complete') || value.includes('read')) {
-    return 'success';
+    return NotificationType.Success;
   }
 
-  return 'info';
+  return NotificationType.Info;
 }
 
 export function mapNotificationDocument(id: string, data: LooseRecord, source: NotificationSource): Notification | null {
@@ -457,7 +458,7 @@ export function mapNotificationDocument(id: string, data: LooseRecord, source: N
     read: data['read'] ?? false,
     type: inferNotificationType(rawType, status),
     source,
-    sourceLabel: source === 'queue' ? 'Queue' : 'Feed',
+    sourceLabel: source === NotificationSource.Queue ? 'Queue' : 'Feed',
     status: status ? normalizeCollectionName(status) : undefined,
     statusLabel: status ? titleCase(status) : undefined,
     link: extractNotificationLink(data)

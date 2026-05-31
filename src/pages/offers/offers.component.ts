@@ -10,6 +10,7 @@ import { PageHeaderComponent } from '../../components/page-header/page-header.co
 import { NewsDetailComponent } from '../news-detail/news-detail.component';
 import { LoginComponent } from '../login/login.component';
 import { ActivatedRoute } from '@angular/router';
+import { BannerTargetType } from '../../enums/banner.enum';
 
 @Component({
   selector: 'app-offers',
@@ -154,7 +155,7 @@ export class OffersComponent implements OnInit {
     let actionLabel = 'Back';
     let actionIcon = 'arrow-back';
     let targetUrl = '';
-    let targetType: any = undefined;
+    let targetType: BannerTargetType | undefined = undefined;
 
     const targetId = offer.targetId || offer.businessId;
     if (targetId) {
@@ -167,21 +168,21 @@ export class OffersComponent implements OnInit {
 
         switch (type) {
             case 'event':
-                targetType = 'event';
+                targetType = BannerTargetType.Event;
                 targetUrl = `/event/${targetId}`;
                 break;
             case 'job':
-                targetType = 'job';
+                targetType = BannerTargetType.Job;
                 targetUrl = `/job/${targetId}`;
                 break;
             case 'news':
-                targetType = 'news';
+                targetType = BannerTargetType.News;
                 targetUrl = `/news/${targetId}`;
                 break;
             case 'restaurant':
             case 'business':
             default:
-                targetType = 'business';
+                targetType = BannerTargetType.Business;
                 targetUrl = `/business/${targetId}`;
                 break;
         }

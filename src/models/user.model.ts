@@ -1,4 +1,4 @@
-export type UserProfileSource = 'app' | 'google' | 'fb' | 'apple';
+import { UserProfileSource } from '../enums/user.enum';
 
 export interface UserProfile {
   id: string;

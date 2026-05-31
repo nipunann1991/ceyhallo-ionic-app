@@ -8,6 +8,7 @@ import { NewsDetailComponent } from '../news-detail/news-detail.component';
 import { NewsCardComponent } from '../../components/news-card/news-card.component';
 import { BannerComponent } from '../../components/banner/banner.component';
 import { Banner } from '../../models/banner.model';
+import { BannerNavigationType, BannerTargetType } from '../../enums/banner.enum';
 import { PageHeaderComponent } from '../../components/page-header/page-header.component';
 import { handleImageError } from '../../utils/image.utils';
 import { AuthService } from '../../services/auth.service';
@@ -102,8 +103,8 @@ export class NewsComponent implements OnInit {
           description: n.description,
           image: n.imageUrl,
           targetId: n.id,
-          targetType: 'news',
-          navigationType: 'internal'
+          targetType: BannerTargetType.News,
+          navigationType: BannerNavigationType.Internal
         }));
     });
 

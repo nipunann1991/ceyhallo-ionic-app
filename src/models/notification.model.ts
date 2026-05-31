@@ -1,5 +1,4 @@
-export type NotificationType = 'info' | 'success' | 'warning' | 'alert';
-export type NotificationSource = 'feed' | 'queue';
+import { NotificationSource, NotificationType } from '../enums/notification.enum';
 
 export interface Notification {
   id: string;

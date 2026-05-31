@@ -11,9 +11,12 @@ import { Job } from '../models/job.model';
 import { LegalDocument } from '../models/legal.model';
 import { SupportInfo } from '../models/support.model';
 import { Notification } from '../models/notification.model';
+import { NotificationSource } from '../enums/notification.enum';
 import { Offer } from '../models/offer.model';
 import { AppConfig, NewsCategoriesConfig, NewsCategoryItem } from '../models/settings.model';
 import { HubSection } from '../models/hub.model';
+import { HubLayout } from '../enums/hub.enum';
+import { HubActionType } from '../enums/hub.enum';
 import { FirestoreService } from './firestore.service';
 import { AuthService } from './auth.service';
 import { mapNotificationDocument } from '../utils/notification.utils';
@@ -715,7 +718,7 @@ export class DataService {
   private listenToNotifications(): void {
     this.notificationsUnsubscribe = this.firestoreService.listenToPath<{ [key: string]: any }>('notifications', (dataObject) => {
       this.notificationFeedItems = Object.keys(dataObject)
-        .map((id) => mapNotificationDocument(id, dataObject[id], 'feed'))
+        .map((id) => mapNotificationDocument(id, dataObject[id], NotificationSource.Feed))
         .filter((item): item is Notification => item !== null)
         .sort((a, b) => b.date.getTime() - a.date.getTime());
 
@@ -729,7 +732,7 @@ export class DataService {
   private listenToPushQueue(): void {
     this.pushQueueUnsubscribe = this.firestoreService.listenToPath<{ [key: string]: any }>('push_queue', (dataObject) => {
       this.pushQueueItems = Object.keys(dataObject)
-        .map((id) => mapNotificationDocument(id, dataObject[id], 'queue'))
+        .map((id) => mapNotificationDocument(id, dataObject[id], NotificationSource.Queue))
         .filter((item): item is Notification => item !== null)
         .sort((a, b) => b.date.getTime() - a.date.getTime());
 
@@ -895,15 +898,15 @@ export class DataService {
         
         // Auto-detect layout: If explicitly set, use it. 
         // If not, check if title contains 'Emergency' to default to 'row'.
-        let layout: 'list' | 'grid' | 'row' = 'list';
+        let layout: HubLayout = HubLayout.List;
         
-        if (data['displayStyle'] === 'grid' || data['layout'] === 'grid') {
-            layout = 'grid';
-        } else if (data['displayStyle'] === 'row' || data['layout'] === 'row' || data['displayStyle'] === 'slide') {
-            layout = 'row';
+        if (data['displayStyle'] === HubLayout.Grid || data['layout'] === HubLayout.Grid) {
+            layout = HubLayout.Grid;
+        } else if (data['displayStyle'] === HubLayout.Row || data['layout'] === HubLayout.Row || data['displayStyle'] === 'slide') {
+            layout = HubLayout.Row;
         } else if (title.toLowerCase().includes('emergency')) {
             // Auto-switch to row layout for Emergency numbers if not explicitly set to something else
-            layout = 'row';
+            layout = HubLayout.Row;
         }
 
         return {
@@ -924,7 +927,7 @@ export class DataService {
             icon: item.icon || 'star',
             iconUrl: item.iconUrl,
             // Map 'link' to 'url', fallback to whatever is there
-            actionType: item.actionType === 'link' ? 'url' : (item.actionType || 'route'),
+            actionType: item.actionType === 'link' ? HubActionType.Url : (item.actionType || HubActionType.Route),
             actionValue: item.actionValue || '',
             colorClass: item.colorClass,
             order: item.order || 99

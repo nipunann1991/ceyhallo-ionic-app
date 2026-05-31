@@ -18,6 +18,7 @@ import { AuthService } from '../../services/auth.service';
 import { LoginComponent } from '../login/login.component';
 import { Country } from '../../models/country.model';
 import { BusinessLocation } from '../../models/business.model';
+import { BannerTargetType } from '../../enums/banner.enum';
 
 @Component({
   selector: 'app-businesses',
@@ -339,7 +340,7 @@ export class BusinessesComponent implements OnInit {
     const actionLabel = 'Back to Page';
     const actionIcon = 'arrow-back';
     const targetUrl = '';
-    const targetType: any = undefined;
+    const targetType: BannerTargetType | undefined = undefined;
 
     const modal = await this.modalCtrl.create({
       component: NewsDetailComponent,

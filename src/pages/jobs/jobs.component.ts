@@ -8,6 +8,7 @@ import { JobDetailComponent } from '../job-detail/job-detail.component';
 import { JobCardComponent } from '../../components/job-card/job-card.component';
 import { BannerComponent } from '../../components/banner/banner.component';
 import { Banner } from '../../models/banner.model';
+import { BannerNavigationType, BannerTargetType } from '../../enums/banner.enum';
 import { PageHeaderComponent } from '../../components/page-header/page-header.component';
 import { handleImageError } from '../../utils/image.utils';
 import { AuthService } from '../../services/auth.service';
@@ -100,8 +101,8 @@ export class JobsComponent implements OnInit {
           // Assign a random high-quality office image based on index to be deterministic
           image: this.OFFICE_IMAGES[index % this.OFFICE_IMAGES.length],
           targetId: job.id,
-          targetType: 'job',
-          navigationType: 'internal'
+          targetType: BannerTargetType.Job,
+          navigationType: BannerNavigationType.Internal
         }));
     });
 
