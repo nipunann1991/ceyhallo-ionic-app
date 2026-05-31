@@ -1,5 +1,99 @@
 /* Global styles */
 
+body { 
+  font-family: 'Inter', sans-serif;
+  --ion-font-family: 'Inter', sans-serif;
+}
+
+/* Set base font size to 14.5px globally as requested */
+html {
+  font-size: 14.5px;
+}
+
+/* Increase base font size on iPhones for better readability and larger touch targets. */
+html.is-iphone {
+  font-size: 14.5px;
+}
+
+/* --- Common Safe Area Overlay --- */
+/* Used for headers over hero images to respect device notches/status bars */
+.nav-overlay-safe {
+  padding-top: calc(4rem + env(safe-area-inset-top));
+}
+.plt-android .nav-overlay-safe {
+  padding-top: 4rem;
+}
+
+/* --- Common Rich Content Styles --- */
+/* Shared typography for dynamic content injected via [innerHTML] */
+
+.article-content *, .legal-content *, .business-content *, .job-content * {
+  /* Reset margins to handle them consistently */
+  margin: 0;
+  padding: 0;
+}
+
+/* Paragraphs */
+.article-content p, .legal-content p, .business-content p, .job-content p {
+  line-height: inherit;
+  color: inherit;
+  margin-bottom: 0;
+}
+
+/* Headings */
+.article-content h2, .article-content h3,
+.legal-content h2, .legal-content h3,
+.business-content h2, 
+.job-content h2, .job-content h3,
+h2.section-title {
+  color: #1A1C1E;
+  font-weight: inherit;
+}
+
+h2.section-title:first-child {
+  margin-top: 0;
+}
+
+/* Lists */
+.legal-content ul, .job-content ul {
+  list-style-type: disc;
+  padding-left: 1.25rem;
+  margin-bottom: 1.25rem;
+  color: inherit;
+}
+
+.legal-content li, .job-content li {
+  margin-bottom: 0.5rem;
+  line-height: inherit;
+}
+
+/* Custom Toast Style */
+ion-toast.toast-custom-text {
+  --color: #ffffff !important;
+  --icon-color: #ffffff !important;
+  --button-color: #ffffff !important;
+  font-weight: 600 !important;
+
+  /* Override Success Color to #22B43A */
+  --ion-color-success: #22B43A;
+  --ion-color-success-rgb: 34, 180, 58;
+  --ion-color-success-shade: #1e9e33;
+  --ion-color-success-tint: #38bc4e;
+}
+
+ion-toast.toast-custom-text::part(message) {
+  color: #ffffff;
+  font-weight: 600;
+}
+ion-toast.toast-custom-text::part(icon) {
+  color: #ffffff;
+}
+
+/* iOS: Move top toasts down dynamically to avoid Dynamic Island/Notch */
+html.is-iphone ion-toast.toast-custom-text {
+  transform: translateY(calc(4rem + var(--ion-safe-area-top, 0px)));
+}
+
 .delete-account-alert {
   --backdrop-opacity: 0.34;
 }
